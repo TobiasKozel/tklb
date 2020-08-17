@@ -30,8 +30,8 @@ class Convolver {
 	// The convolver maintains internal state so each channels need its own
 	fftconvolver::TwoStageFFTConvolver mConvolvers[CHANNELS];
 
-	std::atomic<bool> mIRLoaded = false;
-	std::atomic<bool> mIsProcessing = false;
+	std::atomic<bool> mIRLoaded = { false };
+	std::atomic<bool> mIsProcessing = { false };
 
 public:
 	TKLB_NO_COPY(Convolver)
@@ -39,11 +39,11 @@ public:
 	explicit Convolver(){ }
 
 	void loadIR(float** samples, const size_t sampleCount, const size_t channelCount) {
-		if (samples == nullptr || sampleCount == 0 || channelCount == 0) { return; }	
+		if (samples == nullptr || sampleCount == 0 || channelCount == 0) { return; }
 		mIRLoaded = false;
-		
+
 		while (mIsProcessing) { /** does this even work like a mutex? */ }
-		
+
 		for (int c = 0; c < CHANNELS; c++) {
 			mConvolvers[c].init(BLOCK, TAIL, samples[c % channelCount], sampleCount);
 		}
@@ -59,7 +59,7 @@ public:
 			}
 			return;
 		}
-	  
+
 		mIsProcessing = true;
 
 	  	for(int c = 0; c < CHANNELS; c++) {
@@ -70,13 +70,13 @@ public:
 
 	static const char* getLicense() {
 		return
-			"Realtime Convolution by\n" 
+			"Realtime Convolution by\n"
 			"https://github.com/HiFi-LoFi\n"
 			"https://github.com/HiFi-LoFi/FFTConvolver\n"
 			"MIT License\n\n";
 	}
 };
 
-} // /namespace
+} // namespace
 
 #endif // TKLB_CONVOLVER
