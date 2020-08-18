@@ -25,7 +25,7 @@ namespace tklb {
  * Wraps up the FttConvolver to do easy stereo convolution
  * and also deal with the buffers
  */
-template <int BLOCK = 128, int TAIL = 4096, int CHANNELS = 2, int MAX_BLOCK = 512>
+template <int CHANNELS = 2>
 class Convolver {
 	// The convolver maintains internal state so each channels need its own
 	fftconvolver::TwoStageFFTConvolver mConvolvers[CHANNELS];
@@ -33,19 +33,26 @@ class Convolver {
 	std::atomic<bool> mIRLoaded = { false };
 	std::atomic<bool> mIsProcessing = { false };
 
+	int mBlockSize, mTailBlockSize;
+
 public:
 	TKLB_NO_COPY(Convolver)
 
-	explicit Convolver(){ }
+	explicit Convolver(int block = 128, int tail = 4096){
+		mBlockSize = block;
+		mTailBlockSize = tail;
+	}
 
 	void loadIR(float** samples, const size_t sampleCount, const size_t channelCount) {
 		if (samples == nullptr || sampleCount == 0 || channelCount == 0) { return; }
 		mIRLoaded = false;
 
-		while (mIsProcessing) { /** does this even work like a mutex? */ }
+		while (mIsProcessing) { /** TODO does this even work like a mutex? */ }
 
 		for (int c = 0; c < CHANNELS; c++) {
-			mConvolvers[c].init(BLOCK, TAIL, samples[c % channelCount], sampleCount);
+			mConvolvers[c].init(
+				mBlockSize, mTailBlockSize, samples[c % channelCount], sampleCount
+			);
 		}
 		mIRLoaded = true;
 	}
@@ -62,7 +69,7 @@ public:
 
 		mIsProcessing = true;
 
-	  	for(int c = 0; c < CHANNELS; c++) {
+		for(int c = 0; c < CHANNELS; c++) {
 			mConvolvers[c].process(in[c], out[c], nFrames);
 		}
 		mIsProcessing = false;

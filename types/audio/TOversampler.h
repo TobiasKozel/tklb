@@ -3,6 +3,7 @@
 
 #include <functional>
 #include "../../util/NoCopy.h"
+#include "../TPointerList.h"
 
 #ifdef TKLB_SAMPLE_FLOAT
 	#define TKLB_OVERSAMPLE_FLOAT
@@ -31,6 +32,7 @@ namespace tklb {
  */
 template <int CHANNELS = 2, int MAX_BLOCK = 512>
 class Oversampler {
+public:
 	using T =
 	#ifdef TKLB_OVERSAMPLE_FLOAT
 		float
@@ -38,6 +40,8 @@ class Oversampler {
 		double
 	#endif
 	;
+	using ProcessFunction = std::function<void(T**, T**, int)>;
+private:
 
 #ifdef TKLB_INTRINSICS
 	#ifdef TKLB_OVERSAMPLE_FLOAT
@@ -71,14 +75,21 @@ class Oversampler {
 	 * Straight up stolen from the hiir oversampler wrapper from iPlug2
 	 * https://github.com/iPlug2/iPlug2/blob/master/IPlug/Extras/Oversampler.h
 	 */
-	const double coeffs2x[12] = { 0.036681502163648017, 0.13654762463195794, 0.27463175937945444, 0.42313861743656711, 0.56109869787919531, 0.67754004997416184, 0.76974183386322703, 0.83988962484963892, 0.89226081800387902, 0.9315419599631839, 0.96209454837808417, 0.98781637073289585 };
-	const double coeffs4x[4] = { 0.041893991997656171, 0.16890348243995201, 0.39056077292116603, 0.74389574826847926 };
-public:
-	TKLB_NO_COPY(Oversampler)
+	const double coeffs2x[12] = {
+		0.036681502163648017, 0.13654762463195794, 0.27463175937945444,
+		0.42313861743656711, 0.56109869787919531, 0.67754004997416184,
+		0.76974183386322703, 0.83988962484963892, 0.89226081800387902,
+		0.9315419599631839, 0.96209454837808417, 0.98781637073289585
+	};
+	const double coeffs4x[4] = {
+		0.041893991997656171, 0.16890348243995201,
+		0.39056077292116603, 0.74389574826847926
+	};
 
 	unsigned int mFactor = 1;
-	using ProcessFunction = std::function<void(T**, T**, int)>;
 	ProcessFunction mProc;
+public:
+	TKLB_NO_COPY(Oversampler)
 
 	Oversampler() {
 		for (int c = 0; c < CHANNELS; c++) {
@@ -87,6 +98,18 @@ public:
 			mUp4x[c].set_coefs(coeffs4x);
 			mDown4x[c].set_coefs(coeffs4x);
 		}
+	}
+
+	void setProcessFunc(const ProcessFunction& f) {
+		mProc = f;
+	}
+
+	void setFactor(const int factor) {
+		mFactor = factor;
+	}
+
+	int getFactor() const {
+		return mFactor;
 	}
 
 	void process(T** in, T** out, const int frames) {
@@ -136,6 +159,42 @@ public:
 			"WTFPL Licensed";
 	}
 };
+
+template <int MAX_BLOCK>
+class OversamplerVC {
+	using OversamplerSingle = Oversampler<1, MAX_BLOCK>;
+	PointerList<OversamplerSingle> mOversamplers;
+	int mChannels;
+public:
+	OversamplerVC(const int channels = 2) {
+		mChannels = channels;
+		for (int c = 0; c < channels; c++) {
+			OversamplerSingle* o = new OversamplerSingle();
+			o->setProcessFunc([&]() {
+
+			});
+			mOversamplers.add(o);
+		}
+	}
+
+	void setProcessFunc(const ProcessFunction& f) {
+		for (int c = 0; c < mChannels; c++) {
+			mOversamplers[c].setProcessFunc()
+		}
+		mProc = f;
+	}
+
+	void setFactor(const int factor) {
+		for (int c = 0; c < mChannels; c++) {
+			mOversamplers[c].setFactor(factor);
+		}
+	}
+
+	int getFactor() const {
+		return mOversamplers[0].getFactor();
+	}
+
+}
 
 } // namespace
 
