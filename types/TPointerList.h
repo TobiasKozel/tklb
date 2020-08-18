@@ -2,8 +2,9 @@
 #define TKLB_POINTERLIST
 
 #include <vector>
+#include <algorithm>
 
-namespace guitard {
+namespace tklb {
 
 template <class T>
 class PointerList {

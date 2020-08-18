@@ -17,6 +17,7 @@ class HeapBuffer {
 
 
 public:
+	// TODO handle copying
 	TKLB_NO_COPY(HeapBuffer)
 
 	HeapBuffer(const int granularity = 1024 / sizeof(T)) {

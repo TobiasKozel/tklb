@@ -18,6 +18,10 @@ public:
 		return false;
 	}
 
+	bool push(T& i) {
+		return push(&i);
+	}
+
 	T* pop() {
 		if (mIndex > 0) {
 			mIndex--;

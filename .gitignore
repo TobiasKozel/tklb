@@ -1,2 +1,3 @@
 external/hiir/hiir/test
 .vscode
+*.out
