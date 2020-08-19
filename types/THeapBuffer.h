@@ -1,7 +1,7 @@
 #ifndef TKLB_HEAPBUFFER
 #define TKLB_HEAPBUFFER
 
-#include "../util/NoCopy.h"
+#include "../util/TNoCopy.h"
 
 #include <cmath>
 #include <cstring>

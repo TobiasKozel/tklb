@@ -3,7 +3,7 @@
 
 #include <mutex>
 
-#include "../util/NoCopy.h"
+#include "../util/TNoCopy.h"
 
 namespace tklb {
 

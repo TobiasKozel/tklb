@@ -5,8 +5,12 @@
 #include <algorithm>
 
 namespace tklb {
-
 template <class T>
+/**
+ * Holds a list of pointers
+ * Wraps around a std::vector for now
+ * TODO replace vector with heapbuffer
+ */
 class PointerList {
 	std::vector<T*> mList;
 
