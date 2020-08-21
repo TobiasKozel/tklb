@@ -40,6 +40,7 @@
 #pragma once
 
 #include <cmath>
+#include <limits.h>
 
 namespace speexport {
   enum {
