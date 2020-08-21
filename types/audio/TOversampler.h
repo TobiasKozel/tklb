@@ -2,7 +2,7 @@
 #define TKLB_OVERSAMPLER
 
 #include <functional>
-#include "../../util/NoCopy.h"
+#include "../../util/TNoCopy.h"
 #include "../TPointerList.h"
 
 #ifdef TKLB_SAMPLE_FLOAT
@@ -161,12 +161,12 @@ public:
 };
 
 template <int MAX_BLOCK>
-class OversamplerVC {
+class HeapOversampler {
 	using OversamplerSingle = Oversampler<1, MAX_BLOCK>;
 	PointerList<OversamplerSingle> mOversamplers;
 	int mChannels;
 public:
-	OversamplerVC(const int channels = 2) {
+	HeapOversampler(const int channels = 2) {
 		mChannels = channels;
 		for (int c = 0; c < channels; c++) {
 			OversamplerSingle* o = new OversamplerSingle();

@@ -1,7 +1,7 @@
 #ifndef TKLB_CONVOLVER
 #define TKLB_CONVOLVER
 
-#include "../../util/NoCopy.h"
+#include "../../util/TNoCopy.h"
 
 /**
  * Decide which type the convolution will use
@@ -25,32 +25,35 @@ namespace tklb {
  * Wraps up the FttConvolver to do easy stereo convolution
  * and also deal with the buffers
  */
-template <int CHANNELS = 2>
 class Convolver {
 	// The convolver maintains internal state so each channels need its own
-	fftconvolver::TwoStageFFTConvolver mConvolvers[CHANNELS];
+	fftconvolver::TwoStageFFTConvolver* mConvolvers[16] = { nullptr };
 
 	std::atomic<bool> mIRLoaded = { false };
 	std::atomic<bool> mIsProcessing = { false };
 
-	int mBlockSize, mTailBlockSize;
+	unsigned int mBlockSize, mTailBlockSize, mChannels;
 
 public:
 	TKLB_NO_COPY(Convolver)
 
-	explicit Convolver(int block = 128, int tail = 4096){
+	explicit Convolver(int channels = 2, int block = 128, int tail = 4096) {
 		mBlockSize = block;
 		mTailBlockSize = tail;
+		mChannels = channels;
+		for (int c = 0; c < channels; c++) {
+			mConvolvers[c] = new fftconvolver::TwoStageFFTConvolver();
+		}
 	}
 
-	void loadIR(float** samples, const size_t sampleCount, const size_t channelCount) {
+	void loadIR(const FFTCONVOLVER_TYPE** samples, const size_t sampleCount, const size_t channelCount) {
 		if (samples == nullptr || sampleCount == 0 || channelCount == 0) { return; }
 		mIRLoaded = false;
 
 		while (mIsProcessing) { /** TODO does this even work like a mutex? */ }
 
-		for (int c = 0; c < CHANNELS; c++) {
-			mConvolvers[c].init(
+		for (int c = 0; c < mChannels; c++) {
+			mConvolvers[c]->init(
 				mBlockSize, mTailBlockSize, samples[c % channelCount], sampleCount
 			);
 		}
@@ -59,7 +62,7 @@ public:
 
 	void ProcessBlock(FFTCONVOLVER_TYPE** in, FFTCONVOLVER_TYPE** out, const int nFrames) {
 		if (!mIRLoaded) { // just pass the signal through
-			for (int c = 0; c < CHANNELS; c++) {
+			for (int c = 0; c < mChannels; c++) {
 				for (int i = 0; i < nFrames; i++) {
 					out[c][i] = in[c][i];
 				}
@@ -69,8 +72,8 @@ public:
 
 		mIsProcessing = true;
 
-		for(int c = 0; c < CHANNELS; c++) {
-			mConvolvers[c].process(in[c], out[c], nFrames);
+		for(int c = 0; c < mChannels; c++) {
+			mConvolvers[c]->process(in[c], out[c], nFrames);
 		}
 		mIsProcessing = false;
 	}
