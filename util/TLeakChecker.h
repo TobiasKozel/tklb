@@ -42,7 +42,7 @@ void* tklbMalloc(const size_t size, const char* file, int line) {
 	ptr->allocation = allocationCount;
 
 	int* magicNumber = reinterpret_cast<int*>(
-		reinterpret_cast<unsigned char*>(ptr) + size
+		reinterpret_cast<unsigned char*>(ptr) + size + sizeof(MallocInfo)
 	);
 	(*magicNumber) = TKLB_MAGIC_NUMBER;
 
@@ -68,7 +68,7 @@ void tklbFree(void* ptr, const char* file, int line) {
 	MallocInfo* info = reinterpret_cast<MallocInfo*>(ptr) - 1;
 
 	int* magicNumber = reinterpret_cast<int*>(
-		reinterpret_cast<unsigned char*>(info) + info->size
+		reinterpret_cast<unsigned char*>(info) + info->size + sizeof(MallocInfo)
 	);
 	if ((*magicNumber) != TKLB_MAGIC_NUMBER) {
 		// Magic number was overwritten
@@ -104,12 +104,12 @@ void* tklbRealloc(void* ptr, size_t size, const char* file, int line) {
  * http://stevehanov.ca/blog/?id=10
  * 
  */
-void* operator new(size_t size, const char* file, int line) {
-	return tklb::tklbMalloc(size, file, line);
+void* operator new(size_t size) {
+	return tklb::tklbMalloc(size, nullptr, 1337);
 }
 
-void* operator new[](size_t size, const char* file, int line) {
-	return tklb::tklbMalloc(size, file, line);
+void* operator new[](size_t size) {
+	return tklb::tklbMalloc(size, nullptr, 1337);
 }
 
 void operator delete(void* ptr, size_t size) {
@@ -123,8 +123,6 @@ void operator delete(void* ptr) noexcept {
 void operator delete[](void* ptr) noexcept {
 	tklb::tklbFree(ptr, nullptr, 0);
 }
-
-#define new new(__FILE__, __LINE__)
 
 #define malloc(size)      tklb::tklbMalloc (     size, __FILE__, __LINE__)
 #define free(ptr)         tklb::tklbFree   (ptr,       __FILE__, __LINE__)

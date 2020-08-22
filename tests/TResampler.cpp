@@ -1,5 +1,4 @@
 #include "../types/audio/TResampler.h"
-#define TKLB_LEAKCHECKER_NO_INFO
 #include "../util/TLeakChecker.h"
 
 int main() {
