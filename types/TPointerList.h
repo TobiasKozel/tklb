@@ -30,21 +30,23 @@ public:
 		mList.push_back(element);
 	}
 
-	void remove(const T* element, bool const destroy = false) {
+	bool remove(const T* element, bool const destroy = false) {
 		auto position = std::find(mList.begin(), mList.end(), element);
 		if (position != mList.end()) {
 			mList.erase(position);
+			if (destroy) {
+				delete element;
+			}
+			return true;
 		}
-		if (destroy) {
-			delete element;
-		}
+		return false;
 	}
 
-	void remove(const size_t index, bool const destroy = false) {
-		remove(get(index), destroy);
+	bool remove(const size_t index, bool const destroy = false) {
+		return remove(get(index), destroy);
 	}
 
-	size_t size() const {
+	int size() const {
 		return mList.size();
 	}
 
@@ -69,6 +71,7 @@ public:
 		if (index > size() || index < 0) { return; }
 		mList.insert(mList.begin() + index, element);
 	}
+
 };
 
 } // namespace

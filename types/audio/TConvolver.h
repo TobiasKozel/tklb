@@ -6,12 +6,12 @@
 /**
  * Decide which type the convolution will use
  */
-#ifndef TKLB_FLOAT_CONVOLUTION
+#ifndef TKLB_CONVOLUTION_FLOAT
 	#define FFTCONVOLVER_TYPE double
 #else
 #define FFTCONVOLVER_TYPE float
 	// float convolution can use SSE
-	#ifdef TKLB_INTRINSICS
+	#ifndef TKLB_NO_INTRINSICS
 		#define FFTCONVOLVER_USE_SSE
 	#endif
 #endif
