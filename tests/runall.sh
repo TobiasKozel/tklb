@@ -1,20 +1,25 @@
 #!/bin/bash
 FAILED=false
-for f in ./*.cpp
-do
-	if g++ $f ; then
-		if ./a.out ; then
-			echo "Passed: ${f}"
+
+function test {
+	for f in ./*.cpp
+	do
+		if $1 $f ; then
+			if ./a.out ; then
+				echo "${1} Passed: ${f}"
+			else
+				FAILED=true
+				echo -e "\e[31m${1}  Error: Test failed for ${f}\e[0m"
+			fi
+			rm ./a.out
 		else
-			FAILED=true
-			echo -e "\e[31mError: Test failed for ${f}\e[0m"
+			echo -e "\e[31m${1} Error: Failed to compile ${f}\e[0m"
+			exit
 		fi
-		rm ./a.out
-	else
-		echo -e "\e[31mError: Failed to compile ${f}\e[0m"
-		exit
-	fi
-done
+	done
+}
+test g++
+test clang++
 
 if ($FAILED); then
 	echo -e "\e[31mSome tests failed!\e[0m"

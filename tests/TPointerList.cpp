@@ -1,4 +1,5 @@
 #include "../types/TPointerList.h"
+#include "../util/TLeakChecker.h"
 
 int main() {
 
@@ -39,6 +40,10 @@ int main() {
 		if (list.size() != 0) {
 			return 5;
 		}
+	}
+
+	if (tklb::allocationCount != 0) {
+		return 6;
 	}
 
 	return 0;

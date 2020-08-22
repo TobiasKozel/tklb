@@ -1,4 +1,5 @@
 #include "../types/TRingBuffer.h"
+#include "../util/TLeakChecker.h"
 
 template <typename T>
 int test(T& buffer) {
@@ -44,6 +45,9 @@ int main() {
 		if (ret != 0) {
 			return ret;
 		}
+	}
+	if (tklb::allocationCount != 0) {
+		return 7;
 	}
 	return 0;
 
