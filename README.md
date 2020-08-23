@@ -8,6 +8,9 @@ Will disable all assertions
 ### TKLB_NO_INTRINSICS
 Disables SSE or other intrinsics
 
+### TKLB_MAXCHANNELS
+Maximum channels for audio related classes. Defaults to 2
+
 ### TKLB_SAMPLE_FLOAT
 Will do all audio related stuff with floats
 

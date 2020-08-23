@@ -11,9 +11,9 @@ namespace tklb {
 template <typename T>
 class HeapBuffer {
 	T* mBuf = nullptr;
-	int mSize = 0; // size of elements requested
-	int mRealSize = 0; // the actually allocated size
-	int mGranularity; // the space actually allocated will be a multiple of this
+	unsigned int mSize = 0; // size of elements requested
+	unsigned int mRealSize = 0; // the actually allocated size
+	unsigned int mGranularity; // the space actually allocated will be a multiple of this
 
 
 public:
@@ -38,8 +38,10 @@ public:
 		return mBuf;
 	}
 
-	T* resize(const int size, const bool downsize = true) {
-		const int chunked = mGranularity * std::ceil(size / static_cast<float>(mGranularity));
+	T* resize(const unsigned int size, const bool downsize = true) {
+		const unsigned int chunked =
+			mGranularity * std::ceil(size / static_cast<float>(mGranularity));
+
 		if (chunked != mRealSize) {
 			if (size == 0) { // delete
 				delete mBuf;
@@ -66,11 +68,6 @@ public:
 
 	int size() const {
 		return mSize;
-	}
-
-	static const char* getLicense() {
-		return
-			"Based on Cockos WDL heapbuf.h\n";
 	}
 };
 

@@ -2,6 +2,7 @@
 #define TKLB_CONVOLVER
 
 #include "../../util/TNoCopy.h"
+#include "../../util/TAssert.h"
 
 /**
  * Decide which type the convolution will use
@@ -23,44 +24,60 @@
 namespace tklb {
 /**
  * Wraps up the FttConvolver to do easy stereo convolution
- * and also deal with the buffers
  */
 class Convolver {
+	static constexpr unsigned int MAX_CHANNELS = 
+#ifdef TKLB_MAXCHANNELS
+		TKLB_MAXCHANNELS
+#else
+	2
+#endif
+	;
 	// The convolver maintains internal state so each channels need its own
-	fftconvolver::TwoStageFFTConvolver* mConvolvers[16] = { nullptr };
+	fftconvolver::TwoStageFFTConvolver mConvolvers[MAX_CHANNELS];
 
 	std::atomic<bool> mIRLoaded = { false };
 	std::atomic<bool> mIsProcessing = { false };
 
-	unsigned int mBlockSize, mTailBlockSize, mChannels;
+	unsigned int mBlockSize, mTailBlockSize;
+	unsigned char mChannels;
 
 public:
 	TKLB_NO_COPY(Convolver)
 
-	explicit Convolver(int channels = 2, int block = 128, int tail = 4096) {
+	/**
+	 * @param channels How many channels the convolver has. Can't exceed TKLB_MAXCHANNELS
+	 * @param block The size of each convolution block
+	 * @param tail The size of the tail convolution block
+	 */
+	Convolver(unsigned char channels = 2, int block = 128, int tail = 4096) {
 		mBlockSize = block;
 		mTailBlockSize = tail;
 		mChannels = channels;
-		for (int c = 0; c < channels; c++) {
-			mConvolvers[c] = new fftconvolver::TwoStageFFTConvolver();
-		}
+		TKLB_ASSERT(MAX_CHANNELS <= channels);
 	}
 
-	void loadIR(const FFTCONVOLVER_TYPE** samples, const size_t sampleCount, const size_t channelCount) {
+	void loadIR(
+			FFTCONVOLVER_TYPE** samples,
+			const unsigned int sampleCount,
+			const unsigned int channelCount
+	) {
 		if (samples == nullptr || sampleCount == 0 || channelCount == 0) { return; }
 		mIRLoaded = false;
 
 		while (mIsProcessing) { /** TODO does this even work like a mutex? */ }
 
 		for (int c = 0; c < mChannels; c++) {
-			mConvolvers[c]->init(
+			mConvolvers[c].init(
 				mBlockSize, mTailBlockSize, samples[c % channelCount], sampleCount
 			);
 		}
 		mIRLoaded = true;
 	}
 
-	void ProcessBlock(FFTCONVOLVER_TYPE** in, FFTCONVOLVER_TYPE** out, const int nFrames) {
+	void process(
+			FFTCONVOLVER_TYPE** in, FFTCONVOLVER_TYPE** out, const unsigned int nFrames
+	) {
 		if (!mIRLoaded) { // just pass the signal through
 			for (int c = 0; c < mChannels; c++) {
 				for (int i = 0; i < nFrames; i++) {
@@ -73,7 +90,7 @@ public:
 		mIsProcessing = true;
 
 		for(int c = 0; c < mChannels; c++) {
-			mConvolvers[c]->process(in[c], out[c], nFrames);
+			mConvolvers[c].process(in[c], out[c], nFrames);
 		}
 		mIsProcessing = false;
 	}
