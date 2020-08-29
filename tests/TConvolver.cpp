@@ -1,4 +1,3 @@
-#define TKLB_CONVOLUTION_FLOAT
 #include "../types/audio/TConvolver.h"
 #include "../util/TLeakChecker.h"
 
@@ -8,7 +7,7 @@ bool close(float a, float b) {
 
 int main() {
 	{
-		tklb::Convolver con;
+		tklb::Convolver<> con;
 		float irSamples[1024] = { 0.0 };
 		irSamples[1] = 1.0; // perfect impulse delaying the signal by one sample
 		float* ir[1] = { irSamples };

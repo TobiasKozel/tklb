@@ -18,7 +18,7 @@ function test {
 		fi
 	done
 }
-test g++
+test g++ -O2
 test clang++
 
 if ($FAILED); then

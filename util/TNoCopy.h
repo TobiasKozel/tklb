@@ -10,4 +10,4 @@ name(name&&) = delete; \
 name& operator= (const name&) = delete; \
 name& operator= (name&&) = delete;
 
-#endif
+#endif // TKLB_NO_COPY

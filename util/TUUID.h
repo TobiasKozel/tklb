@@ -30,6 +30,6 @@ namespace tklb {
 			}
 		return true;
 	}
-}
+} // namespace
 
-#endif
+#endif // TKLB_UUID
