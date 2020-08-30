@@ -27,8 +27,19 @@ function test {
 		fi
 	done
 }
-test g++ -O2
-test clang++
+test g++ -O2 -march=native
+test g++ -O2 -march=native -DTKLB_NO_INTRINSICS
+test g++ -O2 -march=native -DTKLB_SAMPLE_FLOAT
+test clang++ -march=native -Ofast
+test clang++ -march=native -Ofast -DTKLB_NO_INTRINSICS
+test clang++ -march=native -Ofast -DTKLB_SAMPLE_FLOAT
+
+# TODO figure out how to get into dev shell for windows
+# if [ "$executable" == "./a.exe" ]; then
+# 	test cl /O2 /arch:AVX
+# 	test cl /O2 /arch:AVX /DTKLB_NO_INTRINSICS
+# 	test cl /O2 /arch:AVX /DTKLB_SAMPLE_FLOAT
+# fi
 
 if ($FAILED); then
 	echo -e "\e[31mSome tests failed!\e[0m"
