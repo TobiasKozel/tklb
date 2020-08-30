@@ -37,15 +37,15 @@ public:
 		Time now = std::chrono::high_resolution_clock::now();
 		if(mUnit == Nanoseconds) {
 			auto dur = std::chrono::duration_cast<std::chrono::nanoseconds>(now - mStart);
-			std::cout << mMessage << dur.count() << " ns\n";
+			std::cout << mMessage << " " << dur.count() << " ns\n";
 		}
 		if (mUnit == Microseconds) {
 			auto dur = std::chrono::duration_cast<std::chrono::microseconds>(now - mStart);
-			std::cout << mMessage << dur.count() << "  microseconds\n";
+			std::cout << mMessage << " " << dur.count() << "  microseconds\n";
 		}
 		if (mUnit == Miliseconds) {
 			auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(now - mStart);
-			std::cout << mMessage << dur.count() << "  ms\n";
+			std::cout << mMessage << " " << dur.count() << "  ms\n";
 		}
 	}
 };
@@ -62,7 +62,7 @@ public:
 
 	~SectionClock() {
 		std::clock_t now = std::clock();
-		std::cout << mMessage << (now - mStart) << " cycles\n";
+		std::cout << mMessage << " " << (now - mStart) << " cycles\n";
 	}
 };
 
