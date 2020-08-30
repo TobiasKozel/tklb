@@ -50,7 +50,7 @@ public:
 	 */
 	void set(const float* samples, const uchar channel, uint length, uint offset = 0) {
 		if (mChannels <= channel) { return; }
-		length = std::min(length - offset, getLength() - offset);
+		length = std::min(length - offset, size() - offset);
 		#ifdef TKLB_SAMPLE_FLOAT
 			memcpy(mBuffers[channel].data() + offset, samples, sizeof(float) * length);
 		#else
@@ -68,7 +68,7 @@ public:
 	 */
 	void set(const double* samples, const uchar channel, uint length, const uint offset = 0) {
 		if (mChannels <= channel) { return; }
-		length = std::min(length - offset, getLength() - offset);
+		length = std::min(length - offset, size() - offset);
 		#ifdef TKLB_SAMPLE_FLOAT
 			for (uint i = 0; i < length; i++) {
 				mBuffers[channel][i + offset] = samples[i];
@@ -97,7 +97,7 @@ public:
 	 */
 	template <typename T>
 	void setFromInterleaved(const T* samples, const uchar channels, uint length, const uint offset = 0) {
-		length = std::min(length - offset, getLength() - offset);
+		length = std::min(length - offset, size() - offset);
 		for (uchar c = 0; c < std::min(channels, mChannels); c++) {
 			for(uint i = 0, j = c; i < length; i++, j+= channels) {
 				mBuffers[c][i + offset] = samples[j];
@@ -109,8 +109,8 @@ public:
 	 * Set from a buffer object
 	 */
 	void set(const AudioBuffer& buffer, const uint offset = 0) {
-		const uint length = buffer.getLength();
-		for (uchar c = 0; c < buffer.getChannels(); c++) {
+		const uint length = buffer.size();
+		for (uchar c = 0; c < buffer.channels(); c++) {
 			set(buffer.get(c), c, length, offset);
 		}
 	};
@@ -131,7 +131,7 @@ public:
 	}
 
 	void resize(const AudioBuffer& buffer) {
-		resize(buffer.getLength(), buffer.getLength());
+		resize(buffer.size(), buffer.channels());
 	}
 
 	void clear() {
@@ -139,13 +139,42 @@ public:
 	}
 
 	void add(const AudioBuffer& buffer, uint offset = 0) {
+		const uint size = std::min(buffer.size() - offset, this->size() - offset);
+		const uchar channels = std::min(buffer.channels(), this->channels());
+
+		#ifndef TKLB_NO_INTRINSICS
+			const uint stride = xsimd::simd_type<sample>::size;
+			const uint vectorize = size - size % stride;
+			for (uchar c = 0; c < channels; c++) {
+				sample* out = &mBuffers[c][offset];
+				const sample* in = buffer.get(c);
+				for(uint i = 0; i < vectorize; i += stride) {
+					xsimd::simd_type<sample> a = xsimd::load_aligned(in);
+					xsimd::simd_type<sample> b = xsimd::load_aligned(out);
+					xsimd::store_aligned(out, (a + b));
+					in += stride;
+					out += stride;
+				}
+				for(uint i = vectorize; i < size; i++) {
+					(*out++) += (*in++);
+				}
+			}
+		#else
+			for (uchar c = 0; c < channels; c++) {
+				sample* out = &mBuffers[c][offset];
+				const sample* in = buffer.get(c);
+				for(uint i = 0; i < size; i++) {
+					(*out++) += (*in++);
+				}
+			}
+		#endif
 	}
 
-	uchar getChannels() const {
+	uchar channels() const {
 		return mChannels;
 	}
 
-	uint getLength() const {
+	uint size() const {
 		return mBuffers[0].size();
 	}
 

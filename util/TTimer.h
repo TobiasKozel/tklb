@@ -31,6 +31,22 @@ public:
 	}
 };
 
+class SectionClock {
+	const char* mMessage;
+	std::clock_t mStart;
+
+public:
+	SectionClock(const char* message = "") {
+		mMessage = message;
+		mStart = std::clock();
+	}
+
+	~SectionClock() {
+		std::clock_t now = std::clock();
+		std::cout << mMessage << (now - mStart) << " cycles\n";
+	}
+};
+
 } // namespace
 
 #endif // TKLB_TIMER

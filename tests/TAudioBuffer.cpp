@@ -1,5 +1,8 @@
+#define TKLB_NO_INTRINSICS
+
 #include "../types/audio/TAudioBuffer.h"
 #include "../util/TLeakChecker.h"
+#include "../util/TTimer.h"
 
 int ret;
 #define returnNonZero(val) ret = val; if(ret != 0) { return ret; }
@@ -35,11 +38,11 @@ int deinterleave(tklb::AudioBuffer& buffer) {
 		}
 	}
 
-	if (buffer.getLength() != size) {
+	if (buffer.size() != size) {
 		return 3;
 	}
 
-	if (buffer.getChannels() != channels) {
+	if (buffer.channels() != channels) {
 		return 4;
 	}
 	return 0;
@@ -75,6 +78,40 @@ int conversion(tklb::AudioBuffer& buffer) {
 	return 0;
 }
 
+int add() {
+	tklb::AudioBuffer buffer, buffer2;
+	buffer.resize(size, channels);
+	buffer2.resize(size, channels);
+
+	tklb::AudioBuffer::sample fsamples[channels * size];
+	std::fill_n(fsamples, channels * size, 1.0);
+	tklb::AudioBuffer::sample* fbuf[channels] = { };
+
+	for (int c = 0; c < channels; c++) {
+		fbuf[c] = fsamples + (size * c);
+	}
+
+	buffer.set(fbuf, channels, size, size / 2);
+
+	std::fill_n(fsamples, channels * size, 0.0);
+	for (int c = 0; c < channels; c++) {
+		for (int i = 0; i < size / 2; i++) {
+			fbuf[c][i] = 1.0;
+		}
+	}
+
+	buffer2.set(fbuf, channels, size);
+
+	{
+		tklb::SectionClock timer("Simd add took ");
+		for(int i = 0; i < 10000; i++) {
+			buffer.add(buffer2);
+		}
+	}
+
+	return 0;
+}
+
 int main() {
 
 	{
@@ -85,6 +122,8 @@ int main() {
 		returnNonZero(conversion<float>(buffer))
 
 		returnNonZero(conversion<double>(buffer))
+
+		returnNonZero(add())
 
 	}
 
