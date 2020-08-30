@@ -19,6 +19,7 @@
 namespace tklb {
 
 static size_t allocationCount = 0;
+static size_t curruptions = 0;
 
 struct MallocInfo {
 	const char* file;
@@ -72,6 +73,7 @@ void tklbFree(void* ptr, const char* file, int line) {
 	);
 	if ((*magicNumber) != TKLB_MAGIC_NUMBER) {
 		// Magic number was overwritten
+		curruptions++;
 		assert(false);
 	}
 	free(info);
@@ -102,7 +104,7 @@ void* tklbRealloc(void* ptr, size_t size, const char* file, int line) {
 
 /**
  * http://stevehanov.ca/blog/?id=10
- * 
+ *
  */
 void* operator new(size_t size) {
 	return tklb::tklbMalloc(size, nullptr, 1337);

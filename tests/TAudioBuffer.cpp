@@ -1,14 +1,17 @@
 #include "../types/audio/TAudioBuffer.h"
+#include "../util/TLeakChecker.h"
+
+int ret;
+#define returnNonZero(val) ret = val; if(ret != 0) { return ret; }
+
+const int size = 1024;
+const int channels = 2;
 
 bool close(float a, float b) {
 	return std::abs(a - b) < 0.01;
 }
 
-int main() {
-	tklb::AudioBuffer buffer;
-	const int size = 1024;
-	const int channels = 2;
-
+int deinterleave(tklb::AudioBuffer& buffer) {
 	buffer.resize(size, channels);
 
 	float noconvInterleaved[size * channels];
@@ -39,8 +42,59 @@ int main() {
 	if (buffer.getChannels() != channels) {
 		return 4;
 	}
+	return 0;
+}
 
+template <typename T>
+int conversion(tklb::AudioBuffer& buffer) {
+	buffer.resize(0, 0);
+	buffer.resize(size, channels);
+	T fsamples[channels * size];
+	std::fill_n(fsamples, channels * size, 1.0);
+	T* fbuf[channels] = { };
 
+	for (int c = 0; c < channels; c++) {
+		fbuf[c] = fsamples + (size * c);
+	}
+
+	buffer.set(fbuf, channels, size, size / 2);
+
+	auto l = buffer.get(0);
+	auto r = buffer.get(1);
+
+	for (int i = 0; i < size; i++) {
+		tklb::AudioBuffer::sample expected = i >= size / 2 ? 1.0 : 0;
+		if (!close(expected, l[i])) {
+			return 5;
+		}
+		if (!close(expected, r[i])) {
+			return 6;
+		}
+	}
+
+	return 0;
+}
+
+int main() {
+
+	{
+		tklb::AudioBuffer buffer;
+
+		returnNonZero(deinterleave(buffer))
+
+		returnNonZero(conversion<float>(buffer))
+
+		returnNonZero(conversion<double>(buffer))
+
+	}
+
+	if (tklb::allocationCount != 0) {
+		return 7;
+	}
+
+	if (tklb::curruptions != 0) {
+		return 8;
+	}
 
 	return 0;
 }
