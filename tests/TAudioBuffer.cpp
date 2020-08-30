@@ -1,8 +1,10 @@
-#define TKLB_NO_INTRINSICS
+// #define TKLB_NO_INTRINSICS
 
 #include "../types/audio/TAudioBuffer.h"
-#include "../util/TLeakChecker.h"
+
+#define TKLB_LEAKCHECKER_DISARM
 #include "../util/TTimer.h"
+#include "../util/TLeakChecker.h"
 
 int ret;
 #define returnNonZero(val) ret = val; if(ret != 0) { return ret; }
@@ -103,7 +105,7 @@ int add() {
 	buffer2.set(fbuf, channels, size);
 
 	{
-		tklb::SectionClock timer("Simd add took ");
+		tklb::SectionTimer timer("Simd add took ", tklb::SectionTimer::Microseconds);
 		for(int i = 0; i < 10000; i++) {
 			buffer.add(buffer2);
 		}

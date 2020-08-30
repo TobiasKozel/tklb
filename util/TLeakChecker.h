@@ -102,6 +102,7 @@ void* tklbRealloc(void* ptr, size_t size, const char* file, int line) {
 
 }
 
+#ifndef TKLB_LEAKCHECKER_DISARM
 /**
  * http://stevehanov.ca/blog/?id=10
  *
@@ -129,5 +130,6 @@ void operator delete[](void* ptr) noexcept {
 #define malloc(size)      tklb::tklbMalloc (     size, __FILE__, __LINE__)
 #define free(ptr)         tklb::tklbFree   (ptr,       __FILE__, __LINE__)
 #define realloc(ptr,size) tklb::tklbRealloc(ptr, size, __FILE__, __LINE__)
+#endif
 
 #endif // TKLB_LEAKCHECKER
