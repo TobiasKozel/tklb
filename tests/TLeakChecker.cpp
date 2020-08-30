@@ -1,5 +1,4 @@
-#include "../util/TLeakChecker.h"
-
+#include "TestCommon.h"
 struct Test {
 	int a;
 	int b;
@@ -13,5 +12,7 @@ int main() {
 	void* test3 = malloc(10);
 	test3 = realloc(test3, 12);
 	free(test3);
-	return tklb::allocationCount;
+
+	memcheck()
+	return 0;
 }

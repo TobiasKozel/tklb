@@ -1,13 +1,10 @@
 #include "../types/audio/TConvolver.h"
-#include "../util/TLeakChecker.h"
 
-bool close(float a, float b) {
-	return std::abs(a - b) < 0.01;
-}
+#include "TestCommon.h"
 
 int main() {
 	{
-		tklb::Convolver<> con;
+		Convolver<> con;
 		float irSamples[1024] = { 0.0 };
 		irSamples[1] = 1.0; // perfect impulse delaying the signal by one sample
 		float* ir[1] = { irSamples };
@@ -27,7 +24,7 @@ int main() {
 
 		float outSamples[audioChannels * audioLength];
 		float* out[audioChannels] = { outSamples +  0, outSamples + audioLength };
-		
+
 		int blockSize = 128;
 		for(int b = 0; b < audioLength; b += blockSize) {
 			for(int c = 0; c < audioChannels; c++) {
@@ -46,7 +43,7 @@ int main() {
 			}
 		}
 	}
-	if (tklb::allocationCount != 0) {
-		return 2;
-	}
+
+	memcheck()
+	return 0;
 }

@@ -1,13 +1,17 @@
 #include "../types/TStack.h"
+#include "TestCommon.h"
 
 int main() {
-	tklb::PointerStack<int, 1024> stack;
+	PointerStack<int, 1024> stack;
+
 	int a = 100;
 	int b = 200;
 	int c = 300;
+
 	stack.push(a);
 	stack.push(b);
 	stack.push(c);
+
 	if (stack.length() != 3) {
 		return 1;
 	}

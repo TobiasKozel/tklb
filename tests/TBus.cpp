@@ -1,5 +1,6 @@
 #include "../types/TBus.h"
-#include "../util/TLeakChecker.h"
+
+#include "TestCommon.h"
 
 int main() {
 	{
@@ -9,15 +10,15 @@ int main() {
 			THING,
 			EVENT_COUNT
 		};
-		tklb::Bus bus(EVENT_COUNT);
+		Bus bus(EVENT_COUNT);
 
 		int fired = 0;
 
-		tklb::Bus::Sub<int> sub1(bus, Events::DO, [&](int param) {
+		Bus::Sub<int> sub1(bus, Events::DO, [&](int param) {
 			fired++;
 		});
 
-		tklb::Bus::Sub<float> sub2(bus, Events::DO, [&](float param) {
+		Bus::Sub<float> sub2(bus, Events::DO, [&](float param) {
 			fired++;
 		});
 
@@ -29,9 +30,7 @@ int main() {
 			return 1;
 		}
 	}
-	if (tklb::allocationCount != 0) {
-		return 2;
-	}
 
+	memcheck()
 	return 0;
 }

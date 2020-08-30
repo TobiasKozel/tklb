@@ -2,36 +2,27 @@
 
 #include "../types/audio/TAudioBuffer.h"
 
-#define TKLB_LEAKCHECKER_DISARM
-#include "../util/TTimer.h"
-#include "../util/TLeakChecker.h"
+#include "./TestCommon.h"
 
-int ret;
-#define returnNonZero(val) ret = val; if(ret != 0) { return ret; }
-
-const int size = 1024;
+const int length = 1024;
 const int channels = 2;
 
-bool close(float a, float b) {
-	return std::abs(a - b) < 0.01;
-}
+int deinterleave(AudioBuffer& buffer) {
+	buffer.resize(length, channels);
 
-int deinterleave(tklb::AudioBuffer& buffer) {
-	buffer.resize(size, channels);
+	float noconvInterleaved[length * channels];
 
-	float noconvInterleaved[size * channels];
-
-	for (int i = 0; i < size * channels; i += channels) {
+	for (int i = 0; i < length * channels; i += channels) {
 		noconvInterleaved[i] = 1.0;
 		noconvInterleaved[i + 1] = 0.0;
 	}
 
-	buffer.setFromInterleaved(noconvInterleaved, channels, size);
+	buffer.setFromInterleaved(noconvInterleaved, channels, length);
 
 	auto deinterleavedL = buffer.get(0);
 	auto deinterleavedR = buffer.get(1);
 
-	for (int i = 0; i < size; i++) {
+	for (int i = 0; i < length; i++) {
 		if (!close(deinterleavedL[i], 1.0)) {
 			return 1;
 		}
@@ -40,7 +31,7 @@ int deinterleave(tklb::AudioBuffer& buffer) {
 		}
 	}
 
-	if (buffer.size() != size) {
+	if (buffer.size() != length) {
 		return 3;
 	}
 
@@ -51,24 +42,24 @@ int deinterleave(tklb::AudioBuffer& buffer) {
 }
 
 template <typename T>
-int conversion(tklb::AudioBuffer& buffer) {
+int conversion(AudioBuffer& buffer) {
 	buffer.resize(0, 0);
-	buffer.resize(size, channels);
-	T fsamples[channels * size];
-	std::fill_n(fsamples, channels * size, 1.0);
+	buffer.resize(length, channels);
+	T fsamples[channels * length];
+	std::fill_n(fsamples, channels * length, 1.0);
 	T* fbuf[channels] = { };
 
 	for (int c = 0; c < channels; c++) {
-		fbuf[c] = fsamples + (size * c);
+		fbuf[c] = fsamples + (length * c);
 	}
 
-	buffer.set(fbuf, channels, size, size / 2);
+	buffer.set(fbuf, channels, length, length / 2);
 
 	auto l = buffer.get(0);
 	auto r = buffer.get(1);
 
-	for (int i = 0; i < size; i++) {
-		tklb::AudioBuffer::sample expected = i >= size / 2 ? 1.0 : 0;
+	for (int i = 0; i < length; i++) {
+		AudioBuffer::sample expected = i >= length / 2 ? 1.0 : 0;
 		if (!close(expected, l[i])) {
 			return 5;
 		}
@@ -81,61 +72,63 @@ int conversion(tklb::AudioBuffer& buffer) {
 }
 
 int add() {
-	tklb::AudioBuffer buffer, buffer2;
-	buffer.resize(size, channels);
-	buffer2.resize(size, channels);
+	AudioBuffer buffer, buffer2;
+	buffer.resize(length, channels);
+	buffer2.resize(length, channels);
 
-	tklb::AudioBuffer::sample fsamples[channels * size];
-	std::fill_n(fsamples, channels * size, 1.0);
-	tklb::AudioBuffer::sample* fbuf[channels] = { };
+	AudioBuffer::sample fsamples[channels * length];
+	AudioBuffer::sample* fbuf[channels] = { };
 
+	/**
+	 * Set the last half to 1.0 of the first buffer
+	 */
+	fill_n(fsamples, channels * length, 1.0);
 	for (int c = 0; c < channels; c++) {
-		fbuf[c] = fsamples + (size * c);
+		fbuf[c] = fsamples + (length * c);
 	}
+	buffer.set(fbuf, channels, length, length / 2);
 
-	buffer.set(fbuf, channels, size, size / 2);
-
-	std::fill_n(fsamples, channels * size, 0.0);
+	/**
+	 * Fill the first half with 1.0 of the second buffer
+	 */
+	fill_n(fsamples, channels * length, 0.0);
 	for (int c = 0; c < channels; c++) {
-		for (int i = 0; i < size / 2; i++) {
+		for (int i = 0; i < length / 2; i++) {
 			fbuf[c][i] = 1.0;
 		}
 	}
+	buffer2.set(fbuf, channels, length);
 
-	buffer2.set(fbuf, channels, size);
+	/**
+	 * Add them together
+	 */
+	buffer.add(buffer2);
 
-	{
-		tklb::SectionTimer timer("Simd add took ", tklb::SectionTimer::Microseconds);
-		for(int i = 0; i < 10000; i++) {
-			buffer.add(buffer2);
+	auto out = buffer.get(0);
+
+	/**
+	 * Check if the whole buffer is 1.0 now
+	 */
+	for (int i = 0; i < length; i++) {
+		if (!close(out[i], 1.0)) {
+			return 7;
 		}
 	}
-
 	return 0;
 }
 
 int main() {
 
 	{
-		tklb::AudioBuffer buffer;
+		AudioBuffer buffer;
 
 		returnNonZero(deinterleave(buffer))
-
 		returnNonZero(conversion<float>(buffer))
-
 		returnNonZero(conversion<double>(buffer))
 
 		returnNonZero(add())
-
 	}
 
-	if (tklb::allocationCount != 0) {
-		return 7;
-	}
-
-	if (tklb::curruptions != 0) {
-		return 8;
-	}
-
+	memcheck()
 	return 0;
 }

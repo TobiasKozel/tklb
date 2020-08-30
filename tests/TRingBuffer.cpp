@@ -1,5 +1,6 @@
 #include "../types/TRingBuffer.h"
-#include "../util/TLeakChecker.h"
+
+#include "TestCommon.h"
 
 template <typename T>
 int test(T& buffer) {
@@ -30,25 +31,18 @@ int test(T& buffer) {
 
 int main() {
 	{
-		tklb::RingBuffer<float> buffer;
-		tklb::RingBuffer<float> buffer2(100);
+		RingBuffer<float> buffer;
+		RingBuffer<float> buffer2(100);
 		if (buffer2.nFree() != 100) {
 			return 1;
 		}
-		tklb::StackRingBuffer<float, 100> stackbuf;
+		StackRingBuffer<float, 100> stackbuf;
 		buffer.setSize(100);
-		int ret = test(buffer);
-		if (ret != 0) {
-			return ret;
-		}
-		ret = test(stackbuf);
-		if (ret != 0) {
-			return ret;
-		}
+		returnNonZero(test(buffer))
+		returnNonZero(test(stackbuf))
 	}
-	if (tklb::allocationCount != 0) {
-		return 7;
-	}
+
+	memcheck()
 	return 0;
 
 }

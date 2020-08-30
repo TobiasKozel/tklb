@@ -1,13 +1,14 @@
 #include "../types/TPointerList.h"
-#include "../util/TLeakChecker.h"
+
+#include "TestCommon.h"
 
 int main() {
 
 	{
-		tklb::PointerList<float> list;
+		PointerList<float> list;
 		const int size = 1024;
 		float arr[size];
-		
+
 		for (int i = 0; i < size; i++) {
 			arr[i] = i;
 			list.add(arr + i);
@@ -16,7 +17,7 @@ int main() {
 		if (list.size() != size) {
 			return 1;
 		}
-		
+
 		for (int i = 0; i < size; i++) {
 			if (*list[i] != i) {
 				return 2;
@@ -42,9 +43,7 @@ int main() {
 		}
 	}
 
-	if (tklb::allocationCount != 0) {
-		return 6;
-	}
+	memcheck()
 
 	return 0;
 }
