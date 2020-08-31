@@ -4,9 +4,17 @@
 #define str(s) #s
 
 #ifdef TKLB_NO_INTRINSICS
-	#define TIMER(text, unit) SectionTimer timer(str(No SIMD text), SectionTimer::unit)
+	#ifdef TKLB_SAMPLE_FLOAT
+		#define TIMER(unit) SectionTimer timer(__FILE__ str(\tNo SIMD\tfloat\t), SectionTimer::unit)
+	#else
+		#define TIMER(unit) SectionTimer timer(__FILE__ str(\tNo SIMD\tdouble\t), SectionTimer::unit)
+	#endif
 #else
-	#define TIMER(text, unit) SectionTimer timer(str(SIMD text took), SectionTimer::unit)
+	#ifdef TKLB_SAMPLE_FLOAT
+		#define TIMER(unit) SectionTimer timer(__FILE__ str(\tSIMD\tfloat\t), SectionTimer::unit)
+	#else
+		#define TIMER(unit) SectionTimer timer(__FILE__ str(\tSIMD\tdouble\t), SectionTimer::unit)
+	#endif
 #endif
 
 using namespace tklb;
