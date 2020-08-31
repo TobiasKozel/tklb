@@ -33,9 +33,11 @@ function test {
 test "g++ -O2 -march=native"
 test "g++ -O2 -march=native -DTKLB_NO_INTRINSICS"
 test "g++ -O2 -march=native -DTKLB_SAMPLE_FLOAT"
+test "g++ -O2 -march=native -DTKLB_SAMPLE_FLOAT -DTKLB_NO_INTRINSICS"
 test "clang++ -march=native -Ofast"
 test "clang++ -march=native -Ofast -DTKLB_NO_INTRINSICS"
 test "clang++ -march=native -Ofast -DTKLB_SAMPLE_FLOAT"
+test "clang++ -march=native -Ofast -DTKLB_SAMPLE_FLOAT -DTKLB_NO_INTRINSICS"
 
 # TODO figure out how to get into dev shell for windows
 # if [ "$executable" == "./a.exe" ]; then
