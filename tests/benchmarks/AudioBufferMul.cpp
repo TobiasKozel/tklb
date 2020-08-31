@@ -4,7 +4,7 @@
 
 int main() {
 	// some overhang so simd can't do all of it
-	const int length = 130;
+	const int length = 495;
 	const int channels = TKLB_MAXCHANNELS;
 	const int bufferCount = 2;
 	AudioBuffer buffers[bufferCount];
