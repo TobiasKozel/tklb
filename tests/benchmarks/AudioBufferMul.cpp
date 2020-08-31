@@ -20,7 +20,7 @@ int main() {
 	{
 		TIMER(Miliseconds);
 		for(int i = 0; i < 100000; i++) {
-			buffers[0].add(buffers[1]);
+			buffers[0].multiply(buffers[1]);
 		}
 	}
 	return 0;

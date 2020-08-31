@@ -170,6 +170,38 @@ public:
 		#endif
 	}
 
+	void multiply(const AudioBuffer& buffer, uint offset = 0) {
+		const uint size = std::min(buffer.size() - offset, this->size() - offset);
+		const uchar channels = std::min(buffer.channels(), this->channels());
+
+		#ifndef TKLB_NO_INTRINSICS
+			const uint stride = xsimd::simd_type<sample>::size;
+			const uint vectorize = size - size % stride;
+			for (uchar c = 0; c < channels; c++) {
+				sample* out = &mBuffers[c][offset];
+				const sample* in = buffer.get(c);
+				for(uint i = 0; i < vectorize; i += stride) {
+					xsimd::simd_type<sample> a = xsimd::load_aligned(in);
+					xsimd::simd_type<sample> b = xsimd::load_aligned(out);
+					xsimd::store_aligned(out, (a * b));
+					in += stride;
+					out += stride;
+				}
+				for(uint i = vectorize; i < size; i++) {
+					(*out++) *= (*in++);
+				}
+			}
+		#else
+			for (uchar c = 0; c < channels; c++) {
+				sample* out = &mBuffers[c][offset];
+				const sample* in = buffer.get(c);
+				for(uint i = 0; i < size; i++) {
+					(*out++) *= (*in++);
+				}
+			}
+		#endif
+	}
+
 	uchar channels() const {
 		return mChannels;
 	}
