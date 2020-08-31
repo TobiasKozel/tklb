@@ -14,11 +14,13 @@ function test {
 	for f in ./*.cpp
 	do
 		if $1 $f ; then
-			if $executable ; then
+			$executable
+			result=$?
+			if [[ $result -eq 0 ]] ; then
 				echo "${1} Passed: ${f}"
 			else
 				FAILED=true
-				echo -e "\e[31m${1}  Error: Test failed for ${f}\e[0m"
+				echo -e "\e[31m${1}  Error: Test failed for ${f}. Returned ${result}\e[0m"
 			fi
 			rm $executable
 		else
@@ -27,18 +29,19 @@ function test {
 		fi
 	done
 }
-test g++ -O2 -march=native
-test g++ -O2 -march=native -DTKLB_NO_INTRINSICS
-test g++ -O2 -march=native -DTKLB_SAMPLE_FLOAT
-test clang++ -march=native -Ofast
-test clang++ -march=native -Ofast -DTKLB_NO_INTRINSICS
-test clang++ -march=native -Ofast -DTKLB_SAMPLE_FLOAT
+
+test "g++ -O2 -march=native"
+test "g++ -O2 -march=native -DTKLB_NO_INTRINSICS"
+test "g++ -O2 -march=native -DTKLB_SAMPLE_FLOAT"
+test "clang++ -march=native -Ofast"
+test "clang++ -march=native -Ofast -DTKLB_NO_INTRINSICS"
+test "clang++ -march=native -Ofast -DTKLB_SAMPLE_FLOAT"
 
 # TODO figure out how to get into dev shell for windows
 # if [ "$executable" == "./a.exe" ]; then
-# 	test cl /O2 /arch:AVX
-# 	test cl /O2 /arch:AVX /DTKLB_NO_INTRINSICS
-# 	test cl /O2 /arch:AVX /DTKLB_SAMPLE_FLOAT
+# 	test "cl /O2 /arch:AVX"
+# 	test "cl /O2 /arch:AVX /DTKLB_NO_INTRINSICS"
+# 	test "cl /O2 /arch:AVX /DTKLB_SAMPLE_FLOAT"
 # fi
 
 if ($FAILED); then

@@ -12,4 +12,5 @@ int main() {
 		// 	buffer.add(buffer2);
 		// }
 	}
+	return 0;
 }
