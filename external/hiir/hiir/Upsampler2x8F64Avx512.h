@@ -35,10 +35,10 @@ http://sam.zoy.org/wtfpl/COPYING for more details.
 
 /*\\\ INCLUDE FILES \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
-#include "hiir/def.h"
-#include "hiir/StageDataF64Avx512.h"
+#include "./def.h"
+#include "./StageDataF64Avx512.h"
 
-#include <immintrin.h> 
+#include <immintrin.h>
 
 #include <array>
 
@@ -113,7 +113,7 @@ private:
 
 
 
-#include "hiir/Upsampler2x8F64Avx512.hpp"
+#include "./Upsampler2x8F64Avx512.hpp"
 
 
 
