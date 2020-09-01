@@ -1,5 +1,3 @@
-// #define TKLB_NO_INTRINSICS
-
 #include "../types/audio/TAudioBuffer.h"
 
 #include "./TestCommon.h"

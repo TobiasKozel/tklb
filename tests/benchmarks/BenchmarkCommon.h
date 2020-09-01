@@ -3,7 +3,7 @@
 #define xstr(s) str(s)
 #define str(s) #s
 
-#ifdef TKLB_NO_INTRINSICS
+#ifdef TKLB_NO_SIMD
 	#ifdef TKLB_SAMPLE_FLOAT
 		#define TIMER(unit) SectionTimer timer(__FILE__ str(\tNo SIMD\tfloat\t), SectionTimer::unit)
 	#else

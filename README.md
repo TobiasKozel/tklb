@@ -5,7 +5,7 @@
 ### TKLB_NO_ASSERT
 Will disable all assertions
 
-### TKLB_NO_INTRINSICS
+### TKLB_NO_SIMD
 Disables SSE or other intrinsics
 
 ### TKLB_MAXCHANNELS

@@ -4,7 +4,7 @@
 #include <vector>
 #include <cstring>
 
-#ifndef TKLB_NO_INTRINSICS
+#ifndef TKLB_NO_SIMD
 	#include "../../external/xsimd/include/xsimd/xsimd.hpp"
 #endif
 
@@ -31,7 +31,7 @@ public:
 
 private:
 	using Buffer = std::vector<sample
-#ifndef TKLB_NO_INTRINSICS
+#ifndef TKLB_NO_SIMD
 	, xsimd::aligned_allocator<sample, XSIMD_DEFAULT_ALIGNMENT>
 #endif
 	>;
@@ -142,7 +142,7 @@ public:
 		const uint size = std::min(buffer.size() - offset, this->size() - offset);
 		const uchar channels = std::min(buffer.channels(), this->channels());
 
-		#ifndef TKLB_NO_INTRINSICS
+		#ifndef TKLB_NO_SIMD
 			const uint stride = xsimd::simd_type<sample>::size;
 			const uint vectorize = size - size % stride;
 			for (uchar c = 0; c < channels; c++) {
@@ -174,7 +174,7 @@ public:
 		const uint size = std::min(buffer.size() - offset, this->size() - offset);
 		const uchar channels = std::min(buffer.channels(), this->channels());
 
-		#ifndef TKLB_NO_INTRINSICS
+		#ifndef TKLB_NO_SIMD
 			const uint stride = xsimd::simd_type<sample>::size;
 			const uint vectorize = size - size % stride;
 			for (uchar c = 0; c < channels; c++) {

@@ -17,7 +17,7 @@
 #else
 #define FFTCONVOLVER_TYPE float
 	// float convolution can use SSE
-	#ifndef TKLB_NO_INTRINSICS
+	#ifndef TKLB_NO_SIMD
 		#define FFTCONVOLVER_USE_SSE
 	#endif
 	#ifndef TKLB_SAMPLE_FLOAT

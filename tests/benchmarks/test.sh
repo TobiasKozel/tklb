@@ -26,13 +26,13 @@ function test {
 }
 echo "g++"
 test "g++ -O2 -march=native"
-test "g++ -O2 -march=native -DTKLB_NO_INTRINSICS"
+test "g++ -O2 -march=native -DTKLB_NO_SIMD"
 test "g++ -O2 -march=native -DTKLB_SAMPLE_FLOAT"
-test "g++ -O2 -march=native -DTKLB_NO_INTRINSICS -DTKLB_SAMPLE_FLOAT"
+test "g++ -O2 -march=native -DTKLB_NO_SIMD -DTKLB_SAMPLE_FLOAT"
 echo "clang++"
 # TODO test -ffast-math
 test "clang++ -march=native -Ofast"
-test "clang++ -march=native -Ofast -DTKLB_NO_INTRINSICS"
+test "clang++ -march=native -Ofast -DTKLB_NO_SIMD"
 test "clang++ -march=native -Ofast -DTKLB_SAMPLE_FLOAT"
-test "clang++ -march=native -Ofast -DTKLB_NO_INTRINSICS -DTKLB_SAMPLE_FLOAT"
+test "clang++ -march=native -Ofast -DTKLB_NO_SIMD -DTKLB_SAMPLE_FLOAT"
 echo ""
