@@ -12,6 +12,8 @@
 
 namespace tklb {
 
+
+
 class AudioBuffer {
 
 public:
@@ -29,14 +31,15 @@ public:
 	using T = double;
 #endif
 
-private:
-	using Buffer = std::vector<T
-#ifndef TKLB_NO_SIMD
-	, xsimd::aligned_allocator<T, XSIMD_DEFAULT_ALIGNMENT>
-#endif
+	template <class T2>
+	using Buffer = std::vector<T2
+	#ifndef TKLB_NO_SIMD
+		, xsimd::aligned_allocator<T2, XSIMD_DEFAULT_ALIGNMENT>
+	#endif
 	>;
 
-	Buffer mBuffers[MAX_CHANNELS];
+private:
+	Buffer<T> mBuffers[MAX_CHANNELS];
 	T* mRawBuffers[MAX_CHANNELS];
 	uchar mChannels = 0;
 
@@ -200,6 +203,35 @@ public:
 				const T* in = buffer.get(c);
 				for(uint i = 0; i < size; i++) {
 					(*out++) *= (*in++);
+				}
+			}
+		#endif
+	}
+
+	void multiply(T value) {
+		const uint size = this->size();
+		const uchar channels = this->channels();
+
+		#ifndef TKLB_NO_SIMD
+			const uint stride = xsimd::simd_type<T>::size;
+			const uint vectorize = size - size % stride;
+			for (uchar c = 0; c < channels; c++) {
+				T* out = &mBuffers[c][0];
+				// xsimd::simd_type<T> a = xsimd::load_aligned(in);
+				for(uint i = 0; i < vectorize; i += stride) {
+					xsimd::simd_type<T> b = xsimd::load_aligned(out);
+					xsimd::store_aligned(out, (b * value));
+					out += stride;
+				}
+				for(uint i = vectorize; i < size; i++) {
+					out[i] *= value;
+				}
+			}
+		#else
+			for (uchar c = 0; c < channels; c++) {
+				T* out = &mBuffers[c][offset];
+				for(uint i = 0; i < size; i++) {
+					out[i] *= value;
 				}
 			}
 		#endif
