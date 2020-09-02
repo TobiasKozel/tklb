@@ -32,6 +32,9 @@ public:
 #endif
 
 	template <class T2>
+	/**
+	 * Aligned vector type
+	 */
 	using Buffer = std::vector<T2
 	#ifndef TKLB_NO_SIMD
 		, xsimd::aligned_allocator<T2, XSIMD_DEFAULT_ALIGNMENT>
@@ -49,39 +52,22 @@ public:
 	};
 
 	/**
-	 * Set a single channel from a float array
-	 * @param samples An Array containing the interleaved audio samples
-	 * @param channel Channel index
-	 * @param length The length
-	 */
-	void set(const float* samples, const uchar channel, uint length, uint offset = 0) {
-		if (mChannels <= channel) { return; }
-		length = std::min(length - offset, size() - offset);
-		#ifdef TKLB_SAMPLE_FLOAT
-			memcpy(mBuffers[channel].data() + offset, samples, sizeof(float) * length);
-		#else
-			for (uint i = 0; i < length; i++) {
-				mBuffers[channel][i + offset] = static_cast<T>(samples[i]);
-			}
-		#endif
-	}
-
-	/**
 	 * Set a single channel from a double array
 	 * @param samples An Array containing the interleaved audio samples
 	 * @param channel Channelindex
 	 * @param length The length (single channel)
 	 */
-	void set(const double* samples, const uchar channel, uint length, const uint offset = 0) {
+	template <typename T2>
+	void set(const T2* samples, const uchar channel, uint length, const uint offset = 0) {
 		if (mChannels <= channel) { return; }
 		length = std::min(length - offset, size() - offset);
-		#ifdef TKLB_SAMPLE_FLOAT
+		if (std::is_same<T2, T>::value) {
+			memcpy(mBuffers[channel].data() + offset, samples, sizeof(T) * length);
+		} else {
 			for (uint i = 0; i < length; i++) {
 				mBuffers[channel][i + offset] = static_cast<T>(samples[i]);
 			}
-		#else
-			memcpy(mBuffers[channel].data() + offset, samples, sizeof(double) * length);
-		#endif
+		}
 	}
 
 	/**
@@ -229,7 +215,7 @@ public:
 			}
 		#else
 			for (uchar c = 0; c < channels; c++) {
-				T* out = &mBuffers[c][offset];
+				T* out = &mBuffers[c][0];
 				for(uint i = 0; i < size; i++) {
 					out[i] *= value;
 				}
