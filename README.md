@@ -25,7 +25,3 @@ Changes the magic number from above (normal integer)
 
 ### TKLB_CONVOLUTION_FLOAT
 Will do float convolution which allows sse optimizations regardless of TKLB_SAMPLE_FLOAT
-
-## Oversampler
-
-### TKLB_OVERSAMPLE_FLOAT

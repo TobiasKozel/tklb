@@ -57,7 +57,7 @@ int conversion(AudioBuffer& buffer) {
 	auto r = buffer.get(1);
 
 	for (int i = 0; i < length; i++) {
-		AudioBuffer::sample expected = i >= length / 2 ? 1.0 : 0;
+		AudioBuffer::T expected = i >= length / 2 ? 1.0 : 0;
 		if (!close(expected, l[i])) {
 			return 5;
 		}
@@ -74,8 +74,8 @@ int add() {
 	buffer.resize(length, channels);
 	buffer2.resize(length, channels);
 
-	AudioBuffer::sample fsamples[channels * length];
-	AudioBuffer::sample* fbuf[channels] = { };
+	AudioBuffer::T fsamples[channels * length];
+	AudioBuffer::T* fbuf[channels] = { };
 
 	/**
 	 * Set the last half to 1.0 of the first buffer

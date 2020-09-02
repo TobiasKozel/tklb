@@ -24,23 +24,26 @@ public:
 #endif
 
 #ifdef TKLB_SAMPLE_FLOAT
-	using sample = float;
+	using T = float;
 #else
-	using sample = double;
+	using T = double;
 #endif
 
 private:
-	using Buffer = std::vector<sample
+	using Buffer = std::vector<T
 #ifndef TKLB_NO_SIMD
-	, xsimd::aligned_allocator<sample, XSIMD_DEFAULT_ALIGNMENT>
+	, xsimd::aligned_allocator<T, XSIMD_DEFAULT_ALIGNMENT>
 #endif
 	>;
 
 	Buffer mBuffers[MAX_CHANNELS];
+	T* mRawBuffers[MAX_CHANNELS];
 	uchar mChannels = 0;
 
 public:
-	AudioBuffer() = default;
+	AudioBuffer() {
+		std::fill_n(mRawBuffers, MAX_CHANNELS, nullptr);
+	};
 
 	/**
 	 * Set a single channel from a float array
@@ -143,14 +146,14 @@ public:
 		const uchar channels = std::min(buffer.channels(), this->channels());
 
 		#ifndef TKLB_NO_SIMD
-			const uint stride = xsimd::simd_type<sample>::size;
+			const uint stride = xsimd::simd_type<T>::size;
 			const uint vectorize = size - size % stride;
 			for (uchar c = 0; c < channels; c++) {
-				sample* out = &mBuffers[c][offset];
-				const sample* in = buffer.get(c);
+				T* out = &mBuffers[c][offset];
+				const T* in = buffer.get(c);
 				for(uint i = 0; i < vectorize; i += stride) {
-					xsimd::simd_type<sample> a = xsimd::load_aligned(in);
-					xsimd::simd_type<sample> b = xsimd::load_aligned(out);
+					xsimd::simd_type<T> a = xsimd::load_aligned(in);
+					xsimd::simd_type<T> b = xsimd::load_aligned(out);
 					xsimd::store_aligned(out, (a + b));
 					in += stride;
 					out += stride;
@@ -161,8 +164,8 @@ public:
 			}
 		#else
 			for (uchar c = 0; c < channels; c++) {
-				sample* out = &mBuffers[c][offset];
-				const sample* in = buffer.get(c);
+				T* out = &mBuffers[c][offset];
+				const T* in = buffer.get(c);
 				for(uint i = 0; i < size; i++) {
 					(*out++) += (*in++);
 				}
@@ -175,14 +178,14 @@ public:
 		const uchar channels = std::min(buffer.channels(), this->channels());
 
 		#ifndef TKLB_NO_SIMD
-			const uint stride = xsimd::simd_type<sample>::size;
+			const uint stride = xsimd::simd_type<T>::size;
 			const uint vectorize = size - size % stride;
 			for (uchar c = 0; c < channels; c++) {
-				sample* out = &mBuffers[c][offset];
-				const sample* in = buffer.get(c);
+				T* out = &mBuffers[c][offset];
+				const T* in = buffer.get(c);
 				for(uint i = 0; i < vectorize; i += stride) {
-					xsimd::simd_type<sample> a = xsimd::load_aligned(in);
-					xsimd::simd_type<sample> b = xsimd::load_aligned(out);
+					xsimd::simd_type<T> a = xsimd::load_aligned(in);
+					xsimd::simd_type<T> b = xsimd::load_aligned(out);
 					xsimd::store_aligned(out, (a * b));
 					in += stride;
 					out += stride;
@@ -193,8 +196,8 @@ public:
 			}
 		#else
 			for (uchar c = 0; c < channels; c++) {
-				sample* out = &mBuffers[c][offset];
-				const sample* in = buffer.get(c);
+				T* out = &mBuffers[c][offset];
+				const T* in = buffer.get(c);
 				for(uint i = 0; i < size; i++) {
 					(*out++) *= (*in++);
 				}
@@ -210,14 +213,28 @@ public:
 		return mBuffers[0].size();
 	}
 
-	sample* get(const uchar channel) {
+	T* get(const uchar channel) {
 		return mBuffers[channel].data();
 	};
 
-	const sample* get(const uchar channel) const {
+	const T* get(const uchar channel) const {
 		return mBuffers[channel].data();
 	};
 
+	const T* operator[](const uchar channel) const {
+		return get(channel);
+	}
+
+	T* operator[](const uchar channel) {
+		return get(channel);
+	}
+
+	T** getRaw() {
+		for (uchar c = 0; c < MAX_CHANNELS; c++) {
+			mRawBuffers[c] = get(c);
+		}
+		return mRawBuffers;
+	}
 };
 
 }
