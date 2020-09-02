@@ -5,7 +5,7 @@
 #include <cmath>
 
 int main() {
-	const int length = 1024 * 1024;
+	const int length = 512; // default max block
 	const int channels = TKLB_MAXCHANNELS;
 	using uchar = unsigned char;
 
@@ -17,7 +17,7 @@ int main() {
 			[&](Oversampler<>::T** in, Oversampler<>::T** out, uint len) {
 				for(uchar c = 0; c < channels; c++) {
 					for (uint i = 0; i < len; i++) {
-						out[c][i] = in[c][i] + 1;
+						out[c][i] = -in[c][i];
 					}
 				}
 		});
@@ -29,15 +29,15 @@ int main() {
 
 		for (uchar c = 0; c < channels; c++) {
 			for (int i = 0; i < length; i++) {
-				in[c][i] = sin(i * c * 0.1);
+				in[c][i] = sin(i * c * 0.001); // Failry low frequency
 			}
 		}
 
 		oversampler.process(in, out);
 
 		for (uchar c = 0; c < channels; c++) {
-			for (int i = 0; i < length; i++) {
-				if (!close(out[c][i], sin(i * c * 0.1)) + 1) {
+			for (int i = 10; i < length - 10; i++) {
+				if (!close(out[c][i], -sin(i * c * 0.001), 0.1)) {
 					return 1;
 				}
 			}
