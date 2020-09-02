@@ -29,15 +29,23 @@
 	#else
 		// TODO PERF maybe try avx
 	#ifdef TKLB_OVERSAMPLE_FLOAT
+		// #include "../../external/hiir/hiir/Upsampler2x8Avx.h"
+		// #include "../../external/hiir/hiir/Downsampler2x8Avx.h"
+		// #define TKLB_OVERSAMPLER_UP(coeffs) hiir::Upsampler2x8Avx<coeffs>
+		// #define TKLB_OVERSAMPLER_DOWN(coeffs) hiir::Downsampler2x8Avx<coeffs>
 		#include "../../external/hiir/hiir/Upsampler2xSse.h"
 		#include "../../external/hiir/hiir/Downsampler2xSse.h"
-			#define TKLB_OVERSAMPLER_UP(coeffs) hiir::Upsampler2xSse<coeffs>
-			#define TKLB_OVERSAMPLER_DOWN(coeffs) hiir::Downsampler2xSse<coeffs>
+		#define TKLB_OVERSAMPLER_UP(coeffs) hiir::Upsampler2xSse<coeffs>
+		#define TKLB_OVERSAMPLER_DOWN(coeffs) hiir::Downsampler2xSse<coeffs>
 	#else
+		// #include "../../external/hiir/hiir/Upsampler2x4F64Avx.h"
+		// #include "../../external/hiir/hiir/Downsampler2x4F64Avx.h"
+		// #define TKLB_OVERSAMPLER_UP(coeffs) hiir::Upsampler2x4F64Avx<coeffs>
+		// #define TKLB_OVERSAMPLER_DOWN(coeffs) hiir::Downsampler2x4F64Avx<coeffs>
 		#include "../../external/hiir/hiir/Upsampler2xF64Sse2.h"
 		#include "../../external/hiir/hiir/Downsampler2xF64Sse2.h"
-			#define TKLB_OVERSAMPLER_UP(coeffs) hiir::Upsampler2xF64Sse2<coeffs>
-			#define TKLB_OVERSAMPLER_DOWN(coeffs) hiir::Downsampler2xF64Sse2<coeffs>
+		#define TKLB_OVERSAMPLER_UP(coeffs) hiir::Upsampler2xF64Sse2<coeffs>
+		#define TKLB_OVERSAMPLER_DOWN(coeffs) hiir::Downsampler2xF64Sse2<coeffs>
 	#endif
 	#endif
 #else
