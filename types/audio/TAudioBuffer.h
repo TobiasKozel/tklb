@@ -58,7 +58,7 @@ public:
 			memcpy(mBuffers[channel].data() + offset, samples, sizeof(float) * length);
 		#else
 			for (uint i = 0; i < length; i++) {
-				mBuffers[channel][i + offset] = samples[i];
+				mBuffers[channel][i + offset] = static_cast<T>(samples[i]);
 			}
 		#endif
 	}
@@ -74,7 +74,7 @@ public:
 		length = std::min(length - offset, size() - offset);
 		#ifdef TKLB_SAMPLE_FLOAT
 			for (uint i = 0; i < length; i++) {
-				mBuffers[channel][i + offset] = samples[i];
+				mBuffers[channel][i + offset] = static_cast<T>(samples[i]);
 			}
 		#else
 			memcpy(mBuffers[channel].data() + offset, samples, sizeof(double) * length);
@@ -86,8 +86,8 @@ public:
 	 * @param channels Channel count
 	 * @param length The length (single channel)
 	 */
-	template <typename T>
-	void set(T** const samples, uchar channels, uint length, const uint offset = 0) {
+	template <typename T2>
+	void set(T2** const samples, uchar channels, uint length, const uint offset = 0) {
 		for (uchar c = 0; c < channels; c++) {
 			set(samples[c], c, length, offset);
 		}
@@ -98,12 +98,12 @@ public:
 	 * @param channels Channel count
 	 * @param length The length (single channel)
 	 */
-	template <typename T>
-	void setFromInterleaved(const T* samples, const uchar channels, uint length, const uint offset = 0) {
+	template <typename T2>
+	void setFromInterleaved(const T2* samples, const uchar channels, uint length, const uint offset = 0) {
 		length = std::min(length - offset, size() - offset);
 		for (uchar c = 0; c < std::min(channels, mChannels); c++) {
 			for(uint i = 0, j = c; i < length; i++, j+= channels) {
-				mBuffers[c][i + offset] = samples[j];
+				mBuffers[c][i + offset] = static_cast<T>(samples[j]);
 			}
 		}
 	}
