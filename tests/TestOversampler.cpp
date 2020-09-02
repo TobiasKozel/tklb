@@ -8,6 +8,8 @@ int main() {
 	const int length = 512; // default max block
 	const int channels = TKLB_MAXCHANNELS;
 	using uchar = unsigned char;
+	using uint = unsigned int;
+
 
 	{
 		Oversampler<> oversampler;
