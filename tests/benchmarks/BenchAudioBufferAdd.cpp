@@ -7,7 +7,7 @@ int main() {
 	const int length = 130;
 	const int channels = TKLB_MAXCHANNELS;
 	const int bufferCount = 2;
-	AudioBuffer buffers[bufferCount];
+	AudioBuffer<> buffers[bufferCount];
 
 	for (int i = 0; i < bufferCount; i++) {
 		buffers[i].resize(length, channels);

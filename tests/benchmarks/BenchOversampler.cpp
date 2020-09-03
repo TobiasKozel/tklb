@@ -23,7 +23,7 @@ int main() {
 				}
 		});
 
-		AudioBuffer in, out;
+		AudioBuffer<> in, out;
 
 		in.resize(length, channels);
 		out.resize(in);

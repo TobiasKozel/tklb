@@ -12,8 +12,11 @@
 
 namespace tklb {
 
-
-
+#ifdef TKLB_SAMPLE_FLOAT
+template <typename T = float>
+#else
+template <typename T = double>
+#endif
 class AudioBuffer {
 
 public:
@@ -25,11 +28,7 @@ public:
 	static constexpr uchar MAX_CHANNELS = 2;
 #endif
 
-#ifdef TKLB_SAMPLE_FLOAT
-	using T = float;
-#else
-	using T = double;
-#endif
+	using sample = T;
 
 	template <class T2>
 	/**
@@ -100,7 +99,8 @@ public:
 	/**
 	 * Set from a buffer object
 	 */
-	void set(const AudioBuffer& buffer, const uint offset = 0) {
+	template <typename T2>
+	void set(const AudioBuffer<T2>& buffer, const uint offset = 0) {
 		const uint length = buffer.size();
 		for (uchar c = 0; c < buffer.channels(); c++) {
 			set(buffer.get(c), c, length, offset);
@@ -122,7 +122,8 @@ public:
 		mChannels = channels;
 	}
 
-	void resize(const AudioBuffer& buffer) {
+	template <typename T2>
+	void resize(const AudioBuffer<T2>& buffer) {
 		resize(buffer.size(), buffer.channels());
 	}
 
@@ -130,68 +131,76 @@ public:
 		resize(0, 0);
 	}
 
-	void add(const AudioBuffer& buffer, uint offset = 0) {
+	template <typename T2>
+	void add(const AudioBuffer<T2>& buffer, uint offset = 0) {
 		const uint size = std::min(buffer.size() - offset, this->size() - offset);
 		const uchar channels = std::min(buffer.channels(), this->channels());
 
 		#ifndef TKLB_NO_SIMD
-			const uint stride = xsimd::simd_type<T>::size;
-			const uint vectorize = size - size % stride;
-			for (uchar c = 0; c < channels; c++) {
-				T* out = &mBuffers[c][offset];
-				const T* in = buffer.get(c);
-				for(uint i = 0; i < vectorize; i += stride) {
-					xsimd::simd_type<T> a = xsimd::load_aligned(in);
-					xsimd::simd_type<T> b = xsimd::load_aligned(out);
-					xsimd::store_aligned(out, (a + b));
-					in += stride;
-					out += stride;
+			if (std::is_same<T2, T>::value) {
+				const uint stride = xsimd::simd_type<T>::size;
+				const uint vectorize = size - size % stride;
+				for (uchar c = 0; c < channels; c++) {
+					T* out = &mBuffers[c][offset];
+					const T* in = reinterpret_cast<const T*>(buffer.get(c));
+					for(uint i = 0; i < vectorize; i += stride) {
+						xsimd::simd_type<T> a = xsimd::load_aligned(in);
+						xsimd::simd_type<T> b = xsimd::load_aligned(out);
+						xsimd::store_aligned(out, (a + b));
+						in += stride;
+						out += stride;
+					}
+					for(uint i = vectorize; i < size; i++) {
+						(*out++) += (*in++);
+					}
 				}
-				for(uint i = vectorize; i < size; i++) {
-					(*out++) += (*in++);
-				}
-			}
-		#else
-			for (uchar c = 0; c < channels; c++) {
-				T* out = &mBuffers[c][offset];
-				const T* in = buffer.get(c);
-				for(uint i = 0; i < size; i++) {
-					(*out++) += (*in++);
-				}
+				return;
 			}
 		#endif
+
+		for (uchar c = 0; c < channels; c++) {
+			T* out = &mBuffers[c][offset];
+			const T2* in = buffer.get(c);
+			for(uint i = 0; i < size; i++) {
+				(*out++) += (*in++);
+			}
+		}
 	}
 
-	void multiply(const AudioBuffer& buffer, uint offset = 0) {
+	template <typename T2>
+	void multiply(const AudioBuffer<T2>& buffer, uint offset = 0) {
 		const uint size = std::min(buffer.size() - offset, this->size() - offset);
 		const uchar channels = std::min(buffer.channels(), this->channels());
 
 		#ifndef TKLB_NO_SIMD
-			const uint stride = xsimd::simd_type<T>::size;
-			const uint vectorize = size - size % stride;
-			for (uchar c = 0; c < channels; c++) {
-				T* out = &mBuffers[c][offset];
-				const T* in = buffer.get(c);
-				for(uint i = 0; i < vectorize; i += stride) {
-					xsimd::simd_type<T> a = xsimd::load_aligned(in);
-					xsimd::simd_type<T> b = xsimd::load_aligned(out);
-					xsimd::store_aligned(out, (a * b));
-					in += stride;
-					out += stride;
+			if (std::is_same<T2, T>::value) {
+				const uint stride = xsimd::simd_type<T>::size;
+				const uint vectorize = size - size % stride;
+				for (uchar c = 0; c < channels; c++) {
+					T* out = &mBuffers[c][offset];
+					const T* in = reinterpret_cast<const T*>(buffer.get(c));
+					for(uint i = 0; i < vectorize; i += stride) {
+						xsimd::simd_type<T> a = xsimd::load_aligned(in);
+						xsimd::simd_type<T> b = xsimd::load_aligned(out);
+						xsimd::store_aligned(out, (a * b));
+						in += stride;
+						out += stride;
+					}
+					for(uint i = vectorize; i < size; i++) {
+						(*out++) *= (*in++);
+					}
 				}
-				for(uint i = vectorize; i < size; i++) {
-					(*out++) *= (*in++);
-				}
-			}
-		#else
-			for (uchar c = 0; c < channels; c++) {
-				T* out = &mBuffers[c][offset];
-				const T* in = buffer.get(c);
-				for(uint i = 0; i < size; i++) {
-					(*out++) *= (*in++);
-				}
+				return;
 			}
 		#endif
+
+		for (uchar c = 0; c < channels; c++) {
+			T* out = &mBuffers[c][offset];
+			const T2* in = buffer.get(c);
+			for(uint i = 0; i < size; i++) {
+				(*out++) *= (*in++);
+			}
+		}
 	}
 
 	void multiply(T value) {

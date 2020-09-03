@@ -68,7 +68,7 @@ template <int CHANNELS = 2, int MAX_BLOCK = 512>
 #endif
 class Oversampler {
 public:
-	using T = AudioBuffer::T;
+	using T = AudioBuffer<>::sample;
 
 	using uchar = unsigned char;
 	using uint = unsigned int;
@@ -81,7 +81,7 @@ private:
 	TKLB_OVERSAMPLER_DOWN(12) mDown2x[CHANNELS];
 	TKLB_OVERSAMPLER_DOWN(4) mDown4x[CHANNELS];
 
-	AudioBuffer mBuf2xUp, mBuf2xDown, mBuf4xUp, mBuf4xDown;
+	AudioBuffer<> mBuf2xUp, mBuf2xDown, mBuf4xUp, mBuf4xDown;
 
 	/**
 	 * Straight up stolen from the hiir oversampler wrapper from iPlug2
@@ -128,7 +128,7 @@ public:
 		return mFactor;
 	}
 
-	void process(AudioBuffer& in, AudioBuffer& out) {
+	void process(AudioBuffer<>& in, AudioBuffer<>& out) {
 		process(in.getRaw(), out.getRaw(), in.size());
 	}
 
