@@ -16,11 +16,11 @@ function test {
 		$executable
 		result=$?
 		if [[ $result -ne 0 ]]; then
-			echo "${1} ${f} Failed with ${result}"
+			echo "${1} ${source_file} Failed with ${result}"
 		fi
 		rm $executable
 	else
-		echo "Compilation failed for ${1} ${f}"
+		echo "Compilation failed for ${1} ${source_file}"
 		exit
 	fi
 }

@@ -12,7 +12,7 @@ int main() {
 	for (int i = 0; i < bufferCount; i++) {
 		buffers[i].resize(length, channels);
 		for (int c = 0; c < channels; c++) {
-			auto channel = buffers[i].get(i);
+			auto channel = buffers[i].get(c);
 			fill_n(channel, length, i);
 		}
 	}
