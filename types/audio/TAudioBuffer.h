@@ -53,6 +53,11 @@ public:
 		std::fill_n(mRawBuffers, MAX_CHANNELS, nullptr);
 	};
 
+	AudioBuffer(const uchar channels) {
+		std::fill_n(mRawBuffers, MAX_CHANNELS, nullptr);
+		mChannels = channels;
+	};
+
 	/**
 	 * Set a single channel from a double array
 	 * @param samples An Array containing the interleaved audio samples
@@ -282,11 +287,37 @@ public:
 		return get(channel);
 	}
 
+	/**
+	 * Returns a array owned by the object containing pointers
+	 * to all the channels
+	 * Don't call this constantly, try to cache the returned value for reuse
+	 */
 	T** getRaw() {
 		for (uchar c = 0; c < MAX_CHANNELS; c++) {
 			mRawBuffers[c] = get(c);
 		}
 		return mRawBuffers;
+	}
+
+	template <typename T2>
+	void put(T2* target, uchar channel, uint length) const {
+		if (mChannels <= channel) { return; }
+		length = std::min(length, size());
+		const T2* source = get(channel);
+		if (std::is_same<T2, T>::value) {
+			memcpy(target, source, sizeof(T) * length);
+		} else {
+			for (uint i = 0; i < length; i++) {
+				target[i] = static_cast<T2>(source[i]);
+			}
+		}
+	}
+
+	template <typename T2>
+	void put(T2** target, const uchar channels, const uint length) const {
+		for (uchar c = 0; c < channels; c++) {
+			put(target[c], c, length);
+		}
 	}
 };
 
