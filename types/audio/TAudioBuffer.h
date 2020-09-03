@@ -41,6 +41,9 @@ public:
 	>;
 
 private:
+#ifndef TKLB_NO_SIMD
+	static constexpr uint stride = xsimd::simd_type<T>::size;
+#endif
 	Buffer<T> mBuffers[MAX_CHANNELS];
 	T* mRawBuffers[MAX_CHANNELS];
 	uchar mChannels = 0;
@@ -122,13 +125,19 @@ public:
 		mChannels = channels;
 	}
 
+	void resize(const uint length) {
+		resize(length, mChannels);
+	}
+
 	template <typename T2>
 	void resize(const AudioBuffer<T2>& buffer) {
 		resize(buffer.size(), buffer.channels());
 	}
 
 	void clear() {
-		resize(0, 0);
+		const uint s = size();
+		resize(0);
+		resize(s);
 	}
 
 	template <typename T2>
@@ -138,20 +147,17 @@ public:
 
 		#ifndef TKLB_NO_SIMD
 			if (std::is_same<T2, T>::value) {
-				const uint stride = xsimd::simd_type<T>::size;
 				const uint vectorize = size - size % stride;
 				for (uchar c = 0; c < channels; c++) {
 					T* out = &mBuffers[c][offset];
 					const T* in = reinterpret_cast<const T*>(buffer.get(c));
 					for(uint i = 0; i < vectorize; i += stride) {
-						xsimd::simd_type<T> a = xsimd::load_aligned(in);
-						xsimd::simd_type<T> b = xsimd::load_aligned(out);
-						xsimd::store_aligned(out, (a + b));
-						in += stride;
-						out += stride;
+						xsimd::simd_type<T> a = xsimd::load_aligned(in + i);
+						xsimd::simd_type<T> b = xsimd::load_aligned(out + i);
+						xsimd::store_aligned(out + i, (a + b));
 					}
 					for(uint i = vectorize; i < size; i++) {
-						(*out++) += (*in++);
+						out[i] += in[i];
 					}
 				}
 				return;
@@ -174,20 +180,17 @@ public:
 
 		#ifndef TKLB_NO_SIMD
 			if (std::is_same<T2, T>::value) {
-				const uint stride = xsimd::simd_type<T>::size;
 				const uint vectorize = size - size % stride;
 				for (uchar c = 0; c < channels; c++) {
 					T* out = &mBuffers[c][offset];
 					const T* in = reinterpret_cast<const T*>(buffer.get(c));
 					for(uint i = 0; i < vectorize; i += stride) {
-						xsimd::simd_type<T> a = xsimd::load_aligned(in);
-						xsimd::simd_type<T> b = xsimd::load_aligned(out);
-						xsimd::store_aligned(out, (a * b));
-						in += stride;
-						out += stride;
+						xsimd::simd_type<T> a = xsimd::load_aligned(in + i);
+						xsimd::simd_type<T> b = xsimd::load_aligned(out + i);
+						xsimd::store_aligned(out + i, (a * b));
 					}
 					for(uint i = vectorize; i < size; i++) {
-						(*out++) *= (*in++);
+						out[i] *= in[i];
 					}
 				}
 				return;
@@ -198,7 +201,7 @@ public:
 			T* out = &mBuffers[c][offset];
 			const T2* in = buffer.get(c);
 			for(uint i = 0; i < size; i++) {
-				(*out++) *= (*in++);
+				out[i] *= in[i];
 			}
 		}
 	}
@@ -208,15 +211,12 @@ public:
 		const uchar channels = this->channels();
 
 		#ifndef TKLB_NO_SIMD
-			const uint stride = xsimd::simd_type<T>::size;
 			const uint vectorize = size - size % stride;
 			for (uchar c = 0; c < channels; c++) {
 				T* out = &mBuffers[c][0];
-				// xsimd::simd_type<T> a = xsimd::load_aligned(in);
 				for(uint i = 0; i < vectorize; i += stride) {
-					xsimd::simd_type<T> b = xsimd::load_aligned(out);
-					xsimd::store_aligned(out, (b * value));
-					out += stride;
+					xsimd::simd_type<T> b = xsimd::load_aligned(out + i);
+					xsimd::store_aligned(out + i, (b * value));
 				}
 				for(uint i = vectorize; i < size; i++) {
 					out[i] *= value;
@@ -227,6 +227,32 @@ public:
 				T* out = &mBuffers[c][0];
 				for(uint i = 0; i < size; i++) {
 					out[i] *= value;
+				}
+			}
+		#endif
+	}
+
+	void add(T value) {
+		const uint size = this->size();
+		const uchar channels = this->channels();
+
+		#ifndef TKLB_NO_SIMD
+			const uint vectorize = size - size % stride;
+			for (uchar c = 0; c < channels; c++) {
+				T* out = &mBuffers[c][0];
+				for(uint i = 0; i < vectorize; i += stride) {
+					xsimd::simd_type<T> b = xsimd::load_aligned(out + i);
+					xsimd::store_aligned(out + i, (b + value));
+				}
+				for(uint i = vectorize; i < size; i++) {
+					out[i] += value;
+				}
+			}
+		#else
+			for (uchar c = 0; c < channels; c++) {
+				T* out = &mBuffers[c][0];
+				for(uint i = 0; i < size; i++) {
+					out[i] += value;
 				}
 			}
 		#endif

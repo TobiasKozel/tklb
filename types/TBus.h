@@ -85,7 +85,7 @@ namespace tklb {
 			Sub(Bus* bus, const Event event, Callback callback) {
 				subscribe(bus, event, callback);
 			}
-			
+
 			~Sub() {
 				if (mBus == nullptr) { return; }
 				mBus->remove(this);
