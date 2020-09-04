@@ -6,6 +6,7 @@
 	#define PFFFT_SIMD_DISABLE
 #endif
 
+#define PFFFT_NO_ALIGNMENT_CHECK
 #include "../../../external/pffft/pffft.h"
 #include "../../../external/pffft/pffft.c"
 

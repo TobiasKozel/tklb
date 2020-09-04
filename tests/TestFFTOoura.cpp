@@ -10,7 +10,7 @@ int main() {
 		AudioBuffer<> input, output;
 		input.resize(fftSize, 1);
 		output.resize(fftSize, 1);
-		result.resize(fftSize / 2, 2);
+		result.resize(fftSize, 2);
 
 		for (int i = 0; i < fftSize; i++) {
 			input[0][i] = sin(i * 0.1);
