@@ -48,10 +48,9 @@ public:
 	template <typename T>
 	void forward(const AudioBuffer<T>& input, AudioBuffer<float>& result) {
 		const float* data = nullptr;
-		// if (std::is_same<T, float>::value) {
-		// 	data = reinterpret_cast<const float*>(input.get(0));
-		// } else
-		{
+		if (std::is_same<T, float>::value) {
+			data = reinterpret_cast<const float*>(input.get(0));
+		} else {
 			mBuffer.set(input);
 			data = mBuffer.get(0);
 		}
@@ -79,10 +78,7 @@ public:
 				out[i] = buf[i] * volume;
 			}
 		}
-
 	}
-
-
 };
 
 } // namespace
