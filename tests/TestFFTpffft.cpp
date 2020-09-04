@@ -1,16 +1,16 @@
-#include "../types/audio/fft/TOouraFFT.h"
+#include "../types/audio/fft/Tpffft.h"
 
 #include "TestCommon.h"
 
 int main() {
 	{
 		const int fftSize = 32;
-		AudioBuffer<double> result; // ooura only does doubles
+		AudioBuffer<float> result;
 		FFT con = { fftSize };
 		AudioBuffer<> input, output;
 		input.resize(fftSize, 1);
 		output.resize(fftSize, 1);
-		result.resize(fftSize / 2, 2);
+		result.resize(fftSize, 2);
 
 		for (int i = 0; i < fftSize; i++) {
 			input[0][i] = sin(i * 0.1);

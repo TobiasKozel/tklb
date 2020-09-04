@@ -41,7 +41,6 @@ public:
 
 	template <typename T>
 	void forward(const AudioBuffer<T>& input, AudioBuffer<double>& result) {
-		result.resize(mSize, 2);
 		double* real = result.get(0);
 		double* imaginary = result.get(1);
 		/**

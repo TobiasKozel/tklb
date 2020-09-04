@@ -115,7 +115,7 @@ public:
 		}
 	};
 
-	void resize(const uint length,  uchar channels) {
+	void resize(const uint length, uchar channels) {
 		if (channels == mChannels && mBuffers[0].size() == length) {
 			return;
 		}
