@@ -5,10 +5,9 @@
 int main() {
 	{
 		const int fftSize = 512;
-		double imaginary[fftSize];
-		double real[fftSize];
-		FFT con = { 512 };
+		FFT con = { fftSize };
 		AudioBuffer<> input, output;
+		AudioBuffer<double> result; // ooura only does doubles
 		input.resize(fftSize, 1);
 		output.resize(fftSize, 1);
 
@@ -19,8 +18,8 @@ int main() {
 		{
 			TIMER(Miliseconds);
 			for (int i = 0; i < 10000; i++) {
-				con.forward(input.get(0), real, imaginary);
-				con.back(output.get(0), real, imaginary);
+				con.forward(input, result);
+				con.back(result, output);
 			}
 		}
 	}

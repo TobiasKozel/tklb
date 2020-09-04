@@ -5,8 +5,7 @@
 int main() {
 	{
 		const int fftSize = 512;
-		double imaginary[fftSize];
-		double real[fftSize];
+		AudioBuffer<double> result; // ooura only does doubles
 		FFT con = { 512 };
 		AudioBuffer<> input, output;
 		input.resize(fftSize, 1);
@@ -16,8 +15,8 @@ int main() {
 			input[0][i] = sin(i * 0.1);
 		}
 
-		con.forward(input.get(0), real, imaginary);
-		con.back(output.get(0), real, imaginary);
+		con.forward(input, result);
+		con.back(result, output);
 
 		for (int i = 0; i < fftSize; i++) {
 			if (!close(sin(i * 0.1), output[0][i])) {

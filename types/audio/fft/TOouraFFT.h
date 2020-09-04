@@ -40,8 +40,16 @@ public:
 	}
 
 	template <typename T>
-	void forward(const T* data, double* real, double* imaginary) {
-		mBuffer.set(data, 0, mSize); // converts or copies the data
+	void forward(const AudioBuffer<T>& input, AudioBuffer<double>& result) {
+		result.resize(mSize, 2);
+		double* real = result.get(0);
+		double* imaginary = result.get(1);
+		/**
+		 * converts or copies the data
+		 * we shouldn't use the original buffer since
+		 * mBuffer gets written toby the fft
+		 */
+		mBuffer.set(input);
 		rdft(mSize, +1, mBuffer.get(0), mIp.data(), mW.get(0));
 
 		// Convert back to split-complex
@@ -62,7 +70,10 @@ public:
 	}
 
 	template <typename T>
-	void back(T* data, const double* real, const double* imaginary) {
+	void back(const AudioBuffer<double>& result, AudioBuffer<T>& input) {
+		T* data = input.get(0);
+		const double* real = result.get(0);
+		const double* imaginary = result.get(1);
 		{
 			double* b = mBuffer.get(0);
 			double* bEnd = b + mSize;
@@ -81,6 +92,7 @@ public:
 			mBuffer.multiply(volume); // scale the output
 			mBuffer.put(reinterpret_cast<double*>(data), 0, mSize);
 		} else {
+			// or the old fashioned way if we need to convert sample types anyways
 			const double* buf = mBuffer.get(0);
 			for (uint i = 0; i < mSize; i++) {
 				data[i] = buf[i] * volume;
