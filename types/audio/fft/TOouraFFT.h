@@ -1,5 +1,5 @@
-#ifndef TKLB_FFT
-#define TKLB_FFT
+#ifndef TKLB_FFT_OOURA
+#define TKLB_FFT_OOURA
 
 
 #include <vector>
@@ -8,7 +8,7 @@
 
 namespace tklb {
 
-class FFT {
+class FFTOoura {
 	using uchar = unsigned char;
 	using uint = unsigned int;
 
@@ -21,21 +21,19 @@ class FFT {
 
 public:
 
-	FFT(uint size = 0) {
+	FFTOoura(uint size = 0) {
 		if (size == 0) { return; }
 		resize(size);
 	}
 
 	void resize(uint size) {
 		if (size == mSize) { return; }
-		mIp.resize(
-			2 + static_cast<int>(std::sqrt(static_cast<double>(size)))
-		);
+		mIp.resize(2 + int(std::sqrt(double(size))));
 		mW.resize(size / 2);
 		mBuffer.resize(size);
 		mSize = size;
 
-		const int size4 = static_cast<int>(size) / 4;
+		const int size4 = size / 4;
 		ooura::makewt(size4, mIp.data(), mW.get(0));
 		ooura::makect(size4, mIp.data(), mW.get(0) + size4);
 	}
@@ -103,4 +101,4 @@ public:
 
 } // namespace
 
-#endif // TKLB_FFT
+#endif // TKLB_FFT_OOURA

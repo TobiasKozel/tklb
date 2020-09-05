@@ -1,4 +1,5 @@
-#include "../types/audio/fft/Tpffft.h"
+
+#include "../types/audio/fft/TFFT.h"
 
 #include "TestCommon.h"
 

@@ -1,5 +1,5 @@
-#ifndef TKLB_FFT
-#define TKLB_FFT
+#ifndef TKLB_FFT_PFFFT
+#define TKLB_FFT_PFFFT
 
 
 #ifdef TKLB_NO_SIMD
@@ -16,7 +16,7 @@
 
 namespace tklb {
 
-class FFT {
+class FFTpffft {
 	using uchar = unsigned char;
 	using uint = unsigned int;
 
@@ -26,12 +26,12 @@ class FFT {
 	AudioBuffer<float> mRc = { 1 }; // RealComplexBuffer
 public:
 
-	FFT(uint size = 0) {
+	FFTpffft(uint size = 0) {
 		if (size == 0) { return; }
 		resize(size);
 	}
 
-	~FFT() {
+	~FFTpffft() {
 		pffft_destroy_setup(mSetup);
 	}
 
@@ -83,5 +83,5 @@ public:
 
 } // namespace
 
-#endif // TKLB_FFT
+#endif // TKLB_FFT_PFFFT
 

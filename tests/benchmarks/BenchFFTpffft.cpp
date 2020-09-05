@@ -1,5 +1,5 @@
 #define TKLB_MAXCHANNELS 16
-#include "../../types/audio/fft/Tpffft.h"
+#include "../../types/audio/fft/TFFT.h"
 #include "BenchmarkCommon.h"
 
 int main() {
