@@ -96,9 +96,11 @@ void tklbFree(void* ptr, const char* file, int line) {
 
 void* tklbRealloc(void* ptr, size_t size, const char* file, int line) {
 	MallocInfo* info = reinterpret_cast<MallocInfo*>(ptr);
-	if (ptr == nullptr) { return ptr; }
 	void* ptr2 = tklbMalloc(size, file, line);
 	if (ptr2 == nullptr) { return ptr; }
+	if (ptr == nullptr) {
+		return ptr2;
+	}
 #ifndef TKLB_LEAKCHECKER_NO_INFO
 	memcpy(ptr2, ptr, info->size < size ? info->size : size);
 #else
