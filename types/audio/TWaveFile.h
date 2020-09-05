@@ -1,10 +1,19 @@
 #ifndef TKLB_AUDIOFILE
 #define TKLB_AUDIOFILE
 
+#include "./TAudioBuffer.h"
+
 #define DR_WAV_IMPLEMENTATION
 #include "../../external/dr_wav.h"
 
 namespace tklb {
+
+namespace wave {
+	template <typename T>
+	bool load(const char* path, AudioBuffer<T>& out) {
+
+	}
+}
 
 class WaveFile {
 	bool mValid = false;

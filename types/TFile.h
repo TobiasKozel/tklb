@@ -15,15 +15,17 @@
 #include <fstream>
 #include <iomanip>
 #include <cassert>
+#include <functional>
+#include "../util/TAssert.h"
 
 namespace tklb {
 
 const std::string PATH_DELIMITER =
-#ifdef _WIN32
-	"\\";
-#else
+// #ifdef _WIN32
+// 	"\\";
+// #else
+// #endif
 	"/";
-#endif
 
 struct FileInfo {
 	std::string name;
@@ -32,89 +34,62 @@ struct FileInfo {
 	bool isFolder = false;
 	std::vector<FileInfo> children;
 
-	std::vector<FileInfo> scanDir(FileInfo& root, bool recursive = false) {
-		std::vector<FileInfo> ret;
-		struct dirent** files = nullptr;
-		const int count = scandir(root.absolute.c_str(), &files, nullptr, alphasort);
-		if (count >= 0) {
-			for (int i = 0; i < count; i++) {
-				const struct dirent* ent = files[i];
-				if (ent->d_name[0] != '.') {
-					FileInfo info;
-					info.isFolder = ent->d_type == DT_DIR;
-					info.name = ent->d_name;
-					info.relative = root.relative + info.name + (info.isFolder ? PATH_DELIMITER : "");
-					info.absolute = root.absolute + info.name + (info.isFolder ? PATH_DELIMITER : "");
-					root.children.push_back(info);
-					if (recursive && info.isFolder) {
-						scanDir(info, true);
-					}
-					ret.push_back(info);
+	FileInfo(const char* path) {
+		if (isRelative(path)) {
+			relative = path;
+			DIR *dir =  opendir (path);
+			if (dir != nullptr) {
+				char str[256];
+				size_t out = 0;
+				wcstombs_s(&out, str, 256, dir->wdirp->patt, 256);
+				if (out > 2) {
+					str[out - 2] = 0; // the last
+					absolute = str;
+					isFolder = true;
 				}
-			free(files[i]);
-		}
-		free(files);
+				closedir(dir);
+			} else {
+				std::fstream fs(path);
+				fs.close();
+			}
 		} else {
-			root.isFolder = false;
+			absolute = path;
+			relative = "./";
 		}
-		return ret;
+		toUnixPath(absolute);
+		toUnixPath(relative);
+		recursiveScan(*this, false);
 	}
 
-	std::vector<FileInfo> scanDir(const std::string path, const bool recursive = false) {
-		absolute = path;
-		relative = "." + PATH_DELIMITER;
-		name = "";
-		return scanDir(*this, recursive);
+	FileInfo() = default;
+
+
+
+	void scan() {
+		recursiveScan(*this, true);
 	}
 
-	bool isWaveName() {
+	bool isWave() {
 		return name.length() - name.find_last_of(".WAV") == 4
 			|| name.length() - name.find_last_of(".wav") == 4;
 	}
 
-	bool isJSONName() {
+	bool isJSON() {
 		return name.length() - name.find_last_of(".JSON") == 5
 			|| name.length() - name.find_last_of(".json") == 5;
 	}
 
-	bool createFolder() {
-		const char* path = absolute.c_str();
-		bool success = true;
-#ifdef _WIN32
-		bool ok = CreateDirectory(path, nullptr);
-		if (!ok) {
-			if (GetLastError() != ERROR_ALREADY_EXISTS) {
-				success = false; // Probably permission, locked file etc
-			}
-		}
-#else
-		mode_t process_mask = umask(0);
-		int result_code = mkdir(path, S_IRWXU | S_IRWXG | S_IRWXO);
-		umask(process_mask);
-		success = !result_code; // TODO Existing folder might throw an error
-#endif
-		if (success) { isFolder = true; }
-		return success;
-	}
-
+	/**
+	 * Will delete the file, does not work with folders
+	 */
 	bool remove() {
 		const char* path = absolute.c_str();
 		if (!isFolder) {
 			return std::remove(path) == 0;
 		}
-		return false;
 		// TODO Folder deleteion
-	}
-
-	bool write(const char* path, const char* data, const size_t length) {
-		try {
-			auto file = std::fstream(path, std::ios::out | std::ios::binary);
-			file.write(data, length);
-			file.close();
-			return true;
-		} catch (...) {
-			return false;
-		}
+		TKLB_ASSERT(false);
+		return false;
 	}
 
 	std::string hashFile() {
@@ -141,6 +116,66 @@ struct FileInfo {
 		return ss.str();
 	}
 
+	void print() {
+		recursivePrint(*this, 0);
+	}
+
+	static bool write(const char* path, const char* data, const size_t length) {
+		try {
+			auto file = std::fstream(path, std::ios::out | std::ios::binary);
+			file.write(data, length);
+			file.close();
+			return true;
+		} catch (...) {
+			return false;
+		}
+	}
+
+	static std::string joinPath(const std::initializer_list<std::string>& paths) {
+		std::string path;
+		for (auto &i : paths) {
+			path += i;
+		}
+		return path;
+	}
+
+private:
+	void recursivePrint(FileInfo& info, int depth) {
+		char space[256];
+		std::fill_n(space, 256, 0);
+		std::fill_n(space, depth, ' ');
+		std::cout << space << info.name << "\n";
+		for (auto &i : info.children) {
+			recursivePrint(i, depth + 1);
+		}
+	}
+
+	void recursiveScan(FileInfo& root, bool recursive) {
+		root.children.clear();
+		struct dirent** files = nullptr;
+		const int count = scandir(root.absolute.c_str(), &files, nullptr, alphasort);
+		if (count >= 0) {
+			for (int i = 0; i < count; i++) {
+				const struct dirent* ent = files[i];
+				if (ent->d_name[0] != '.') {
+					FileInfo info;
+					info.isFolder = ent->d_type == DT_DIR;
+					info.name = ent->d_name;
+					info.relative = root.relative + info.name + (info.isFolder ? PATH_DELIMITER : "");
+					info.absolute = root.absolute + info.name + (info.isFolder ? PATH_DELIMITER : "");
+					if (recursive && info.isFolder) {
+						recursiveScan(info, true);
+					}
+					root.children.push_back(info);
+				}
+				free(files[i]);
+			}
+		} else {
+			root.isFolder = false;
+		}
+		free(files);
+	}
+
 	std::string platformPath(std::string path) {
 		for (size_t i = 1; i < path.size(); i++) {
 			if ((path[i - 1] == '/' || path[i - 1] == '\\') && (path[i] == '/' || path[i] == '\\')) {
@@ -157,8 +192,16 @@ struct FileInfo {
 		return path;
 	}
 
-	bool isRelative(const std::string path) {
+	static bool isRelative(const std::string& path) {
 		return path[0] == '.';
+	}
+
+	void toUnixPath(std::string& path) {
+		for (size_t i = 1; i < path.size(); i++) {
+			if (path[i] == '\\') {
+				path[i] = '/';
+			}
+		}
 	}
 };
 

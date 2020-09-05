@@ -49,6 +49,8 @@ private:
 	uchar mChannels = 0;
 
 public:
+	uint sampleRate = 0;
+
 	AudioBuffer() {
 		std::fill_n(mRawBuffers, MAX_CHANNELS, nullptr);
 	};
