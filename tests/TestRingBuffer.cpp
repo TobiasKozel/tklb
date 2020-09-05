@@ -1,6 +1,5 @@
-#include "../types/TRingBuffer.h"
-
 #include "TestCommon.h"
+#include "../types/TRingBuffer.h"
 
 template <typename T>
 int test(T& buffer) {

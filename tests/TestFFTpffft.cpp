@@ -1,7 +1,6 @@
-
+#include "TestCommon.h"
 #include "../types/audio/fft/TFFT.h"
 
-#include "TestCommon.h"
 
 int main() {
 	{

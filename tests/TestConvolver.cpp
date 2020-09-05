@@ -1,6 +1,6 @@
+#include "TestCommon.h"
 #include "../types/audio/TConvolver.h"
 
-#include "TestCommon.h"
 
 int main() {
 	{

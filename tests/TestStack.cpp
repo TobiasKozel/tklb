@@ -1,5 +1,5 @@
-#include "../types/TStack.h"
 #include "TestCommon.h"
+#include "../types/TStack.h"
 
 int main() {
 	PointerStack<int, 1024> stack;

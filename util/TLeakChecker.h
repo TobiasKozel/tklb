@@ -18,8 +18,12 @@
 
 namespace tklb {
 
+// Current allocations
 static size_t allocationCount = 0;
+// corrupted allocations
 static size_t curruptions = 0;
+
+static size_t allocationsTotal = 0;
 
 struct MallocInfo {
 	const char* file;
@@ -37,6 +41,7 @@ void* tklbMalloc(const size_t size, const char* file, int line) {
 	);
 	if (!ptr) { return nullptr; }
 	allocationCount++;
+	allocationsTotal++;
 	ptr->file = file;
 	ptr->line = line;
 	ptr->size = size;
@@ -50,7 +55,10 @@ void* tklbMalloc(const size_t size, const char* file, int line) {
 	return ptr + 1;
 #else
 	void* ret = malloc(size);
-	if (ret) { allocationCount++; }
+	if (ret) {
+		allocationCount++;
+		allocationsTotal++;
+	}
 	return ret;
 #endif
 }
@@ -115,7 +123,7 @@ void* operator new[](size_t size) {
 	return tklb::tklbMalloc(size, nullptr, 1337);
 }
 
-void operator delete(void* ptr, size_t size) {
+void operator delete(void* ptr, size_t size) noexcept {
 	tklb::tklbFree(ptr, nullptr, 0);
 }
 

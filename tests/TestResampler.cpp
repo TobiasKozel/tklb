@@ -1,6 +1,6 @@
+#include "TestCommon.h"
 #include "../types/audio/TResampler.h"
 
-#include "TestCommon.h"
 
 int main() {
 	{

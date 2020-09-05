@@ -1,7 +1,7 @@
-#include "../types/TBus.h"
-// TODO Figure out why this fails on windows g++
 #define TKLB_LEAKCHECKER_DISARM
 #include "TestCommon.h"
+#include "../types/TBus.h"
+// TODO Figure out why this fails on windows g++
 
 int main() {
 	{

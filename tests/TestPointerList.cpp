@@ -1,6 +1,6 @@
+#include "TestCommon.h"
 #include "../types/TPointerList.h"
 
-#include "TestCommon.h"
 
 int main() {
 

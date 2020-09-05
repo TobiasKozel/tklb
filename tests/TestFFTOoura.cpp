@@ -1,8 +1,7 @@
-
+#include "TestCommon.h"
 #define TKLB_USE_OOURA
 #include "../types/audio/fft/TFFT.h"
 
-#include "TestCommon.h"
 
 int main() {
 	{
