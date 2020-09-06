@@ -61,7 +61,7 @@ public:
 	};
 
 	/**
-	 * Set a single channel from a double array
+	 * @brief * Set a single channel from a array
 	 * @param samples An Array containing the interleaved audio samples
 	 * @param channel Channelindex
 	 * @param length The length (single channel)
@@ -80,6 +80,7 @@ public:
 	}
 
 	/**
+	 * @brief Set multiple channels from a 2D array
 	 * @param samples A 2D Array containing the audio samples (float or double)
 	 * @param channels Channel count
 	 * @param length The length (single channel)
@@ -92,6 +93,7 @@ public:
 	};
 
 	/**
+	 * @brief Set multiple channels from an interleaved array
 	 * @param samples A 1D Array containing the interleaved audio samples (float or double)
 	 * @param channels Channel count
 	 * @param length The length (single channel)
@@ -107,11 +109,15 @@ public:
 	}
 
 	/**
-	 * Set from a buffer object
+	 * @brief Set from another buffer object
+	 * e.g. offset=10 and length=15 will copy 15 samples into the buffer starting at the 10th sample
+	 * @param buffer Source buffer object
+	 * @param offset Start offset in the target buffer
+	 * @param length Operation will stop at that sample
 	 */
 	template <typename T2>
-	void set(const AudioBuffer<T2>& buffer, const uint offset = 0) {
-		const uint length = buffer.size();
+	void set(const AudioBuffer<T2>& buffer, const uint offset = 0, uint length = 0) {
+		length = length == 0 ? buffer.size() : length;
 		for (uchar c = 0; c < buffer.channels(); c++) {
 			set(buffer.get(c), c, length, offset);
 		}
@@ -213,6 +219,10 @@ public:
 		}
 	}
 
+	/**
+	 * @brief Mutliplies the content of the buffer with a constant
+	 * @param value
+	 */
 	void multiply(T value) {
 		const uint size = this->size();
 		const uchar channels = this->channels();
@@ -239,6 +249,10 @@ public:
 		#endif
 	}
 
+	/**
+	 * @brief Adds a constant to the contents of the buffer
+	 * @param value
+	 */
 	void add(T value) {
 		const uint size = this->size();
 		const uchar channels = this->channels();
@@ -290,9 +304,8 @@ public:
 	}
 
 	/**
-	 * Returns a array owned by the object containing pointers
-	 * to all the channels
-	 * Don't call this constantly, try to cache the returned value for reuse
+	 * @brief Returns a array owned by the object containing pointers to all the channels.
+	 * <b>Don't</b> call this constantly, try to cache the returned value for reuse
 	 */
 	T** getRaw() {
 		for (uchar c = 0; c < MAX_CHANNELS; c++) {
@@ -302,6 +315,12 @@ public:
 	}
 
 	template <typename T2>
+	/**
+	 * @brief Fill the provided array with the contents oof this buffer
+	 * @param target The arry to fill
+	 * @param channel Which source channel to use
+	 * @param length The length of the output
+	 */
 	void put(T2* target, uchar channel, uint length) const {
 		if (mChannels <= channel) { return; }
 		length = std::min(length, size());

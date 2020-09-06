@@ -9,68 +9,44 @@
 namespace tklb {
 
 namespace wave {
+
 	template <typename T>
-	bool load(const char* path, AudioBuffer<T>& out) {
-
-	}
-}
-
-class WaveFile {
-	bool mValid = false;
-	float** mSamples = nullptr;
-	unsigned int mChannels = 0;
-	unsigned int mSampleRate = 0;
-	unsigned int mLength = 0;
-public:
 	/**
-	 * Load wave from file
+	 * @brief Decode wav from memory or file path
+	 * @param path The path or the wav file buffer if length is 0
+	 * @param out The buffer to store the result in
+	 * @param length The length of the wav file buffer if not reading from file
 	 */
-	WaveFile(const char* file = nullptr) {
-		if (file == nullptr) { return; }
+	bool load(const char* path, AudioBuffer<T>& out, size_t length = 0) {
 		drwav wav;
-		if (!drwav_init_file(&wav, file, nullptr)) {
-			return;
+		if (length == 0) {
+			if (!drwav_init_file(&wav, path, nullptr)) {
+				return false;
+			}
+		} else {
+			if (!drwav_init_memory(&wav, path, length, nullptr)) {
+				return false;
+			}
 		}
-
-	}
-
-
-	/**
-	 * Load wave from memory
-	 */
-	WaveFile(const char* data, unsigned int length) {
-		drwav wav;
-		if (!drwav_init_memory(&wav, data, length, nullptr)) {
-			return;
-		}
-	}
-
-	bool getValid() const {
-		return mValid;
-	}
-
-private:
-	bool decode(drwav* wav) {
 		float* sampleData = static_cast<float*>(malloc(
-			static_cast<size_t>(wav->totalPCMFrameCount)
-			* wav->channels * sizeof(float)
+			size_t(wav.totalPCMFrameCount) * wav.channels * sizeof(float)
 		));
 
 		if (sampleData == nullptr) { return false; }
-		size_t length = drwav_read_pcm_frames_f32(
-			wav, wav->totalPCMFrameCount, sampleData
+
+		length = drwav_read_pcm_frames_f32(
+			&wav, wav.totalPCMFrameCount, sampleData
 		);
+
 		if (length == 0) {
 			free(sampleData);
 			return false;
 		}
-		int channels = wav->channels;
-
-		mLength = length;
-		mChannels = channels;
-		mSampleRate = wav->sampleRate;
+		out.sampleRate = wav.sampleRate;
+		out.setFromInterleaved(sampleData, wav.channels, length);
 	}
-};
+
+}
 
 } // namespace
 
