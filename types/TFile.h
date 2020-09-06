@@ -21,11 +21,11 @@
 namespace tklb {
 
 const std::string PATH_DELIMITER =
-// #ifdef _WIN32
-// 	"\\";
-// #else
-// #endif
+#ifdef _WIN32
+	"\\";
+#else
 	"/";
+#endif
 
 struct FileInfo {
 	std::string name;
@@ -37,16 +37,25 @@ struct FileInfo {
 	FileInfo(const char* path) {
 		if (isRelative(path)) {
 			relative = path;
-			DIR *dir =  opendir (path);
+			DIR *dir =  opendir(path);
 			if (dir != nullptr) {
-				char str[256];
-				size_t out = 0;
-				wcstombs_s(&out, str, 256, dir->wdirp->patt, 256);
-				if (out > 2) {
-					str[out - 2] = 0; // the last
-					absolute = str;
-					isFolder = true;
+				struct dirent *dp;
+				while ((dp = readdir (dir)) != NULL) {
+					int i = 0;
 				}
+				// char str[256];
+				// wcstombs(str, dir->wdirp->patt, 256);
+				// int out = 0;
+				// while (out++ < 256) {
+				// 	if (str[out] == '*') {
+				// 		break;
+				// 	}
+				// }
+				// if (out > 1) {
+				// 	str[out] = 0; // rempve the *
+				// 	absolute = str;
+				// 	isFolder = true;
+				// }
 				closedir(dir);
 			} else {
 				std::fstream fs(path);
@@ -64,23 +73,31 @@ struct FileInfo {
 	FileInfo() = default;
 
 
-
+	/**
+	 * @brief Recursively scans the directory and its subfolder
+	 */
 	void scan() {
 		recursiveScan(*this, true);
 	}
 
+	/**
+	 * @brief check if the file has a .wav extension
+	 */
 	bool isWave() {
 		return name.length() - name.find_last_of(".WAV") == 4
 			|| name.length() - name.find_last_of(".wav") == 4;
 	}
 
+	/**
+	 * @brief check if the file has a .json extension
+	 */
 	bool isJSON() {
 		return name.length() - name.find_last_of(".JSON") == 5
 			|| name.length() - name.find_last_of(".json") == 5;
 	}
 
 	/**
-	 * Will delete the file, does not work with folders
+	 * @brief Will delete the file, does not work with folders
 	 */
 	bool remove() {
 		const char* path = absolute.c_str();
@@ -92,6 +109,9 @@ struct FileInfo {
 		return false;
 	}
 
+	/**
+	 * @brief Simple hash operation
+	 */
 	std::string hashFile() {
 		const char* path = absolute.c_str();
 
@@ -116,10 +136,19 @@ struct FileInfo {
 		return ss.str();
 	}
 
+	/**
+	 * @brief Print the directory tree
+	 */
 	void print() {
 		recursivePrint(*this, 0);
 	}
 
+	/**
+	 * @brief Write to a file
+	 * @param path The path to the file
+	 * @param data The data buffer
+	 * @param length The length of the data buffer
+	 */
 	static bool write(const char* path, const char* data, const size_t length) {
 		try {
 			auto file = std::fstream(path, std::ios::out | std::ios::binary);
@@ -131,12 +160,47 @@ struct FileInfo {
 		}
 	}
 
+	/**
+	 * @brief Concats multiple paths
+	 * TODO trim path dilimters
+	 */
 	static std::string joinPath(const std::initializer_list<std::string>& paths) {
-		std::string path;
+		std::string joined;
 		for (auto &i : paths) {
-			path += i;
+			joined += i;
+		}
+		return joined;
+	}
+
+	/**
+	 * @brief Replaces all pathdelimters to the platform ones
+	 */
+	static std::string platformPath(std::string path) {
+		for (size_t i = 1; i < path.size(); i++) {
+			if ((path[i - 1] == '/' || path[i - 1] == '\\') && (path[i] == '/' || path[i] == '\\')) {
+				// need to get rid of double slashes
+				TKLB_ASSERT(false);
+			}
+		}
+
+		for (size_t i = 0; i < path.size(); i++) {
+			if (path[i] == '/' || path[i] == '\\') {
+				path[i] = PATH_DELIMITER[0];
+			}
 		}
 		return path;
+	}
+
+	static bool isRelative(const std::string& path) {
+		return path[0] == '.';
+	}
+
+	static void toUnixPath(std::string& path) {
+		for (size_t i = 1; i < path.size(); i++) {
+			if (path[i] == '\\') {
+				path[i] = '/';
+			}
+		}
 	}
 
 private:
@@ -161,8 +225,8 @@ private:
 					FileInfo info;
 					info.isFolder = ent->d_type == DT_DIR;
 					info.name = ent->d_name;
-					info.relative = root.relative + info.name + (info.isFolder ? PATH_DELIMITER : "");
-					info.absolute = root.absolute + info.name + (info.isFolder ? PATH_DELIMITER : "");
+					info.relative = root.relative + info.name + (info.isFolder ? '/' : "");
+					info.absolute = root.absolute + info.name + (info.isFolder ? '/' : "");
 					if (recursive && info.isFolder) {
 						recursiveScan(info, true);
 					}
@@ -174,34 +238,6 @@ private:
 			root.isFolder = false;
 		}
 		free(files);
-	}
-
-	std::string platformPath(std::string path) {
-		for (size_t i = 1; i < path.size(); i++) {
-			if ((path[i - 1] == '/' || path[i - 1] == '\\') && (path[i] == '/' || path[i] == '\\')) {
-				// need to get rid of double slashes
-				assert(false);
-			}
-		}
-
-		for (size_t i = 0; i < path.size(); i++) {
-			if (path[i] == '/' || path[i] == '\\') {
-				path[i] = PATH_DELIMITER[0];
-			}
-		}
-		return path;
-	}
-
-	static bool isRelative(const std::string& path) {
-		return path[0] == '.';
-	}
-
-	void toUnixPath(std::string& path) {
-		for (size_t i = 1; i < path.size(); i++) {
-			if (path[i] == '\\') {
-				path[i] = '/';
-			}
-		}
 	}
 };
 

@@ -5,7 +5,7 @@
 #include <cmath>
 
 int main() {
-	const int length = 512; // default max block
+	const int length = 530; // default max block
 	const int channels = TKLB_MAXCHANNELS;
 	using uchar = unsigned char;
 	using uint = unsigned int;
@@ -17,9 +17,7 @@ int main() {
 		oversampler.setProcessFunc(
 			[&](Oversampler<>::T** in, Oversampler<>::T** out, uint len) {
 				for(uchar c = 0; c < channels; c++) {
-					for (uint i = 0; i < len; i++) {
-						out[c][i] = -in[c][i];
-					}
+					// memcpy(out[c], in[c], sizeof(Oversampler<>::T) * len);
 				}
 		});
 
@@ -35,12 +33,12 @@ int main() {
 		}
 
 		{
-			TIMER(Miliseconds);
-			for (int i = 0; i < 1000; i++) {
+			TIMER(Microseconds);
+			for (int i = 0; i < ITERATIONS; i++) {
 				oversampler.process(in, out);
 			}
 		}
-
+		int i = 0;
 
 	}
 

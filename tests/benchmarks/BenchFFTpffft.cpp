@@ -1,5 +1,6 @@
 #define TKLB_MAXCHANNELS 16
 #include "../../types/audio/fft/TFFT.h"
+
 #include "BenchmarkCommon.h"
 
 int main() {
@@ -17,8 +18,8 @@ int main() {
 		}
 
 		{
-			TIMER(Miliseconds);
-			for (int i = 0; i < 10000; i++) {
+			TIMER(Microseconds);
+			for (int i = 0; i < ITERATIONS * TKLB_MAXCHANNELS; i++) {
 				con.forward(input, result);
 				con.back(result, output);
 			}

@@ -1,10 +1,12 @@
 #define TKLB_MAXCHANNELS 16
 #include "../../types/audio/TAudioBuffer.h"
+
+#define ITERATIONS 10000
 #include "BenchmarkCommon.h"
 
 int main() {
 	// some overhang so simd can't do all of it
-	const int length = 495;
+	const int length = 530;
 	const int channels = TKLB_MAXCHANNELS;
 	AudioBuffer<> buffer;
 
@@ -15,8 +17,8 @@ int main() {
 	}
 
 	{
-		TIMER(Miliseconds);
-		for(int i = 0; i < 100000; i++) {
+		TIMER(Microseconds);
+		for(int i = 0; i < ITERATIONS; i++) {
 			buffer.multiply(10.0);
 		}
 	}

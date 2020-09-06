@@ -5,7 +5,7 @@
 
 int main() {
 	{
-		const int length = 256;
+		const int length = 530;
 		const int channels = TKLB_MAXCHANNELS;
 		const int rate1 = 44100;
 		const int rate2 = 48000;
@@ -28,8 +28,8 @@ int main() {
 		in.setValidSize(length);
 
 		{
-			TIMER(Miliseconds);
-			for (int i = 0; i < 1000; i++) {
+			TIMER(Microseconds);
+			for (int i = 0; i < ITERATIONS; i++) {
 				up.process(in, out);
 				down.process(out, in);
 			}
