@@ -44,6 +44,15 @@ namespace wave {
 		}
 		out.sampleRate = wav.sampleRate;
 		out.setFromInterleaved(sampleData, wav.channels, length);
+		out.setValidSize(length);
+		free(sampleData);
+		drwav_uninit(&wav);
+	}
+
+	template <typename T>
+	bool write(const AudioBuffer<T>& in, char* path, size_t length = 0) {
+		// TODO
+		TKLB_ASSERT(false);
 	}
 
 }

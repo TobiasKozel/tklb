@@ -3,8 +3,8 @@
 
 #include <string>
 #include <chrono>
-#include <iostream>
 #include <ctime>
+#include "./TPrint.h"
 
 namespace tklb {
 
@@ -19,7 +19,7 @@ public:
 private:
 	const char* mMessage;
 
-	uint mDivider;
+	unsigned int mDivider;
 
 	#ifdef _MSC_VER
 		using Time = std::chrono::time_point<std::chrono::steady_clock>;
@@ -30,7 +30,7 @@ private:
 	Time mStart;
 
 public:
-	SectionTimer(const char* message = "", Unit unit = Microseconds, uint divider = 1) {
+	SectionTimer(const char* message = "", Unit unit = Microseconds, unsigned int divider = 1) {
 		mMessage = message;
 		mUnit = unit;
 		mStart = std::chrono::high_resolution_clock::now();
@@ -41,15 +41,15 @@ public:
 		Time now = std::chrono::high_resolution_clock::now();
 		if(mUnit == Nanoseconds) {
 			auto dur = std::chrono::duration_cast<std::chrono::nanoseconds>(now - mStart);
-			std::cout << mMessage << " " << dur.count() / mDivider << "\tns\n";
+			TKLB_PRINT("%s\t%i\tnanoseconds\n", mMessage, int(dur.count() / mDivider))
 		}
 		if (mUnit == Microseconds) {
 			auto dur = std::chrono::duration_cast<std::chrono::microseconds>(now - mStart);
-			std::cout << mMessage << " " << dur.count() / mDivider << "\tmicroseconds\n";
+			TKLB_PRINT("%s\t%i\tmicroseconds\n", mMessage, int(dur.count() / mDivider))
 		}
 		if (mUnit == Miliseconds) {
 			auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(now - mStart);
-			std::cout << mMessage << " " << dur.count() / mDivider << "\tms\n";
+			TKLB_PRINT("%s\t%i\tmilliseconds\n", mMessage, int(dur.count() / mDivider))
 		}
 	}
 };
@@ -66,7 +66,7 @@ public:
 
 	~SectionClock() {
 		std::clock_t now = std::clock();
-		std::cout << mMessage << " " << (now - mStart) << " cycles\n";
+		TKLB_PRINT("%s\t%i\tCycles\n", mMessage, int(now - mStart))
 	}
 };
 

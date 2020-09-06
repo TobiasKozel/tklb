@@ -96,6 +96,27 @@ public:
 	};
 
 	/**
+	 * @brief Set from another buffer object
+	 * e.g. offset=10 and length=15 will copy 15 samples into the buffer starting at the 10th sample
+	 * @param buffer Source buffer object
+	 * @param offset Start offset in the target buffer
+	 * @param length Operation will stop at that sample
+	 */
+	template <typename T2>
+	void set(const AudioBuffer<T2>& buffer, const uint offset = 0, uint length = 0) {
+		length = length == 0 ? buffer.size() : length;
+		for (uchar c = 0; c < buffer.channels(); c++) {
+			set(buffer.get(c), c, length, offset);
+		}
+	};
+
+	void set(T value) {
+		for (uchar c = 0; c < channels(); c++) {
+			fill_n(mBuffers[c].data(), size(), value);
+		}
+	}
+
+	/**
 	 * @brief Set multiple channels from an interleaved array
 	 * @param samples A 1D Array containing the interleaved audio samples (float or double)
 	 * @param channels Channel count
@@ -110,21 +131,6 @@ public:
 			}
 		}
 	}
-
-	/**
-	 * @brief Set from another buffer object
-	 * e.g. offset=10 and length=15 will copy 15 samples into the buffer starting at the 10th sample
-	 * @param buffer Source buffer object
-	 * @param offset Start offset in the target buffer
-	 * @param length Operation will stop at that sample
-	 */
-	template <typename T2>
-	void set(const AudioBuffer<T2>& buffer, const uint offset = 0, uint length = 0) {
-		length = length == 0 ? buffer.size() : length;
-		for (uchar c = 0; c < buffer.channels(); c++) {
-			set(buffer.get(c), c, length, offset);
-		}
-	};
 
 	void resize(const uint length, uchar channels) {
 		if (channels == mChannels && mBuffers[0].size() == length) {
@@ -153,9 +159,7 @@ public:
 	}
 
 	void clear() {
-		const uint s = size();
-		resize(0);
-		resize(s);
+		set(0.0);
 	}
 
 	template <typename T2>

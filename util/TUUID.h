@@ -2,6 +2,7 @@
 #define TKLB_UUID
 
 #include <string>
+#include "time.h"
 
 namespace tklb {
 	std::string generateUUID() {

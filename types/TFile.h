@@ -10,13 +10,11 @@
 
 #include <string>
 #include <vector>
-#include <iostream>
 #include <sstream>
 #include <fstream>
 #include <iomanip>
-#include <cassert>
-#include <functional>
 #include "../util/TAssert.h"
+#include "../util/TPrint.h"
 
 namespace tklb {
 
@@ -37,30 +35,8 @@ struct FileInfo {
 	FileInfo(const char* path) {
 		if (isRelative(path)) {
 			relative = path;
-			DIR *dir =  opendir(path);
-			if (dir != nullptr) {
-				struct dirent *dp;
-				while ((dp = readdir (dir)) != NULL) {
-					int i = 0;
-				}
-				// char str[256];
-				// wcstombs(str, dir->wdirp->patt, 256);
-				// int out = 0;
-				// while (out++ < 256) {
-				// 	if (str[out] == '*') {
-				// 		break;
-				// 	}
-				// }
-				// if (out > 1) {
-				// 	str[out] = 0; // rempve the *
-				// 	absolute = str;
-				// 	isFolder = true;
-				// }
-				closedir(dir);
-			} else {
-				std::fstream fs(path);
-				fs.close();
-			}
+			TKLB_ASSERT(false)
+			// TODO figure out the absolute path
 		} else {
 			absolute = path;
 			relative = "./";
@@ -208,7 +184,7 @@ private:
 		char space[256];
 		std::fill_n(space, 256, 0);
 		std::fill_n(space, depth, ' ');
-		std::cout << space << info.name << "\n";
+		TKLB_PRINT("%s%s\n", space, info.name.c_str())
 		for (auto &i : info.children) {
 			recursivePrint(i, depth + 1);
 		}
@@ -219,14 +195,16 @@ private:
 		struct dirent** files = nullptr;
 		const int count = scandir(root.absolute.c_str(), &files, nullptr, alphasort);
 		if (count >= 0) {
+			root.isFolder = true;
+			appendDelimiter(root);
 			for (int i = 0; i < count; i++) {
 				const struct dirent* ent = files[i];
 				if (ent->d_name[0] != '.') {
 					FileInfo info;
 					info.isFolder = ent->d_type == DT_DIR;
 					info.name = ent->d_name;
-					info.relative = root.relative + info.name + (info.isFolder ? '/' : "");
-					info.absolute = root.absolute + info.name + (info.isFolder ? '/' : "");
+					info.relative = root.relative + info.name;
+					info.absolute = root.absolute + info.name;
 					if (recursive && info.isFolder) {
 						recursiveScan(info, true);
 					}
@@ -238,6 +216,15 @@ private:
 			root.isFolder = false;
 		}
 		free(files);
+	}
+
+	void appendDelimiter(FileInfo& info) {
+		if (info.relative.length() - info.relative.find_last_of('/') != 1) {
+			info.relative = info.relative + "/";
+		}
+		if (info.absolute.length() - info.absolute.find_last_of('/') != 1) {
+			info.absolute = info.absolute + "/";
+		}
 	}
 };
 

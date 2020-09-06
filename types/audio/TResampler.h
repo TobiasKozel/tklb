@@ -53,7 +53,7 @@ public:
 	 * @param maxBlock The maximum blocksize beeing passed into process().
 	 * Only relevant when doing non float resampling to allocate space for the
 	 * conversion buffers
-	 * @param quality Quality factor from 0-10. Higher results in better quality and higher CPU usage
+	 * @param quality Quality factor from 1-10. Higher results in better quality and higher CPU usage
 	 * @return True on success
 	 */
 	bool init(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
@@ -77,8 +77,11 @@ public:
 	uint process(const AudioBuffer<T>& in, AudioBuffer<T>& out) {
 		TKLB_ASSERT(in.sampleRate == mRateIn);
 		TKLB_ASSERT(out.sampleRate == mRateOut);
+		TKLB_ASSERT(in.validSize() > 0)
 		uint samplesOut = 0;
 		if (std::is_same<T, float>::value) {
+			// Input output buffer must not overlap when working directly on them
+			TKLB_ASSERT(&in != &out)
 			for (uchar c = 0; c < in.channels(); c++) {
 				uint countIn = in.validSize();
 				uint countOut = out.size();
@@ -105,8 +108,37 @@ public:
 		return samplesOut;
 	}
 
+	/**
+	 * @brief Calculate a buffersize fit for the resampled result.
+	 * Also adds a bit of padding.
+	 */
 	static uint calculateBufferSize(uint rateIn, uint rateOut, uint initialSize) {
 		return ceil(initialSize * (rateOut / double(rateIn))) + 10;
+	}
+
+	/**
+	 * @brief Resamples the provided buffer from its sampleRate
+	 * to the target rate
+	 * @param buffer Audiobuffer to resample
+	 * @param rateOut Desired output samplerate in Hz
+	 * @param quality Quality from 1-10
+	 */
+	static void resample(AudioBuffer<T>& buffer, const uint rateOut, const uchar quality = 5) {
+		const uint rateIn = buffer.sampleRate;
+		const uint samples = buffer.size();
+		TKLB_ASSERT(rateIn > 0)
+		// Make a copy, this could be skipped when a conversion to float is needed anyways
+		AudioBuffer<T> copy;
+		copy.resize(buffer);
+		copy.set(buffer);
+		copy.sampleRate = rateIn;
+		copy.setValidSize(samples);
+
+		buffer.resize(calculateBufferSize(rateIn, rateOut, samples));
+
+		Resampler<T> resampler;
+		resampler.init(rateIn, rateOut, copy.size(), quality);
+		resampler.process(copy, buffer);
 	}
 };
 

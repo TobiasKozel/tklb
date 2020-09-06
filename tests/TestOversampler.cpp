@@ -35,12 +35,20 @@ int main() {
 			}
 		}
 
+		unsigned int allocations = allocationCount;
+
 		oversampler.process(in, out);
+
+		unsigned int allocationsAfter = allocationCount;
+
+		if ((allocationCount - allocationsAfter) != 0) {
+			return 1; // TODO Apparently std::function allocates memory
+		}
 
 		for (uchar c = 0; c < channels; c++) {
 			for (int i = 10; i < length - 10; i++) {
 				if (!close(out[c][i], -sin(i * c * 0.001), 0.1)) {
-					return 1;
+					return 2;
 				}
 			}
 		}

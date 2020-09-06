@@ -3,7 +3,7 @@
 
 int main() {
 	{
-		FileInfo file("./");
+		FileInfo file("C:\\dev\\git\\tklb");
 		file.scan();
 		file.print();
 	}
