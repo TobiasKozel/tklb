@@ -1,15 +1,11 @@
 #define TKLB_MAXCHANNELS 16
 
-// TODO there's some fuckery going on here
-// probably the memchecker missing some allocations
-#define TKLB_LEAKCHECKER_DISARM
-#include "TestCommon.h"
-#include "../types/audio/TResampler.h"
-
+#include "../../types/audio/TResampler.h"
+#include "BenchmarkCommon.h"
 
 int main() {
 	{
-		const int length = 512;
+		const int length = 256;
 		const int channels = TKLB_MAXCHANNELS;
 		const int rate1 = 44100;
 		const int rate2 = 48000;
@@ -31,18 +27,14 @@ int main() {
 		}
 		in.setValidSize(length);
 
-		up.process(in, out);
-		down.process(out, in);
-
-		// compare sine test signal
-		for (int c = 0; c < channels; c++) {
-			for (int i = 10; i < length - 10; i++) {
-				if (!close(in[c][i], -sin(i * c * 0.001), 0.6)) {
-					// return 1;
-				}
+		{
+			TIMER(Miliseconds);
+			for (int i = 0; i < 1000; i++) {
+				up.process(in, out);
+				down.process(out, in);
 			}
 		}
+
 	}
-	memcheck()
 	return 0;
 }

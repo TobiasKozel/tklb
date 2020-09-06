@@ -1,77 +1,112 @@
 #ifndef TKLB_RESAMPLER
 #define TKLB_RESAMPLER
 
-#include "../../external/SpeexResampler.h"
+#define OUTSIDE_SPEEX
+#define FLOATING_POINT
+
+#ifndef TKLB_NO_SIMD
+	#ifdef __arm__
+		#define USE_NEON
+	#else
+		#define USE_SSE
+		#define USE_SSE2
+	#endif
+#endif
+
+#define RANDOM_PREFIX tklb
+
+#include "../../external/speex_resampler/speex_resampler.h"
+#include "../../external/speex_resampler/resample.c"
+
+#include "./TAudioBuffer.h"
+
 namespace tklb {
 
-template <unsigned int CHANNELS = 1, unsigned int MAX_BLOCK = 512>
+#ifdef TKLB_SAMPLE_FLOAT
+template <typename T = float>
+#else
+template <typename T = double>
+#endif
 class Resampler {
-	speexport::SpeexResampler mResampler;
-	float mBuffer[CHANNELS][MAX_BLOCK] = { 0 };
+	using uchar = unsigned char;
+	using uint = unsigned int;
+	uint mRateIn, mRateOut;
+	AudioBuffer<float> mConvertOut, mConvertIn;
+	static constexpr uchar MAX_CHANNELS = AudioBuffer<float>::MAX_CHANNELS;
+	SpeexResamplerState* mState = nullptr;
+
 public:
-	Resampler(int rateIn, int rateOut, int quality = 5) {
-		init(rateIn, rateOut, quality);
+	Resampler(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
+		init(rateIn, rateOut, maxBlock, quality);
 	}
 
-	bool init(int rateIn, int rateOut, int quality = 5) {
+	Resampler() = default;
+
+	~Resampler() {
+		speex_resampler_destroy(mState);
+	}
+
+	/**
+	 * @brief setup the resampler
+	 * @param rateIn Input sample rate
+	 * @param rateOut Desired output samplerate
+	 * @param maxBlock The maximum blocksize beeing passed into process().
+	 * Only relevant when doing non float resampling to allocate space for the
+	 * conversion buffers
+	 * @param quality Quality factor from 0-10. Higher results in better quality and higher CPU usage
+	 * @return True on success
+	 */
+	bool init(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
 		int err;
-		mResampler.init(CHANNELS, rateIn, rateOut, quality, &err);
+		mState = speex_resampler_init(MAX_CHANNELS, rateIn, rateOut, quality, &err);
+
+		// Conversion buffers if not doing float resampling
+		if (!std::is_same<T, float>::value) {
+			mConvertIn.resize(calculateBufferSize(rateIn, rateIn, maxBlock), MAX_CHANNELS);
+			mConvertOut.resize(calculateBufferSize(rateIn, rateOut, maxBlock), MAX_CHANNELS);
+		}
+		mRateIn = rateIn;
+		mRateOut = rateOut;
 		return err == 0;
 	}
 
-	unsigned int process(float** buffer, unsigned int countIn) {
-		unsigned int countOut = MAX_BLOCK;
-		for (unsigned int c = 0; c < CHANNELS; c++) {
-			unsigned int _countOut = MAX_BLOCK;
-			unsigned int _countIn = countIn;
-			mResampler.process(c, buffer[c], &_countIn, mBuffer[c], &_countOut);
-			countOut = _countOut > countOut ? countOut : _countOut;
+	/**
+	 * @brief Resample function
+	 * Make sure the out buffer has enough space
+	 */
+	uint process(const AudioBuffer<T>& in, AudioBuffer<T>& out) {
+		TKLB_ASSERT(in.sampleRate == mRateIn);
+		TKLB_ASSERT(out.sampleRate == mRateOut);
+		uint samplesOut = 0;
+		if (std::is_same<T, float>::value) {
+			for (uchar c = 0; c < in.channels(); c++) {
+				uint countIn = in.validSize();
+				uint countOut = out.size();
+				const float* inBuf = reinterpret_cast<const float*>(in.get(c));
+				float* outBuf = reinterpret_cast<float*>(out.get(c));
+				speex_resampler_process_float(mState, c, inBuf, &countIn, outBuf, &countOut);
+				samplesOut = countOut;
+			}
+		} else {
+			mConvertIn.set(in);
+			for (uchar c = 0; c < in.channels(); c++) {
+				uint countIn = in.validSize();
+				uint countOut = mConvertOut.size();
+				const float* inBuf = mConvertIn.get(c);
+				float* outBuf = mConvertOut.get(c);
+				speex_resampler_process_float(mState, c, inBuf, &countIn, outBuf, &countOut);
+				samplesOut = countOut;
+				TKLB_ASSERT(mConvertOut.size() >= countOut);
+			}
+			out.set(mConvertOut, 0, samplesOut);
 		}
-		return countOut;
+		TKLB_ASSERT(out.size() >= samplesOut);
+		out.setValidSize(samplesOut);
+		return samplesOut;
 	}
 
-	const float** getOutBuffer() const{
-		return mBuffer;
-	}
-};
-
-template <int MAX_BLOCK = 512, int MAX_CHANNELS = 16>
-class HeapResampler {
-	using ResamplerSingle = Resampler<1, MAX_BLOCK>;
-	ResamplerSingle* mResamplers[MAX_CHANNELS] = { nullptr };
-	unsigned int mChannels = 0;
-public:
-	HeapResampler(int rateIn, int rateOut, int channels = 2, int quality = 5) {
-		init(rateIn, rateOut, channels, quality);
-	}
-
-	~HeapResampler() {
-		for (int c = 0; c < MAX_CHANNELS; c++) {
-			delete mResamplers[c];
-		}
-	}
-
-	bool init(int rateIn, int rateOut, int channels = 2, int quality = 5) {
-		mChannels = channels;
-		for (int c = 0; c < MAX_CHANNELS; c++) {
-			delete mResamplers[c];
-			mResamplers[c] = nullptr;
-		}
-
-		for (int c = 0; c < channels; c++) {
-			mResamplers[c] = new ResamplerSingle(rateIn, rateOut, quality);
-		}
-		return true;
-	}
-
-	unsigned int process(float** buffer, unsigned int countIn) {
-		unsigned int countOut = MAX_BLOCK;
-		for (unsigned int c = 0; c < mChannels; c++) {
-			float* channel[] = { buffer[c] };
-			unsigned int _countOut = mResamplers[c]->process(channel, countIn);
-			countOut = _countOut > countOut ? countOut : _countOut;
-		}
-		return countOut;
+	static uint calculateBufferSize(uint rateIn, uint rateOut, uint initialSize) {
+		return ceil(initialSize * (rateOut / double(rateIn))) + 10;
 	}
 };
 

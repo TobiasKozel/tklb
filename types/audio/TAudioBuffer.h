@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cstring>
+#include <algorithm>
 
 #ifndef TKLB_NO_SIMD
 	#include "../../external/xsimd/include/xsimd/xsimd.hpp"
@@ -47,6 +48,8 @@ private:
 	Buffer<T> mBuffers[MAX_CHANNELS];
 	T* mRawBuffers[MAX_CHANNELS];
 	uchar mChannels = 0;
+	uint mSize = 0;
+	uint mValidSize = 0;
 
 public:
 	uint sampleRate = 0;
@@ -136,6 +139,8 @@ public:
 			mBuffers[c].resize(0);
 		}
 		mChannels = channels;
+		mSize = length;
+		mValidSize = std::min(mValidSize, mSize);
 	}
 
 	void resize(const uint length) {
@@ -279,12 +284,34 @@ public:
 		#endif
 	}
 
+	/**
+	 * Returns the amount of channels
+	 */
 	uchar channels() const {
 		return mChannels;
 	}
 
+	/**
+	 * Returns the allocated length of the buffer
+	 */
 	uint size() const {
-		return mBuffers[0].size();
+		return mSize;
+	}
+
+	/**
+	 * Returns the length of actually valid audio in the buffer
+	 */
+	uint validSize() const {
+		return mValidSize;
+	}
+
+	/**
+	 * Set the amount of valid samples currently in the buffer
+	 * This is mostly a convenience flag since the actual size of the buffer may be larger
+	 */
+	void setValidSize(const uint v) {
+		TKLB_ASSERT(size() >= v);
+		mValidSize = v;
 	}
 
 	T* get(const uchar channel) {
