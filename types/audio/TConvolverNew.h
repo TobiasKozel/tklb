@@ -16,7 +16,10 @@ public:
 
 private:
 	uint mBlockSize, mSegmentSize, mSegmentCount, mFFTSize;
-	AudioBuffer<> mComplexIr;
+	AudioBuffer<> mComplexIr, mFFTBuffer;
+	std::vector<AudioBuffer<>> mSegments, mSegmentsIR;
+	FFT mFFT;
+
 public:
 	// template <typename T>
 	using T = double;
@@ -32,7 +35,9 @@ public:
 		mSegmentSize = 2 * mBlockSize;
 		mSegmentCount = std::ceil(length / T(mBlockSize));
 		mFFTSize = (mSegmentSize / 2) + 1;
-		FFT fft = { mSegmentSize };
+
+		mFFT.resize(mSegmentSize);
+		mFFTBuffer.resize(mSegmentSize, 1);
 	}
 
 };
