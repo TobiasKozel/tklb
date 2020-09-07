@@ -46,7 +46,7 @@ public:
 	}
 
 	template <typename T>
-	void forward(const AudioBuffer<T>& input, AudioBuffer<float>& result) {
+	void forward(const AudioBuffer<T>& input, AudioBuffer<T>& result) {
 		const float* data = nullptr;
 		if (std::is_same<T, float>::value) {
 			data = reinterpret_cast<const float*>(input.get(0));
@@ -61,7 +61,7 @@ public:
 	}
 
 	template <typename T>
-	void back(const AudioBuffer<float>& input, AudioBuffer<T>& result) {
+	void back(const AudioBuffer<T>& input, AudioBuffer<T>& result) {
 		const uint sizeHalf = mSize / 2;
 		mRc.set(input.get(0), 0, sizeHalf);
 		mRc.set(input.get(1), 0, sizeHalf, sizeHalf);

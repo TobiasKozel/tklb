@@ -39,9 +39,9 @@ public:
 	}
 
 	template <typename T>
-	void forward(const AudioBuffer<T>& input, AudioBuffer<double>& result) {
-		double* real = result.get(0);
-		double* imaginary = result.get(1);
+	void forward(const AudioBuffer<T>& input, AudioBuffer<T>& result) {
+		T* real = result.get(0);
+		T* imaginary = result.get(1);
 		/**
 		 * converts or copies the data
 		 * we shouldn't use the original buffer since
@@ -54,8 +54,8 @@ public:
 		{
 			double* b = mBuffer.get(0);
 			double* bEnd = b + mSize;
-			double* r = real;
-			double* i = imaginary;
+			T* r = real;
+			T* i = imaginary;
 			while (b != bEnd) {
 				*(r++) = (*(b++));
 				*(i++) = (-(*(b++)));
@@ -68,24 +68,24 @@ public:
 	}
 
 	template <typename T>
-	void back(const AudioBuffer<double>& result, AudioBuffer<T>& input) {
-		T* data = input.get(0);
-		const double* real = result.get(0);
-		const double* imaginary = result.get(1);
+	void back(const AudioBuffer<T>& input, AudioBuffer<T>& result) {
+		T* data = result.get(0);
+		const T* real = input.get(0);
+		const T* imaginary = input.get(1);
 		{
 			double* b = mBuffer.get(0);
 			double* bEnd = b + mSize;
-			const double* r = real;
-			const double* i = imaginary;
+			const T* r = real;
+			const T* i = imaginary;
 			while (b != bEnd) {
-				*(b++) = static_cast<double>(*(r++));
-				*(b++) = -static_cast<double>(*(i++));
+				*(b++) = (*(r++));
+				*(b++) = -(*(i++));
 			}
 			mBuffer[0][1] = real[mSize / 2];
 		}
-		ooura::rdft(static_cast<int>(mSize), -1, mBuffer.get(0), mIp.data(), mW.get(0));
+		ooura::rdft(int(mSize), -1, mBuffer.get(0), mIp.data(), mW.get(0));
 
-		const T volume = 2.0 / static_cast<double>(mSize);
+		const T volume = 2.0 / T(mSize);
 		if (std::is_same<T, double>::value) {
 			mBuffer.multiply(volume); // scale the output
 			mBuffer.put(reinterpret_cast<double*>(data), 0, mSize);
