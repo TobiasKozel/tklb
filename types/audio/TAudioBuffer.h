@@ -41,10 +41,11 @@ public:
 	#endif
 	>;
 
-private:
 #ifndef TKLB_NO_SIMD
 	static constexpr uint stride = xsimd::simd_type<T>::size;
 #endif
+
+private:
 	Buffer<T> mBuffers[MAX_CHANNELS];
 	T* mRawBuffers[MAX_CHANNELS];
 	uchar mChannels = 0;
@@ -163,8 +164,10 @@ public:
 	}
 
 	template <typename T2>
-	void add(const AudioBuffer<T2>& buffer, uint offset = 0) {
-		const uint size = std::min(buffer.size() - offset, this->size() - offset);
+	void add(const AudioBuffer<T2>& buffer, uint offset = 0, uint size = 0) {
+		if (size == 0) {
+			size = std::min(buffer.size() - offset, this->size() - offset);
+		}
 		const uchar channels = std::min(buffer.channels(), this->channels());
 
 		#ifndef TKLB_NO_SIMD
@@ -196,8 +199,10 @@ public:
 	}
 
 	template <typename T2>
-	void multiply(const AudioBuffer<T2>& buffer, uint offset = 0) {
-		const uint size = std::min(buffer.size() - offset, this->size() - offset);
+	void multiply(const AudioBuffer<T2>& buffer, uint offset = 0, uint size = 0) {
+		if (size == 0) {
+			size = std::min(buffer.size() - offset, this->size() - offset);
+		}
 		const uchar channels = std::min(buffer.channels(), this->channels());
 
 		#ifndef TKLB_NO_SIMD

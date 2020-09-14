@@ -32,6 +32,7 @@ public:
 	}
 
 	~FFTpffft() {
+		if (mSetup == nullptr) { return; }
 		pffft_destroy_setup(mSetup);
 	}
 
