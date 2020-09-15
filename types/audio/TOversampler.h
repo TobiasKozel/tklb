@@ -60,6 +60,9 @@ namespace tklb {
 /**
  * Super simple wrapper for the hiir up and down samplers
  * It only goes up to 4x oversampling
+ * Its type is also bound to the Audiouffers default sample type
+ * Maybe templated at some point but this will require all resamplers
+ * to be included
  */
 #ifdef TKLB_MAXCHANNELS
 template <int CHANNELS = TKLB_MAXCHANNELS, int MAX_BLOCK = 512>
@@ -68,7 +71,7 @@ template <int CHANNELS = 2, int MAX_BLOCK = 512>
 #endif
 class Oversampler {
 public:
-	using T = AudioBuffer<>::sample;
+	using T = AudioBuffer::sample;
 
 	using uchar = unsigned char;
 	using uint = unsigned int;
@@ -81,7 +84,7 @@ private:
 	TKLB_OVERSAMPLER_DOWN(12) mDown2x[CHANNELS];
 	TKLB_OVERSAMPLER_DOWN(4) mDown4x[CHANNELS];
 
-	AudioBuffer<> mBuf2xUp, mBuf2xDown, mBuf4xUp, mBuf4xDown;
+	AudioBuffer mBuf2xUp, mBuf2xDown, mBuf4xUp, mBuf4xDown;
 
 	/**
 	 * Straight up stolen from the hiir oversampler wrapper from iPlug2
@@ -128,7 +131,7 @@ public:
 		return mFactor;
 	}
 
-	void process(AudioBuffer<>& in, AudioBuffer<>& out) {
+	void process(AudioBuffer& in, AudioBuffer& out) {
 		process(in.getRaw(), out.getRaw(), in.size());
 	}
 

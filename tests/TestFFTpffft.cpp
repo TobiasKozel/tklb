@@ -6,7 +6,7 @@ int main() {
 	{
 		const int fftSize = 32;
 		FFT con = { fftSize };
-		AudioBuffer<> input, output, result;
+		AudioBuffer input, output, result;
 		input.resize(fftSize, 1);
 		output.resize(fftSize, 1);
 		result.resize(fftSize, 2);

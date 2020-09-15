@@ -5,58 +5,103 @@
 
 #include <cmath>
 #include <cstring>
+#include <memory>
 
 namespace tklb {
 
-template <typename T>
+/**
+ * Basically a std::vector which can also work with
+ * foreign memory
+ */
+template <typename T, class Allocator = std::allocator<T>>
 class HeapBuffer {
+	using uint = unsigned int;
 	T* mBuf = nullptr;
-	unsigned int mSize = 0; // size of elements requested
-	unsigned int mRealSize = 0; // the actually allocated size
-	unsigned int mGranularity; // the space actually allocated will be a multiple of this
-
+	uint mSize = 0; // size of elements requested
+	uint mRealSize = 0; // the actually allocated size
+	uint mGranularity; // the space actually allocated will be a multiple of this
+	bool mInjected = false; // True if the memory doesn't belong to this instance
+	Allocator allocator;
 
 public:
 	// TODO handle copying
 	TKLB_NO_COPY(HeapBuffer)
 
-	HeapBuffer(const int granularity = 1024 / sizeof(T)) {
+	/**
+	 * @param size Size in elements of the buffer
+	 * @param granularity How big the real allocated chunks are
+	 */
+	HeapBuffer(const uint size = 0, const uint granularity = 1024 / sizeof(T)) {
 		setGranularity(granularity);
+		if (size != 0) { resize(0); }
 	}
 
 	~HeapBuffer() {
-		delete mBuf;
+		resize(0);
 	}
 
-	void setGranularity(const int granularity) {
-		if (granularity > 0) {
-			mGranularity = granularity;
-		}
+	/**
+	 * Provide foreign memory to borrow
+	 */
+	void inject(T* mem, const uint size, uint realSize = 0) {
+		if (mBuf != nullptr) { resize(0); };
+		mInjected = true;
+		mBuf = mem;
+		mSize = size;
+		mRealSize = realSize == 0 ? size : realSize;
 	}
 
-	T* get() {
+	void setGranularity(const uint granularity) {
+		mGranularity = std::min(1u, granularity);
+	}
+
+	T* data() {
 		return mBuf;
 	}
 
-	T* resize(const unsigned int size, const bool downsize = true) {
+	const T* data() const {
+		return mBuf;
+	}
+
+	const T& operator[](const uint index) const {
+		return mBuf[index];
+	}
+
+	T& operator[](const uint index) {
+		return mBuf[index];
+	}
+
+	/**
+	 * Resize the buffer
+	 * If the memory is borrowed it will become unique and owned by this instance
+	 * as soon as an allocation happens
+	 * @param size The new size
+	 * @param downsize Whether to downsize and reallocate
+	 */
+	T* resize(const uint size, const bool downsize = true) {
 		const unsigned int chunked =
 			mGranularity * std::ceil(size / static_cast<float>(mGranularity));
 
 		if (chunked != mRealSize) {
-			if (size == 0) { // delete
-				delete mBuf;
+			if (size == 0 && !mInjected) {
+				allocator.deallocate(mBuf, mRealSize);
 				mBuf = nullptr;
+				mRealSize = 0;
 			} else {
+				T* temp = nullptr;
 				if (chunked > mRealSize) { // Size up
-					T* temp = new T[chunked];
+					temp = allocator.allocate(chunked);
 					memcpy(temp, mBuf, mSize * sizeof(T));
 					memset(temp + mSize, 0, (chunked - mSize) * sizeof(T));
-					delete[] mBuf;
-					mBuf = temp;
 				} else if(downsize) { // size down
-					T* temp = new T[chunked];
+					temp = allocator.allocate(chunked);
 					memcpy(temp, mBuf, chunked * sizeof(T));
-					delete[] mBuf;
+				}
+				if (temp != nullptr) { // an allocation occured
+					if (!mInjected) {
+						allocator.deallocate(mBuf, mRealSize);
+					}
+					mInjected = false; // we own the memory now
 					mBuf = temp;
 				}
 			}
@@ -66,49 +111,8 @@ public:
 		return mBuf;
 	}
 
-	int size() const {
+	uint size() const {
 		return mSize;
-	}
-};
-
-template <typename T, int DIMENSIONS>
-class MultiHeapBuffer {
-	HeapBuffer<T> mBuffers[DIMENSIONS];
-	T* mBufferRef[DIMENSIONS] = { nullptr };
-public:
-	MultiHeapBuffer(int granularity = 0) {
-		setGranularity(granularity);
-	}
-
-	~MultiHeapBuffer() {
-		for (int c = 0; c < DIMENSIONS; c++) {
-			mBufferRef[c] = nullptr;
-		}
-	}
-
-	void setGranularity(int granularity = 0) {
-		for (int c = 0; c < DIMENSIONS; c++) {
-			mBuffers[c].setGranularity(granularity);
-		}
-	}
-
-	T** get(size_t offset = 0) {
-		for (int c = 0; c < DIMENSIONS; c++) {
-			mBufferRef[c] = mBuffers[c].get() + offset;
-		}
-		return mBufferRef;
-	}
-
-	T* getChannel(int c) {
-		return mBuffers[c].get();
-	}
-
-	T** resize(const int size, const bool downsize = true) {
-		for (int c = 0; c < DIMENSIONS; c++) {
-			mBuffers[c].resize(size, downsize);
-			mBufferRef[c] = mBuffers[c].get();
-		}
-		return mBufferRef;
 	}
 };
 

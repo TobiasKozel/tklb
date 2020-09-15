@@ -31,8 +31,8 @@ class Resampler {
 	using uchar = unsigned char;
 	using uint = unsigned int;
 	uint mRateIn, mRateOut;
-	AudioBuffer<float> mConvertOut, mConvertIn;
-	static constexpr uchar MAX_CHANNELS = AudioBuffer<float>::MAX_CHANNELS;
+	AudioBufferFloat mConvertOut, mConvertIn;
+	static constexpr uchar MAX_CHANNELS = AudioBufferFloat::MAX_CHANNELS;
 	SpeexResamplerState* mState = nullptr;
 
 public:
@@ -74,7 +74,7 @@ public:
 	 * @brief Resample function
 	 * Make sure the out buffer has enough space
 	 */
-	uint process(const AudioBuffer<T>& in, AudioBuffer<T>& out) {
+	uint process(const AudioBufferTpl<T>& in, AudioBufferTpl<T>& out) {
 		TKLB_ASSERT(in.sampleRate == mRateIn);
 		TKLB_ASSERT(out.sampleRate == mRateOut);
 		TKLB_ASSERT(in.validSize() > 0)
@@ -123,12 +123,12 @@ public:
 	 * @param rateOut Desired output samplerate in Hz
 	 * @param quality Quality from 1-10
 	 */
-	static void resample(AudioBuffer<T>& buffer, const uint rateOut, const uchar quality = 5) {
+	static void resample(AudioBufferTpl<T>& buffer, const uint rateOut, const uchar quality = 5) {
 		const uint rateIn = buffer.sampleRate;
 		const uint samples = buffer.size();
 		TKLB_ASSERT(rateIn > 0)
 		// Make a copy, this could be skipped when a conversion to float is needed anyways
-		AudioBuffer<T> copy;
+		AudioBufferTpl<T> copy;
 		copy.resize(buffer);
 		copy.set(buffer);
 		copy.sampleRate = rateIn;

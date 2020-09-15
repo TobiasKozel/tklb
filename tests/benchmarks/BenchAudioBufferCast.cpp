@@ -8,7 +8,7 @@ int main() {
 	// some overhang so simd can't do all of it
 	int length = 530;
 	const int channels = TKLB_MAXCHANNELS;
-	AudioBuffer<> abuffer;
+	AudioBuffer abuffer;
 	abuffer.resize(length, channels);
 
 	#ifdef TKLB_SAMPLE_FLOAT

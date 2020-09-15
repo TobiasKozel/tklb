@@ -16,7 +16,7 @@ int main() {
 		Resampler<> up(rate1, rate2, length);
 		Resampler<> down(rate2, rate1, length * 2); // Bigger max block obviously
 
-		AudioBuffer<> in, out;
+		AudioBuffer in, out;
 		in.sampleRate = rate1;
 		out.sampleRate = rate2;
 

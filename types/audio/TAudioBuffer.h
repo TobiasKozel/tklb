@@ -9,16 +9,13 @@
 	#include "../../external/xsimd/include/xsimd/xsimd.hpp"
 #endif
 
+#include "../THeapBuffer.h"
 #include "../../util/TAssert.h"
 
 namespace tklb {
 
-#ifdef TKLB_SAMPLE_FLOAT
-template <typename T = float>
-#else
-template <typename T = double>
-#endif
-class AudioBuffer {
+template <typename T>
+class AudioBufferTpl {
 
 public:
 	using uchar = unsigned char;
@@ -35,7 +32,7 @@ public:
 	/**
 	 * Aligned vector type
 	 */
-	using Buffer = std::vector<T2
+	using Buffer = HeapBuffer<T2
 	#ifndef TKLB_NO_SIMD
 		, xsimd::aligned_allocator<T2, XSIMD_DEFAULT_ALIGNMENT>
 	#endif
@@ -55,13 +52,18 @@ private:
 public:
 	uint sampleRate = 0;
 
-	AudioBuffer() {
+	AudioBufferTpl() {
 		std::fill_n(mRawBuffers, MAX_CHANNELS, nullptr);
 	};
 
-	AudioBuffer(const uchar channels) {
+	AudioBufferTpl(const uchar channels) {
 		std::fill_n(mRawBuffers, MAX_CHANNELS, nullptr);
 		mChannels = channels;
+	};
+
+	AudioBufferTpl(const uchar channels, const uint length) {
+		std::fill_n(mRawBuffers, MAX_CHANNELS, nullptr);
+		resize(length, channels);
 	};
 
 	/**
@@ -104,7 +106,7 @@ public:
 	 * @param length Operation will stop at that sample
 	 */
 	template <typename T2>
-	void set(const AudioBuffer<T2>& buffer, const uint offset = 0, uint length = 0) {
+	void set(const AudioBufferTpl<T2>& buffer, const uint offset = 0, uint length = 0) {
 		length = length == 0 ? buffer.size() : length;
 		for (uchar c = 0; c < buffer.channels(); c++) {
 			set(buffer.get(c), c, length, offset);
@@ -155,7 +157,7 @@ public:
 	}
 
 	template <typename T2>
-	void resize(const AudioBuffer<T2>& buffer) {
+	void resize(const AudioBufferTpl<T2>& buffer) {
 		resize(buffer.size(), buffer.channels());
 	}
 
@@ -164,7 +166,7 @@ public:
 	}
 
 	template <typename T2>
-	void add(const AudioBuffer<T2>& buffer, uint offset = 0, uint size = 0) {
+	void add(const AudioBufferTpl<T2>& buffer, uint offset = 0, uint size = 0) {
 		if (size == 0) {
 			size = std::min(buffer.size() - offset, this->size() - offset);
 		}
@@ -199,7 +201,7 @@ public:
 	}
 
 	template <typename T2>
-	void multiply(const AudioBuffer<T2>& buffer, uint offset = 0, uint size = 0) {
+	void multiply(const AudioBufferTpl<T2>& buffer, uint offset = 0, uint size = 0) {
 		if (size == 0) {
 			size = std::min(buffer.size() - offset, this->size() - offset);
 		}
@@ -377,6 +379,15 @@ public:
 		}
 	}
 };
+
+#ifdef TKLB_SAMPLE_FLOAT
+	typedef AudioBufferTpl<float> AudioBuffer;
+#else
+	typedef AudioBufferTpl<double> AudioBuffer;
+#endif
+
+typedef AudioBufferTpl<float> AudioBufferFloat;
+typedef AudioBufferTpl<double> AudioBufferDouble;
 
 }
 

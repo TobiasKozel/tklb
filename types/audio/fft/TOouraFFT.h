@@ -14,10 +14,10 @@ class FFTOoura {
 
 	uint mSize;
 	// No idea what this is
-	AudioBuffer<>::Buffer<int> mIp;
+	AudioBuffer::Buffer<int> mIp;
 	// or this, prolly lookup tables
-	AudioBuffer<double> mW = { 1 };
-	AudioBuffer<double> mBuffer { 1 };
+	AudioBufferDouble mW = { 1 };
+	AudioBufferDouble mBuffer { 1 };
 
 public:
 
@@ -34,12 +34,12 @@ public:
 		mSize = size;
 
 		const int size4 = size / 4;
-		ooura::makewt(size4, mIp.data(), mW.get(0));
-		ooura::makect(size4, mIp.data(), mW.get(0) + size4);
+		ooura::makewt(size4, mIp.data(), mW[0]);
+		ooura::makect(size4, mIp.data(), mW[0] + size4);
 	}
 
 	template <typename T>
-	void forward(const AudioBuffer<T>& input, AudioBuffer<T>& result) {
+	void forward(const AudioBufferTpl<T>& input, AudioBufferTpl<T>& result) {
 		T* real = result.get(0);
 		T* imaginary = result.get(1);
 		/**
@@ -48,11 +48,11 @@ public:
 		 * mBuffer gets written toby the fft
 		 */
 		mBuffer.set(input);
-		ooura::rdft(mSize, +1, mBuffer.get(0), mIp.data(), mW.get(0));
+		ooura::rdft(mSize, +1, mBuffer[0], mIp.data(), mW.get(0));
 
 		// Convert back to split-complex
 		{
-			double* b = mBuffer.get(0);
+			double* b = mBuffer[0];
 			double* bEnd = b + mSize;
 			T* r = real;
 			T* i = imaginary;
@@ -68,7 +68,7 @@ public:
 	}
 
 	template <typename T>
-	void back(const AudioBuffer<T>& input, AudioBuffer<T>& result) {
+	void back(const AudioBufferTpl<T>& input, AudioBufferTpl<T>& result) {
 		T* data = result.get(0);
 		const T* real = input.get(0);
 		const T* imaginary = input.get(1);

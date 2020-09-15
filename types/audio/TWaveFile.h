@@ -17,7 +17,7 @@ namespace wave {
 	 * @param out The buffer to store the result in
 	 * @param length The length of the wav file buffer if not reading from file
 	 */
-	bool load(const char* path, AudioBuffer<T>& out, size_t length = 0) {
+	bool load(const char* path, AudioBufferTpl<T>& out, size_t length = 0) {
 		drwav wav;
 		if (length == 0) {
 			if (!drwav_init_file(&wav, path, nullptr)) {
@@ -50,7 +50,7 @@ namespace wave {
 	}
 
 	template <typename T>
-	bool write(const AudioBuffer<T>& in, char* path, size_t length = 0) {
+	bool write(const AudioBufferTpl<T>& in, char* path, size_t length = 0) {
 		// TODO
 		TKLB_ASSERT(false);
 	}

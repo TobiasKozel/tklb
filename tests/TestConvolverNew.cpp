@@ -1,10 +1,10 @@
 #include "TestCommon.h"
-#include "../types/audio/TConvolverNew.h"
+// #include "../types/audio/TConvolverNew.h"
 
 
 int main() {
 	{
-		SingleConvolver con;
+		// SingleConvolver con;
 		// float irSamples[1024] = { 0.0 };
 		// irSamples[1] = 1.0; // perfect impulse delaying the signal by one sample
 		// float* ir[1] = { irSamples };
