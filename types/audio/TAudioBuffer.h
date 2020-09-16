@@ -162,7 +162,7 @@ public:
 	}
 
 	void clear() {
-		set(0.0);
+		set(0);
 	}
 
 	template <typename T2>
@@ -293,6 +293,10 @@ public:
 				}
 			}
 		#endif
+	}
+
+	void inject(T* mem, const uchar channel, const uint size) {
+		mBuffers[channel].inject(mem, size);
 	}
 
 	/**

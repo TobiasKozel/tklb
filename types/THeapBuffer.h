@@ -79,34 +79,32 @@ public:
 	 * @param downsize Whether to downsize and reallocate
 	 */
 	T* resize(const uint size, const bool downsize = true) {
-		const unsigned int chunked =
-			mGranularity * std::ceil(size / static_cast<float>(mGranularity));
+		const uint chunked =
+			mGranularity * std::ceil(size / double(mGranularity));
 
-		if (chunked != mRealSize) {
-			if (size == 0 && !mInjected) {
-				allocator.deallocate(mBuf, mRealSize);
-				mBuf = nullptr;
-				mRealSize = 0;
-			} else {
-				T* temp = nullptr;
-				if (chunked > mRealSize) { // Size up
-					temp = allocator.allocate(chunked);
-					memcpy(temp, mBuf, mSize * sizeof(T));
-					memset(temp + mSize, 0, (chunked - mSize) * sizeof(T));
-				} else if(downsize) { // size down
-					temp = allocator.allocate(chunked);
-					memcpy(temp, mBuf, chunked * sizeof(T));
-				}
-				if (temp != nullptr) { // an allocation occured
-					if (!mInjected) {
-						allocator.deallocate(mBuf, mRealSize);
-					}
-					mInjected = false; // we own the memory now
-					mBuf = temp;
-				}
+		if (size == 0) {
+			if (!mInjected) { allocator.deallocate(mBuf, mRealSize); }
+			mBuf = nullptr;
+			mRealSize = 0;
+		} else if (chunked != mRealSize) {
+			T* temp = nullptr;
+			if (chunked > mRealSize) { // Size up
+				temp = allocator.allocate(chunked);
+				memcpy(temp, mBuf, mSize * sizeof(T));
+				memset(temp + mSize, 0, (chunked - mSize) * sizeof(T));
+			} else if(downsize) { // size down
+				temp = allocator.allocate(chunked);
+				memcpy(temp, mBuf, chunked * sizeof(T));
 			}
-			mRealSize = chunked;
+			if (temp != nullptr) { // an allocation occured
+				if (!mInjected) {
+					allocator.deallocate(mBuf, mRealSize);
+				}
+				mInjected = false; // we own the memory now
+				mBuf = temp;
+			}
 		}
+		mRealSize = chunked;
 		mSize = size;
 		return mBuf;
 	}
