@@ -61,8 +61,7 @@ namespace tklb {
  * Super simple wrapper for the hiir up and down samplers
  * It only goes up to 4x oversampling
  * Its type is also bound to the Audiouffers default sample type
- * Maybe templated at some point but this will require all resamplers
- * to be included
+ * in order to avoid including all versions of the hiir library
  */
 #ifdef TKLB_MAXCHANNELS
 template <int CHANNELS = TKLB_MAXCHANNELS, int MAX_BLOCK = 512>

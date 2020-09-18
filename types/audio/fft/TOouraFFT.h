@@ -20,7 +20,6 @@ class FFTOoura {
 	AudioBufferDouble mBuffer { 1 };
 
 public:
-
 	FFTOoura(uint size = 0) {
 		if (size == 0) { return; }
 		resize(size);

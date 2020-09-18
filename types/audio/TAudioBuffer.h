@@ -15,6 +15,10 @@
 namespace tklb {
 
 template <typename T>
+/**
+ * Class for handling the most basic audio needs
+ * Does convenient type conversions
+ */
 class AudioBufferTpl {
 
 public:
@@ -295,6 +299,11 @@ public:
 		#endif
 	}
 
+	/**
+	 * Inject forgeign memory to be used by the buffer
+	 * Potentially dangerous but useful when splitting
+	 * up channels for processing
+	 */
 	void inject(T* mem, const uchar channel, const uint size) {
 		mBuffers[channel].inject(mem, size);
 	}
@@ -384,14 +393,16 @@ public:
 	}
 };
 
-#ifdef TKLB_SAMPLE_FLOAT
-	typedef AudioBufferTpl<float> AudioBuffer;
-#else
-	typedef AudioBufferTpl<double> AudioBuffer;
-#endif
 
 typedef AudioBufferTpl<float> AudioBufferFloat;
 typedef AudioBufferTpl<double> AudioBufferDouble;
+
+// Default type
+#ifdef TKLB_SAMPLE_FLOAT
+	typedef AudioBufferFloat AudioBuffer;
+#else
+	typedef AudioBufferDouble AudioBuffer;
+#endif
 
 }
 
