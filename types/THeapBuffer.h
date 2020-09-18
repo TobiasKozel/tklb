@@ -10,7 +10,7 @@
 namespace tklb {
 
 /**
- * Basically a std::vector which can also work with
+ * Basically a bad std::vector which can also work with
  * foreign memory
  */
 template <typename T, class Allocator = std::allocator<T>>
@@ -83,7 +83,7 @@ public:
 			mGranularity * std::ceil(size / double(mGranularity));
 
 		if (size == 0) {
-			if (!mInjected) { allocator.deallocate(mBuf, mRealSize); }
+			if (!mInjected && mRealSize > 0) { allocator.deallocate(mBuf, mRealSize); }
 			mBuf = nullptr;
 			mRealSize = 0;
 		} else if (chunked != mRealSize) {

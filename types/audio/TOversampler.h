@@ -135,6 +135,7 @@ public:
 	}
 
 	void process(T** in, T** out, const uint frames) {
+		TKLB_ASSERT(frames <= MAX_BLOCK)
 		/**
 		 * No OverSampling at all
 		 */
