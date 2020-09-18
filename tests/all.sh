@@ -4,7 +4,7 @@ FAILED=false
 
 for f in ./*.cpp
 do
-	./test.sh $f
+	./run.sh $f
 	if [[ $? -ne 0 ]] ; then
 		FAILED=true
 	fi

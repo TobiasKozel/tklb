@@ -2,6 +2,6 @@
 
 for f in ./*.cpp
 do
-	./test.sh $f
+	./run.sh $f
 done
 
