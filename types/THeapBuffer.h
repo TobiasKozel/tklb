@@ -97,7 +97,7 @@ public:
 				memcpy(temp, mBuf, chunked * sizeof(T));
 			}
 			if (temp != nullptr) { // an allocation occured
-				if (!mInjected) {
+				if (!mInjected && mRealSize > 0) {
 					allocator.deallocate(mBuf, mRealSize);
 				}
 				mInjected = false; // we own the memory now
