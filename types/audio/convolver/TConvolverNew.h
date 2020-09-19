@@ -37,12 +37,12 @@ private:
 	Buffer mFFTBuffer; // space for the FFT of the input signal
 
 	using Segments = HeapBuffer<Buffer>;
-	Segments mSegmentsIR; // FFT of the IR in segments
-	Segments mSegments; // ?
+	Segments mSegmentsIR; // Complex FFT of the IR in segments
+	Segments mSegments; // Complex ?
 	FFT mFFT; // FFT object, fixed type and will do conversions when needed
-	Buffer mPremultipliedBuffer;
+	Buffer mPremultipliedBuffer; // Complex
 	Buffer mInputBuffer;
-	Buffer mConvolutionBuffer;
+	Buffer mConvolutionBuffer; // Complex
 	Buffer mOverlapBuffer;
 
 public:
@@ -57,26 +57,27 @@ public:
 	template <typename T2>
 	void load(const AudioBufferTpl<T2>& buffer, const uint blockSize) {
 		uint irLength = buffer.validSize();
-		if (irLength == 0) { return; }
 		const T2* ir = buffer[0];
-		// trim silence, since longer IR increase CPU usage considerably
+		// trim silence, since longer IRs increase CPU usage considerably
 		const T2 silence = 0.000001;
-		while (--irLength && silence > fabs(ir[irLength])) { }
+		while (irLength && silence > fabs(ir[irLength])) { irLength--; }
 		if (irLength == 0) { return; }
 
 		// Figure out how many segments a block is
 		mBlockSize = powerOf2(blockSize);
 		mSegmentSize = 2 * mBlockSize;
-		mSegmentCount = std::ceil(irLength / double(mBlockSize));
+		mSegmentCount = uint(std::ceil(irLength / double(mBlockSize)));
 		mFFTComplexSize = mBlockSize + 1;
 
 		// create segment buffers for the input signal
 		mFFT.resize(mSegmentSize);
-		mFFTBuffer.resize(mSegmentSize, 1);
+		mFFTBuffer.resize(mSegmentSize);
 
 		// create segment buffers for the impulse response
 		mSegments.resize(mSegmentCount);
+		mSegments.construct();
 		mSegmentsIR.resize(mSegmentCount);
+		mSegmentsIR.construct();
 
 		for (uint i = 0; i < mSegmentCount; i++) {
 			const uint remaining = std::min(irLength - (i * mBlockSize), mBlockSize);
@@ -102,18 +103,26 @@ public:
 	 */
 	template <typename T2>
 	void process(const AudioBufferTpl<T2>& inBuf, AudioBufferTpl<T2>& outBuf) {
+		if (mSegmentCount == 0) {
+			outBuf.set(inBuf);
+			return;
+		}
+
 		const uint length = inBuf.validSize();
 		const T2* in = inBuf[0];
 		T2* out = outBuf[0];
-		uint processed = 0;
 
+		uint processed = 0;
+		uint iterations = 0;
 		while (processed < length) {
-			const bool inputBufferWasEmpty = mInputBufferFill == 0;
+			const bool inputBufferWasEmpty = (mInputBufferFill == 0);
 			const uint processing = std::min(length - processed, mBlockSize - mInputBufferFill);
 			const uint inputBufferPos = mInputBufferFill;
 
 			mInputBuffer.set(in + processed, inputBufferPos, processing);
+
 			mFFTBuffer.set(0);
+			mFFTBuffer.set(in, 0, mBlockSize);
 			mFFT.forward(mFFTBuffer, mSegments[mCurrentPosition]);
 
 			if (inputBufferWasEmpty) {
@@ -126,10 +135,12 @@ public:
 			}
 
 			mConvolutionBuffer.set(mPremultipliedBuffer);
-
 			complexMultiply(mConvolutionBuffer, mSegments[mCurrentPosition], mSegmentsIR[0]);
 
 			mFFT.back(mConvolutionBuffer, mFFTBuffer);
+
+			outBuf.set(mFFTBuffer[0] + inputBufferPos, 0, processing, processed);
+			outBuf.add(mOverlapBuffer, processed, processing, inputBufferPos);
 
 			mInputBufferFill += processing;
 			if (mInputBufferFill == mBlockSize) {
@@ -139,9 +150,8 @@ public:
 				mCurrentPosition = (mCurrentPosition > 0) ? (mCurrentPosition - 1) : (mSegmentCount - 1);
 			}
 
-			mFFTBuffer.add(mOverlapBuffer, 0, processing);
-			mFFTBuffer.set(out + processed, 0, processing, 0);
 			processed += processing;
+			iterations++;
 		}
 	}
 
@@ -210,7 +220,7 @@ public:
 	 * TODO make buffer const
 	 */
 	template <typename T2>
-	void load(AudioBufferTpl<T2>& buffer, const uint blockSize) {
+	void load(const AudioBufferTpl<T2>& buffer, const uint blockSize) {
 		AudioBufferTpl<T2> in = { 1 };
 		const uint size = buffer.validSize();
 		for (uchar c = 0; c < buffer.channels(); c++) {
@@ -223,7 +233,7 @@ public:
 	 * @brief Load a impulse response and prepare the convolution
 	 */
 	template <typename T2>
-	void process(AudioBufferTpl<T2>& inBuf, AudioBufferTpl<T2>& outBuf) {
+	void process(const AudioBufferTpl<T2>& inBuf, AudioBufferTpl<T2>& outBuf) {
 		AudioBufferTpl<T2> in = { 1 };
 		AudioBufferTpl<T2> out = { 1 };
 		const uint size = inBuf.validSize();

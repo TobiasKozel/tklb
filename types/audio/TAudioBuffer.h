@@ -88,6 +88,7 @@ public:
 	 */
 	template <typename T2>
 	void set(const T2* samples, const uchar channel, uint length, const uint offset = 0) {
+		TKLB_ASSERT(mChannels > channel)
 		if (mChannels <= channel) { return; }
 		length = std::min(length - offset, size() - offset);
 		if (std::is_same<T2, T>::value) {

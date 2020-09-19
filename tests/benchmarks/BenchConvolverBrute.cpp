@@ -1,20 +1,22 @@
-#include "TestCommon.h"
-#include "../types/audio/convolver/TConvolverNew.h"
+#define TKLB_LEAKCHECKER_DISARM
+#include "BenchmarkCommon.h"
+#include "../../types/audio/TAudioBuffer.h"
+#include "../../types/audio/convolver/TConvolverBrute.h"
 
 
 int main() {
 	{
-		const int audioLength = 1024 * 1;
+		ConvolverBrute con;
+		const int audioLength = 1024 * 100;
 		const int audioChannels = 2;
 		int blockSize = 128;
 
-		using T = Convolver::sample;
-		Convolver con;
-		AudioBuffer ir, in, out;
+		AudioBufferFloat ir, in, out;
 		ir.resize(1024, audioChannels);
 		ir.set(0);
 		for (int c = 0; c < audioChannels; c++) {
 			ir[c][1] = 1.0; // perfect impulse delaying the signal by one sample
+			ir[c][512] = 1.0; // second delay to make the ir longer
 		}
 		con.load(ir, 128);
 
@@ -27,20 +29,11 @@ int main() {
 			}
 		}
 
-		con.process(in, out);
-
-		/**
-		 * Skip the first and last sample due to the delay
-		 */
-		for (char c = 0; c < audioChannels; c++) {
-			for(int i = 1; i < (audioLength - 1); i++) {
-				if (!close(in[c][i], out[c][i + 1])) {
-					return 1;
-				}
-			}
+		{
+			TIMER(Microseconds);
+			con.process(in, out);
 		}
-	}
 
-	memcheck()
+	}
 	return 0;
 }

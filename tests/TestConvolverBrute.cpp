@@ -1,5 +1,6 @@
+#define TKLB_NO_SIMD
 #include "TestCommon.h"
-#include "../types/audio/convolver/TConvolverNew.h"
+#include "../types/audio/convolver/TConvolverBrute.h"
 
 
 int main() {
@@ -8,8 +9,8 @@ int main() {
 		const int audioChannels = 2;
 		int blockSize = 128;
 
-		using T = Convolver::sample;
-		Convolver con;
+		using T = ConvolverBrute::sample;
+		ConvolverBrute con;
 		AudioBuffer ir, in, out;
 		ir.resize(1024, audioChannels);
 		ir.set(0);
