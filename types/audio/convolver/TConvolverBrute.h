@@ -8,7 +8,7 @@
 
 namespace tklb {
 /**
- * @brief Brute force convolver using element wise multiplication
+ * @brief Brute force convolver using element wise multiplication.
  * Super slow especially for longer impulse responses
  */
 template <typename T>

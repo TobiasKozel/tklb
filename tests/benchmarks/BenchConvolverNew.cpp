@@ -1,17 +1,17 @@
 #define TKLB_LEAKCHECKER_DISARM
 #include "BenchmarkCommon.h"
 #include "../../types/audio/TAudioBuffer.h"
-#include "../../types/audio/convolver/TConvolverBrute.h"
+#include "../../types/audio/convolver/TConvolverNew.h"
 
 
 int main() {
 	{
-		ConvolverBrute con;
+		Convolver con;
 		const int audioLength = 48000 * 10;
 		const int audioChannels = 2;
 		int blockSize = 128;
 
-		AudioBufferFloat ir, in, out;
+		AudioBuffer ir, in, out;
 		ir.resize(1024, audioChannels);
 		ir.set(0);
 		for (int c = 0; c < audioChannels; c++) {
@@ -21,7 +21,7 @@ int main() {
 		con.load(ir, 128);
 
 		in.resize(audioLength, audioChannels);
-		out.resize(in);
+		out.resize(audioLength * 2, audioChannels);
 
 		for(int c = 0; c < audioChannels; c++) {
 			for(int i = 0; i < audioLength; i++) {

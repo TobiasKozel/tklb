@@ -62,6 +62,7 @@ public:
 		const T2 silence = 0.000001;
 		while (irLength && silence > fabs(ir[irLength])) { irLength--; }
 		if (irLength == 0) { return; }
+		irLength++; // index to length
 
 		// Figure out how many segments a block is
 		mBlockSize = powerOf2(blockSize);

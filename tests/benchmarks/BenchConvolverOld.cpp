@@ -7,7 +7,7 @@
 int main() {
 	{
 		Convolver<> con;
-		const int audioLength = 1024 * 100;
+		const int audioLength = 48000 * 10;
 		const int audioChannels = 2;
 		int blockSize = 128;
 
