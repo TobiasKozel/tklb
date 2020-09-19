@@ -22,8 +22,8 @@ class FFTpffft {
 
 	uint mSize;
 	PFFFT_Setup* mSetup = nullptr;
-	AudioBufferFloat mBuffer = { 1 }; //  Audiobuffer
-	AudioBufferFloat mRc = { 1 }; // RealComplexBuffer
+	AudioBufferFloat mBuffer; //  Audiobuffer
+	AudioBufferFloat mRc; // RealComplexBuffer
 public:
 
 	FFTpffft(uint size = 0) {
@@ -50,33 +50,34 @@ public:
 	void forward(const AudioBufferTpl<T>& input, AudioBufferTpl<T>& result) {
 		const float* data = nullptr;
 		if (std::is_same<T, float>::value) {
-			data = reinterpret_cast<const float*>(input.get(0));
+			data = reinterpret_cast<const float*>(input[0]);
 		} else {
-			mBuffer.set(input);
-			data = mBuffer.get(0);
+			mBuffer.set(input); // Type conversion
+			data = mBuffer[0];
 		}
-		pffft_transform(mSetup, data, mRc.get(0), nullptr, PFFFT_FORWARD);
+		pffft_transform(mSetup, data, mRc[0], nullptr, PFFFT_FORWARD);
+		// Split real and complex in two channels
 		const uint sizeHalf = mSize / 2;
-		result.set(mRc.get(0), 0, sizeHalf);
-		result.set(mRc.get(0) + sizeHalf, 1, sizeHalf);
+		result.set(mRc[0], 0, sizeHalf);
+		result.set(mRc[0] + sizeHalf, 1, sizeHalf);
 	}
 
 	template <typename T>
 	void back(const AudioBufferTpl<T>& input, AudioBufferTpl<T>& result) {
 		const uint sizeHalf = mSize / 2;
-		mRc.set(input.get(0), 0, sizeHalf);
-		mRc.set(input.get(1), 0, sizeHalf, sizeHalf);
-		const T volume = 1.0 / static_cast<double>(mSize);
+		mRc.set(input[0], 0, sizeHalf);
+		mRc.set(input[1], 0, sizeHalf, sizeHalf);
+		const T volume = 1.0 / double(mSize);
 		if (std::is_same<T, float>::value) {
-			float* out = reinterpret_cast<float*>(result.get(0));
-			pffft_transform(mSetup, mRc.get(0), out, nullptr, PFFFT_BACKWARD);
-			result.multiply(volume);
+			float* out = reinterpret_cast<float*>(result[0]);
+			pffft_transform(mSetup, mRc[0], out, nullptr, PFFFT_BACKWARD);
+			result.multiply(volume); // scale the result
 		} else {
-			pffft_transform(mSetup, mRc.get(0), mBuffer.get(0), nullptr, PFFFT_BACKWARD);
-			const float* buf = mBuffer.get(0);
-			T* out = result.get(0);
+			pffft_transform(mSetup, mRc[0], mBuffer[0], nullptr, PFFFT_BACKWARD);
+			const float* buf = mBuffer[0];
+			T* out = result[0];
 			for (uint i = 0; i < mSize; i++) {
-				out[i] = buf[i] * volume;
+				out[i] = buf[i] * volume; // scale the result + type conversion
 			}
 		}
 	}

@@ -10,13 +10,13 @@ namespace tklb {
 
 namespace wave {
 
-	template <typename T>
 	/**
 	 * @brief Decode wav from memory or file path
 	 * @param path The path or the wav file buffer if length is 0
 	 * @param out The buffer to store the result in
 	 * @param length The length of the wav file buffer if not reading from file
 	 */
+	template <typename T>
 	bool load(const char* path, AudioBufferTpl<T>& out, size_t length = 0) {
 		drwav wav;
 		if (length == 0) {
@@ -28,9 +28,7 @@ namespace wave {
 				return false;
 			}
 		}
-		float* sampleData = static_cast<float*>(malloc(
-			size_t(wav.totalPCMFrameCount) * wav.channels * sizeof(float)
-		));
+		float* sampleData = new float[size_t(wav.totalPCMFrameCount) * size_t(wav.channels)];
 
 		if (sampleData == nullptr) { return false; }
 

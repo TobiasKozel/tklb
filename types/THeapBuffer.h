@@ -2,6 +2,7 @@
 #define TKLB_HEAPBUFFER
 
 #include "../util/TNoCopy.h"
+#include "../util/TAssert.h"
 
 #include <cmath>
 #include <cstring>
@@ -21,6 +22,7 @@ class HeapBuffer {
 	uint mRealSize = 0; // the actually allocated size
 	uint mGranularity; // the space actually allocated will be a multiple of this
 	bool mInjected = false; // True if the memory doesn't belong to this instance
+	TKLB_ASSERT_STATE(bool IS_CONST)
 	Allocator allocator;
 
 public:
@@ -41,14 +43,30 @@ public:
 	}
 
 	/**
-	 * Provide foreign memory to borrow
+	 * @brief Provide foreign memory to borrow
+	 * @param mem Modifyable memory to use
+	 * @param size Size of the memory in elements
+	 * @param realSize The actual size if it's chunk allocated
 	 */
-	void inject(T* mem, const uint size, uint realSize = 0) {
+	void inject(T* mem, const uint size, const uint realSize = 0) {
 		if (!mInjected && mBuf != nullptr) { resize(0); };
+		TKLB_ASSERT_STATE(IS_CONST = false)
 		mInjected = true;
 		mBuf = mem;
 		mSize = size;
 		mRealSize = realSize == 0 ? size : realSize;
+	}
+
+	/**
+	 * @brief Provide const foreign memory to use
+	 * Using non const accessors will cause assertions
+	 * @param mem Non modifyable memory to use
+	 * @param size Size of the memory in elements
+	 * @param realSize The actual size if it's chunk allocated
+	 */
+	void inject(const T* mem, const uint size, const uint realSize = 0) {
+		inject(const_cast<T*>(mem), size, realSize);
+		TKLB_ASSERT_STATE(IS_CONST = true)
 	}
 
 	void setGranularity(const uint granularity) {
@@ -56,6 +74,8 @@ public:
 	}
 
 	T* data() {
+		// Don't use non const access when using injected const memory
+		TKLB_ASSERT(!IS_CONST)
 		return mBuf;
 	}
 
@@ -68,6 +88,8 @@ public:
 	}
 
 	T& operator[](const uint index) {
+		// Don't use non const access when using injected const memory
+		TKLB_ASSERT(!IS_CONST)
 		return mBuf[index];
 	}
 
@@ -105,12 +127,19 @@ public:
 					allocator.deallocate(mBuf, mRealSize);
 				}
 				mInjected = false; // we own the memory now
+				TKLB_ASSERT_STATE(IS_CONST = false)
 				mBuf = temp;
 			}
 		}
 		mRealSize = chunked;
 		mSize = size;
 		return mBuf;
+	}
+
+	void construct() {
+		for (uint i = 0; i < mRealSize; i++) {
+			allocator.construct(mBuf + i);
+		}
 	}
 
 	uint size() const {

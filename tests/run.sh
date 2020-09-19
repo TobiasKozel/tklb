@@ -12,7 +12,7 @@ esac
 source_file=$1
 
 function test {
-	if $1 $source_file ; then
+	if $1 $source_file >> /dev/null 2>&1 ; then
 		$executable
 		result=$?
 		if [[ $result -eq 0 ]] ; then

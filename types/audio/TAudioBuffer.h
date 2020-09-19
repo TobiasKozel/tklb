@@ -198,7 +198,7 @@ public:
 	 * @param size How many samples to add from the source buffer
 	 */
 	template <typename T2>
-	void add(const AudioBufferTpl<T2>& buffer, uint offset = 0, uint size = 0) {
+	void add(const AudioBufferTpl<T2>& buffer, uint offset = 0, uint size = 0, uint offsetIn = 0) {
 		if (size == 0) {
 			size = std::min(buffer.size() - offset, this->size() - offset);
 		}
@@ -209,7 +209,7 @@ public:
 				const uint vectorize = size - size % stride;
 				for (uchar c = 0; c < channels; c++) {
 					T* out = &mBuffers[c][offset];
-					const T* in = reinterpret_cast<const T*>(buffer.get(c));
+					const T* in = reinterpret_cast<const T*>(buffer.get(c)) + offsetIn;
 					for(uint i = 0; i < vectorize; i += stride) {
 						xsimd::simd_type<T> a = xsimd::load_aligned(in + i);
 						xsimd::simd_type<T> b = xsimd::load_aligned(out + i);
@@ -225,7 +225,7 @@ public:
 
 		for (uchar c = 0; c < channels; c++) {
 			T* out = &mBuffers[c][offset];
-			const T2* in = buffer.get(c);
+			const T2* in = buffer.get(c) + offsetIn;
 			for(uint i = 0; i < size; i++) {
 				out[i] += in[i];
 			}
@@ -239,7 +239,7 @@ public:
 	 * @param size How many samples to multiply from the source buffer
 	 */
 	template <typename T2>
-	void multiply(const AudioBufferTpl<T2>& buffer, uint offset = 0, uint size = 0) {
+	void multiply(const AudioBufferTpl<T2>& buffer, uint offset = 0, uint size = 0, uint offsetIn = 0) {
 		if (size == 0) {
 			size = std::min(buffer.size() - offset, this->size() - offset);
 		}
@@ -250,7 +250,7 @@ public:
 				const uint vectorize = size - size % stride;
 				for (uchar c = 0; c < channels; c++) {
 					T* out = &mBuffers[c][offset];
-					const T* in = reinterpret_cast<const T*>(buffer.get(c));
+					const T* in = reinterpret_cast<const T*>(buffer.get(c)) + offsetIn;
 					for(uint i = 0; i < vectorize; i += stride) {
 						xsimd::simd_type<T> a = xsimd::load_aligned(in + i);
 						xsimd::simd_type<T> b = xsimd::load_aligned(out + i);
@@ -266,7 +266,7 @@ public:
 
 		for (uchar c = 0; c < channels; c++) {
 			T* out = &mBuffers[c][offset];
-			const T2* in = buffer.get(c);
+			const T2* in = buffer.get(c) + offsetIn;
 			for(uint i = 0; i < size; i++) {
 				out[i] *= in[i];
 			}
@@ -335,10 +335,25 @@ public:
 
 	/**
 	 * @brief Inject forgeign memory to be used by the buffer.
-	 * Potentially dangerous but useful when splitting
-	 * up channels for processing
+	 * Potentially dangerous but useful when splitting up channels for processing
+	 * @param mem Modifiable memory (No type conversions here)
+	 * @param size Size of the buffer
+	 * @param channel The channel index
 	 */
 	void inject(T* mem, const uint size, const uchar channel = 0) {
+		mBuffers[channel].inject(mem, size);
+		mSize = size;
+		mValidSize = size;
+	}
+
+	/**
+	 * @brief Inject const forgeign memory to be used by the buffer.
+	 * Potentially dangerous but useful when splitting up channels for processing
+	 * @param mem Const memory (No type conversions here)
+	 * @param size Size of the buffer
+	 * @param channel The channel index
+	 */
+	void inject(const T* mem, const uint size, const uchar channel = 0) {
 		mBuffers[channel].inject(mem, size);
 		mSize = size;
 		mValidSize = size;
@@ -383,11 +398,11 @@ public:
 	};
 
 	const T* operator[](const uchar channel) const {
-		return get(channel);
+		return mBuffers[channel].data();
 	}
 
 	T* operator[](const uchar channel) {
-		return get(channel);
+		return mBuffers[channel].data();
 	}
 
 	/**
