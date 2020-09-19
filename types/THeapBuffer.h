@@ -44,7 +44,7 @@ public:
 	 * Provide foreign memory to borrow
 	 */
 	void inject(T* mem, const uint size, uint realSize = 0) {
-		if (mBuf != nullptr) { resize(0); };
+		if (!mInjected && mBuf != nullptr) { resize(0); };
 		mInjected = true;
 		mBuf = mem;
 		mSize = size;
@@ -90,11 +90,15 @@ public:
 			T* temp = nullptr;
 			if (chunked > mRealSize) { // Size up
 				temp = allocator.allocate(chunked);
-				memcpy(temp, mBuf, mSize * sizeof(T));
-				memset(temp + mSize, 0, (chunked - mSize) * sizeof(T));
+				if (mBuf != nullptr) {
+					memcpy(temp, mBuf, mSize * sizeof(T));
+					memset(temp + mSize, 0, (chunked - mSize) * sizeof(T));
+				}
 			} else if(downsize) { // size down
 				temp = allocator.allocate(chunked);
-				memcpy(temp, mBuf, chunked * sizeof(T));
+				if (mBuf != nullptr) {
+					memcpy(temp, mBuf, chunked * sizeof(T));
+				}
 			}
 			if (temp != nullptr) { // an allocation occured
 				if (!mInjected && mRealSize > 0) {

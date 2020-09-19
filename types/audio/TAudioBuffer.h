@@ -1,7 +1,6 @@
 #ifndef TKLB_AUDIOBUFFER
 #define TKLB_AUDIOBUFFER
 
-#include <vector>
 #include <cstring>
 #include <algorithm>
 
@@ -14,11 +13,11 @@
 
 namespace tklb {
 
-template <typename T>
 /**
- * Class for handling the most basic audio needs
+ * @brief Class for handling the most basic audio needs
  * Does convenient type conversions
  */
+template <typename T>
 class AudioBufferTpl {
 
 public:
@@ -30,11 +29,14 @@ public:
 	static constexpr uchar MAX_CHANNELS = 2;
 #endif
 
+	/**
+	 * @brief Sample type exposed for convenience
+	 */
 	using sample = T;
 
 	template <class T2>
 	/**
-	 * Aligned vector type
+	 * @brief Aligned vector type
 	 */
 	using Buffer = HeapBuffer<T2
 	#ifndef TKLB_NO_SIMD
@@ -54,19 +56,27 @@ private:
 	uint mValidSize = 0;
 
 public:
+	/**
+	 * @brief Only relevant for resampling and oversampling.
+	 */
 	uint sampleRate = 0;
 
-	AudioBufferTpl() {
-		std::fill_n(mRawBuffers, MAX_CHANNELS, nullptr);
-	};
+	/**
+	 * @brief Empty buffer with no memory allocated yet
+	 */
+	AudioBufferTpl() { };
 
+	/**
+	 * @brief Empty buffer with no memory allocated yet but channel count set
+	 */
 	AudioBufferTpl(const uchar channels) {
-		std::fill_n(mRawBuffers, MAX_CHANNELS, nullptr);
 		mChannels = channels;
 	};
 
+	/**
+	 * @brief Buffer with memory allocated
+	 */
 	AudioBufferTpl(const uchar channels, const uint length) {
-		std::fill_n(mRawBuffers, MAX_CHANNELS, nullptr);
 		resize(length, channels);
 	};
 
@@ -117,7 +127,10 @@ public:
 		}
 	};
 
-	void set(T value) {
+	/**
+	 * @brief Set the entire buffer to a constant value
+	 */
+	void set(T value = 0) {
 		for (uchar c = 0; c < channels(); c++) {
 			fill_n(mBuffers[c].data(), size(), value);
 		}
@@ -139,6 +152,11 @@ public:
 		}
 	}
 
+	/**
+	 * @brief Resizes the buffer to the desired length and channel count.
+	 * @brief The desired length in Samples. 0 will deallocate.
+	 * @brief Desired channel count. 0 will deallocate.
+	 */
 	void resize(const uint length, uchar channels) {
 		if (channels == mChannels && mBuffers[0].size() == length) {
 			return;
@@ -156,19 +174,29 @@ public:
 		mValidSize = std::min(mValidSize, mSize);
 	}
 
+	/**
+	 * @brief Resize to the provided length and keep the channelcount.
+	 * If the channel count was 0 it will assume 1 channel instead.
+	 * @param length The desired length in samples. 0 will deallocate.
+	 */
 	void resize(const uint length) {
-		resize(length, mChannels);
+		resize(length, std::max(uchar(1), mChannels));
 	}
 
+	/**
+	 * @brief Resize to match the provided buffer
+	 */
 	template <typename T2>
 	void resize(const AudioBufferTpl<T2>& buffer) {
 		resize(buffer.size(), buffer.channels());
 	}
 
-	void clear() {
-		set(0);
-	}
-
+	/**
+	 * @brief Add the provided buffer
+	 * @param buffer Buffer to add onto self
+	 * @param offset Where to start in the own buffer
+	 * @param size How many samples to add from the source buffer
+	 */
 	template <typename T2>
 	void add(const AudioBufferTpl<T2>& buffer, uint offset = 0, uint size = 0) {
 		if (size == 0) {
@@ -199,11 +227,17 @@ public:
 			T* out = &mBuffers[c][offset];
 			const T2* in = buffer.get(c);
 			for(uint i = 0; i < size; i++) {
-				(*out++) += (*in++);
+				out[i] += in[i];
 			}
 		}
 	}
 
+	/**
+	 * @brief Multiply two buffers
+	 * @param buffer Buffer to multiply onto self
+	 * @param offset Where to start in the own buffer
+	 * @param size How many samples to multiply from the source buffer
+	 */
 	template <typename T2>
 	void multiply(const AudioBufferTpl<T2>& buffer, uint offset = 0, uint size = 0) {
 		if (size == 0) {
@@ -300,37 +334,39 @@ public:
 	}
 
 	/**
-	 * Inject forgeign memory to be used by the buffer
+	 * @brief Inject forgeign memory to be used by the buffer.
 	 * Potentially dangerous but useful when splitting
 	 * up channels for processing
 	 */
-	void inject(T* mem, const uchar channel, const uint size) {
+	void inject(T* mem, const uint size, const uchar channel = 0) {
 		mBuffers[channel].inject(mem, size);
+		mSize = size;
+		mValidSize = size;
 	}
 
 	/**
-	 * Returns the amount of channels
+	 * @brief Returns the amount of channels
 	 */
 	uchar channels() const {
 		return mChannels;
 	}
 
 	/**
-	 * Returns the allocated length of the buffer
+	 * @brief Returns the allocated length of the buffer
 	 */
 	uint size() const {
 		return mSize;
 	}
 
 	/**
-	 * Returns the length of actually valid audio in the buffer
+	 * @brief fReturns the length of actually valid audio in the buffer
 	 */
 	uint validSize() const {
-		return mValidSize;
+		return mValidSize ? mValidSize : size();
 	}
 
 	/**
-	 * Set the amount of valid samples currently in the buffer
+	 * @brief Set the amount of valid samples currently in the buffer
 	 * This is mostly a convenience flag since the actual size of the buffer may be larger
 	 */
 	void setValidSize(const uint v) {
@@ -359,19 +395,19 @@ public:
 	 * <b>Don't</b> call this constantly, try to cache the returned value for reuse
 	 */
 	T** getRaw() {
-		for (uchar c = 0; c < MAX_CHANNELS; c++) {
+		for (uchar c = 0; c < mChannels; c++) {
 			mRawBuffers[c] = get(c);
 		}
 		return mRawBuffers;
 	}
 
-	template <typename T2>
 	/**
-	 * @brief Fill the provided array with the contents oof this buffer
+	 * @brief Fill the provided array with the contents of this buffer
 	 * @param target The arry to fill
 	 * @param channel Which source channel to use
 	 * @param length The length of the output
 	 */
+	template <typename T2>
 	void put(T2* target, uchar channel, uint length) const {
 		if (mChannels <= channel) { return; }
 		length = std::min(length, size());
@@ -385,6 +421,12 @@ public:
 		}
 	}
 
+	/**
+	 * @brief Fill the provided 2D array with the contents of this buffer
+	 * @param target The arry to fill
+	 * @param channels How many channels there are in the target buffer
+	 * @param length The length of the output
+	 */
 	template <typename T2>
 	void put(T2** target, const uchar channels, const uint length) const {
 		for (uchar c = 0; c < channels; c++) {

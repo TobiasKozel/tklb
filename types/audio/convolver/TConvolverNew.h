@@ -1,21 +1,26 @@
-#ifndef TKLB_CONVOLVER
-#define TKLB_CONVOLVER
+#ifndef TKLB_CONVOLVER_MONO
+#define TKLB_CONVOLVER_MONO
 
-#include "../../util/TAssert.h"
-#include "../../util/TMath.h"
+#include "../../../util/TAssert.h"
+#include "../../../util/TMath.h"
 #include <cmath>
-#include "./TAudioBuffer.h"
-#include "./fft/TFFT.h"
+#include "./../TAudioBuffer.h"
+#include "./../fft/TFFT.h"
 
 #ifndef TKLB_NO_SIMD
-	#include "../../external/xsimd/include/xsimd/xsimd.hpp"
+	#include "../../../external/xsimd/include/xsimd/xsimd.hpp"
 #endif
 
 namespace tklb {
 
 
+/**
+ * @brief Single stage mono convolver based on HiFi-Lofis convolver
+ * The FFT and buffers use the tklb types and the simd
+ * was replaced with xsimd
+ */
 template <typename T>
-class SingleConvolverTpl {
+class ConvolverMonoTpl {
 public:
 	using uchar = unsigned char;
 	using uint = unsigned int;
@@ -31,7 +36,7 @@ private:
 	Buffer mComplexIr; // FFT of the impulse response
 	Buffer mFFTBuffer; // space for the FFT of the input signal
 
-	using Segments = std::vector<Buffer>;
+	using Segments = HeapBuffer<Buffer>;
 	Segments mSegmentsIR; // FFT of the IR in segments
 	Segments mSegments; // ?
 	FFT mFFT; // FFT object, fixed type and will do conversions when needed
@@ -41,9 +46,18 @@ private:
 	Buffer mOverlapBuffer;
 
 public:
+
+	ConvolverMonoTpl() = default;
+
+	/**
+	 * @brief Load a impulse response and prepare the convolution
+	 * @param buffer The ir buffer. Only the first channel is used
+	 * @param blockSize Size of blocks ir will be divided in
+	 */
 	template <typename T2>
 	void load(const AudioBufferTpl<T2>& buffer, const uint blockSize) {
-		uint irLength = buffer.size();
+		uint irLength = buffer.validSize();
+		if (irLength == 0) { return; }
 		const T2* ir = buffer[0];
 		// trim silence, since longer IR increase CPU usage considerably
 		const T2 silence = 0.000001;
@@ -83,6 +97,9 @@ public:
 		mInputBufferFill = 0;
 	}
 
+	/**
+	 * @brief Do the convolution
+	 */
 	template <typename T2>
 	void process(const AudioBufferTpl<T2>& inBuf, AudioBufferTpl<T2>& outBuf) {
 		const uint length = inBuf.validSize();
@@ -113,7 +130,6 @@ public:
 			complexMultiply(mConvolutionBuffer, mSegments[mCurrentPosition], mSegmentsIR[0]);
 
 			mFFT.back(mConvolutionBuffer, mFFTBuffer);
-
 
 			mInputBufferFill += processing;
 			if (mInputBufferFill == mBlockSize) {
@@ -164,16 +180,71 @@ private:
 
 };
 
-typedef SingleConvolverTpl<float> SingleConvolverFloat;
-typedef SingleConvolverTpl<double> SingleConvolverDouble;
+typedef ConvolverMonoTpl<float> ConvolverMonoFloat;
+typedef ConvolverMonoTpl<double> ConvolverMonoDouble;
 
 // Default type
 #ifdef TKLB_SAMPLE_FLOAT
-	typedef SingleConvolverFloat SingleConvolver;
+	typedef ConvolverMonoFloat ConvolverMono;
 #else
-	typedef SingleConvolverDouble SingleConvolver;
+	typedef ConvolverMonoDouble ConvolverMono;
+#endif
+
+
+/**
+ * @brief Multichannel version of the convolver
+ */
+template <typename T>
+class ConvolverTpl {
+	using uchar = unsigned char;
+	using uint = unsigned int;
+	ConvolverMonoTpl<T> mConvolvers[AudioBufferTpl<T>::MAX_CHANNELS];
+
+public:
+	using sample = T;
+
+	ConvolverTpl() = default;
+
+	/**
+	 * @brief Load a impulse response and prepare the convolution
+	 * TODO make buffer const
+	 */
+	template <typename T2>
+	void load(AudioBufferTpl<T2>& buffer, const uint blockSize) {
+		AudioBufferTpl<T2> in = { 1 };
+		const uint size = buffer.validSize();
+		for (uchar c = 0; c < buffer.channels(); c++) {
+			in.inject(buffer[c], size);
+			mConvolvers[c].load(in, blockSize);
+		}
+	}
+
+	/**
+	 * @brief Load a impulse response and prepare the convolution
+	 */
+	template <typename T2>
+	void process(AudioBufferTpl<T2>& inBuf, AudioBufferTpl<T2>& outBuf) {
+		AudioBufferTpl<T2> in = { 1 };
+		AudioBufferTpl<T2> out = { 1 };
+		const uint size = inBuf.validSize();
+		for (uchar c = 0; c < inBuf.channels(); c++) {
+			in.inject(inBuf[c], size);
+			out.inject(outBuf[c], size);
+			mConvolvers[c].process(in, out);
+		}
+	}
+};
+
+typedef ConvolverTpl<float> ConvolverFloat;
+typedef ConvolverTpl<double> ConvolverDouble;
+
+// Default type
+#ifdef TKLB_SAMPLE_FLOAT
+	typedef ConvolverFloat Convolver;
+#else
+	typedef ConvolverDouble Convolver;
 #endif
 
 } // namespace
 
-#endif // TKLB_CONVOLVER
+#endif // TKLB_CONVOLVER_MONO

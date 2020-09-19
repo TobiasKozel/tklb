@@ -1,17 +1,19 @@
+#define TKLB_LEAKCHECKER_DISARM
 #include "TestCommon.h"
-#include "../types/audio/TConvolver.h"
+#include "../types/audio/convolver/TConvolverOld.h"
 
 
 int main() {
 	{
+		const int audioLength = 1024 * 10;
+		const int audioChannels = 2;
+		const int blockSize = 128;
+
 		Convolver<> con;
 		float irSamples[1024] = { 0.0 };
 		irSamples[1] = 1.0; // perfect impulse delaying the signal by one sample
 		float* ir[1] = { irSamples };
 		con.loadIR(ir, 1024, 1);
-
-		const int audioLength = 1024 * 10;
-		const int audioChannels = 2;
 
 		float inSamples[audioChannels * audioLength];
 		float* in[audioChannels] = { inSamples +  0, inSamples + audioLength };
@@ -25,9 +27,10 @@ int main() {
 		float outSamples[audioChannels * audioLength];
 		float* out[audioChannels] = { outSamples +  0, outSamples + audioLength };
 
-		int blockSize = 128;
+
 		for(int b = 0; b < audioLength; b += blockSize) {
 			for(int c = 0; c < audioChannels; c++) {
+
 				con.process(in, out, blockSize);
 				in[c] += blockSize;
 				out[c] += blockSize;

@@ -1,8 +1,8 @@
 #ifndef TKLB_CONVOLVER
 #define TKLB_CONVOLVER
 
-#include "../../util/TNoCopy.h"
-#include "../../util/TAssert.h"
+#include "../../../util/TNoCopy.h"
+#include "../../../util/TAssert.h"
 
 #define TKLB_CONVOLUTION_FLOAT
 
@@ -25,7 +25,7 @@
 	#endif
 #endif
 
-#include "../../external/convolver/twoStageConvolver.h"
+#include "../../../external/convolver/twoStageConvolver.h"
 
 #include <atomic>
 
