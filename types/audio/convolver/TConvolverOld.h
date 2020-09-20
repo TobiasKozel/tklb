@@ -3,6 +3,7 @@
 
 #include "../../../util/TNoCopy.h"
 #include "../../../util/TAssert.h"
+#include "../TAudioBuffer.h"
 
 #define TKLB_CONVOLUTION_FLOAT
 
@@ -33,142 +34,68 @@
 
 namespace tklb {
 /**
- * Wraps up the FttConvolver to do easy stereo convolution
+ * Wraps up the FttConvolver to support type conversion
  */
-template <unsigned int MAX_BUFFER = 512>
-class Convolver {
+class ConvolverMono {
 
 public:
 	using uchar = unsigned char;
 	using uint = unsigned int;
-#ifdef TKLB_MAXCHANNELS
-	static const uchar MAX_CHANNELS = TKLB_MAXCHANNELS;
-#else
-	static const uchar MAX_CHANNELS = 2;
-#endif
 
 private:
-	// The convolver maintains internal state so each channels need its own
-	fftconvolver::TwoStageFFTConvolver mConvolvers[MAX_CHANNELS];
-
-	std::atomic<bool> mIRLoaded = { false };
-	std::atomic<bool> mIsProcessing = { false };
-
-	uint mBlockSize, mTailBlockSize;
-	uchar mChannels;
-
-#ifdef TKLB_CONVOLUTION_NEEDS_CONVERSION
-#ifdef TKLB_SAMPLE_FLOAT
-	using SAMPLE = float;
-#else
-	using SAMPLE = double;
-#endif
-	/** Buffers need to be converted from double to float */
-	SAMPLE mConversionBufferIn[MAX_BUFFER];
-	SAMPLE mConversionBufferOut[MAX_BUFFER];
-#endif
+	fftconvolver::FFTConvolver mConvolver;
+	AudioBufferTpl<fftconvolver::Sample> mConversion = { 2 };
+	uint mBlockSize;
 
 public:
-	TKLB_NO_COPY(Convolver)
-
+	ConvolverMono() = default;
 	/**
-	 * @param channels How many channels the convolver has. Can't exceed TKLB_MAXCHANNELS
-	 * @param block The size of each convolution block
-	 * @param tail The size of the tail convolution block
+	 * @brief Load a impulse response and prepare the convolution
+	 * @param buffer The ir buffer. Only the first channel is used
+	 * @param channel Which channel to use from the AudioBuffer
+	 * @param blockSize Size of blocks ir will be divided in
 	 */
-	Convolver(uchar channels = 2, uint block = 128, uint tail = 4096) {
-		mBlockSize = block;
-		mTailBlockSize = tail;
-		mChannels = channels;
-		TKLB_ASSERT(MAX_CHANNELS <= channels);
-	}
+	template <typename T2>
+	void load(const AudioBufferTpl<T2>& buffer, const uchar channel, const uint blockSize) {
+		const fftconvolver::Sample* ir = nullptr;
+		const uint irLength = buffer.validSize();
+		if (std::is_same<T2, fftconvolver::Sample>::value) {
+			ir = reinterpret_cast<const fftconvolver::Sample*>(buffer[channel]);
+		} else {
 
-	void loadIR(
-			FFTCONVOLVER_TYPE** samples,
-			const unsigned int sampleCount,
-			const unsigned int channelCount
-	) {
-		if (samples == nullptr || sampleCount == 0 || channelCount == 0) { return; }
-		mIRLoaded = false;
-
-		while (mIsProcessing) { /** TODO does this even work like a mutex? */ }
-
-		for (uchar c = 0; c < mChannels; c++) {
-			mConvolvers[c].init(
-				mBlockSize, mTailBlockSize, samples[c % channelCount], sampleCount
-			);
+			mConversion.resize(irLength);
+			mConversion.set(buffer[channel], 0, irLength);
+			ir = mConversion[0];
 		}
-		mIRLoaded = true;
+		mConversion.resize(blockSize); // incase we need to convert
+		mConvolver.init(blockSize, ir, irLength);
+		mBlockSize = blockSize;
 	}
 
 	/**
-	 * Native process function which does no sample type conversion
+	 * @brief Do the convolution
 	 */
-	void process(
-			FFTCONVOLVER_TYPE** in, FFTCONVOLVER_TYPE** out, const uint nFrames
-	) {
-		if (!mIRLoaded) { // just pass the signal through
-			for (uchar c = 0; c < mChannels; c++) {
-				memcpy(out[c], in[c], sizeof(FFTCONVOLVER_TYPE) * nFrames);
+	template <typename T2>
+	void process(const AudioBufferTpl<T2>& inBuf, AudioBufferTpl<T2>& outBuf, const uchar channel) {
+		const uint length = inBuf.validSize();
+		uint samplesLeft = length;
+		for (uint i = 0; i < length; i += mBlockSize) {
+			const uint remaining = std::min(mBlockSize, samplesLeft);
+			const fftconvolver::Sample* in = nullptr;
+			fftconvolver::Sample* out = nullptr;
+			if (std::is_same<T2, fftconvolver::Sample>::value) {
+				in = reinterpret_cast<const fftconvolver::Sample*>(inBuf[channel] + i);
+				out = reinterpret_cast<fftconvolver::Sample*>(outBuf[channel] + i);
+			} else {
+				mConversion.set(inBuf[channel] + i, 0, remaining);
+				mConversion.set(outBuf[channel] + i, 1, remaining);
+				in = mConversion[0];
+				out = mConversion[1];
 			}
-			return;
+			mConvolver.process(in, out, remaining);
+			samplesLeft -= mBlockSize;
 		}
-
-		mIsProcessing = true;
-
-		for(uchar c = 0; c < mChannels; c++) {
-			mConvolvers[c].process(in[c], out[c], nFrames);
-		}
-		mIsProcessing = false;
 	}
-
-#ifdef TKLB_CONVOLUTION_NEEDS_CONVERSION
-	/**
-	 * Conversion function used when the convolution type
-	 * and global sample type don't match
-	 */
-	void process(SAMPLE** in, SAMPLE** out, const uint nFrames) {
-		if (!mIRLoaded) { // just pass the signal through
-			for (uchar c = 0; c < mChannels; c++) {
-				memcpy(out[c], in[c], sizeof(SAMPLE) * nFrames);
-			}
-			return;
-		}
-
-		mIsProcessing = true;
-
-		for(uchar c = 0; c < mChannels; c++) {
-			for (unsigned int i = 0; i < nFrames; i++) {
-				mConversionBufferIn[i] = in[c][i];
-			}
-			mConvolvers[c].process(
-				mConversionBufferIn, mConversionBufferOut, nFrames
-			);
-			for (uint i = 0; i < nFrames; i++) {
-				out[c][i] = mConversionBufferOut[i];
-			}
-		}
-		mIsProcessing = false;
-	}
-
-	// void loadIR(
-	// 		SAMPLE** samples,
-	// 		const uint sampleCount,
-	// 		const uchar channelCount
-	// ) {
-	// 	if (samples == nullptr || sampleCount == 0 || channelCount == 0) { return; }
-	// 	mIRLoaded = false;
-
-	// 	while (mIsProcessing) { /** TODO does this even work like a mutex? */ }
-
-	// 	for (uchar c = 0; c < mChannels; c++) {
-	// 		mConvolvers[c].init(
-	// 			mBlockSize, mTailBlockSize, samples[c % channelCount], sampleCount
-	// 		);
-	// 	}
-	// 	mIRLoaded = true;
-	// }
-#endif
 
 	static const char* getLicense() {
 		return
@@ -176,6 +103,43 @@ public:
 			"https://github.com/HiFi-LoFi\n"
 			"https://github.com/HiFi-LoFi/FFTConvolver\n"
 			"MIT License\n\n";
+	}
+};
+
+
+/**
+ * @brief Multichannel version of the convolver
+ */
+class Convolver {
+	using uchar = unsigned char;
+	using uint = unsigned int;
+	ConvolverMono mConvolvers[AudioBuffer::MAX_CHANNELS];
+
+public:
+	using sample = fftconvolver::Sample;
+
+	Convolver() = default;
+
+	/**
+	 * @brief Load a impulse response and prepare the convolution
+	 */
+	template <typename T2>
+	void load(const AudioBufferTpl<T2>& buffer, const uint blockSize) {
+		const uint size = buffer.validSize();
+		for (uchar c = 0; c < buffer.channels(); c++) {
+			mConvolvers[c].load(buffer, c, blockSize);
+		}
+	}
+
+	/**
+	 * @brief Load a impulse response and prepare the convolution
+	 */
+	template <typename T2>
+	void process(const AudioBufferTpl<T2>& inBuf, AudioBufferTpl<T2>& outBuf) {
+		const uint size = inBuf.validSize();
+		for (uchar c = 0; c < inBuf.channels(); c++) {
+			mConvolvers[c].process(inBuf, outBuf, c);
+		}
 	}
 };
 

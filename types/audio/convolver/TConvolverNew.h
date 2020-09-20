@@ -55,9 +55,9 @@ public:
 	 * @param blockSize Size of blocks ir will be divided in
 	 */
 	template <typename T2>
-	void load(const AudioBufferTpl<T2>& buffer, const uint blockSize) {
+	void load(const AudioBufferTpl<T2>& buffer, const uchar channel, const uint blockSize) {
 		uint irLength = buffer.validSize();
-		const T2* ir = buffer[0];
+		const T2* ir = buffer[channel];
 		// trim silence, since longer IRs increase CPU usage considerably
 		const T2 silence = 0.000001;
 		while (irLength && silence > fabs(ir[irLength])) { irLength--; }
@@ -103,15 +103,15 @@ public:
 	 * @brief Do the convolution
 	 */
 	template <typename T2>
-	void process(const AudioBufferTpl<T2>& inBuf, AudioBufferTpl<T2>& outBuf) {
+	void process(const AudioBufferTpl<T2>& inBuf, AudioBufferTpl<T2>& outBuf, const uchar channel) {
 		if (mSegmentCount == 0) {
 			outBuf.set(inBuf);
 			return;
 		}
 
 		const uint length = inBuf.validSize();
-		const T2* in = inBuf[0];
-		T2* out = outBuf[0];
+		const T2* in = inBuf[channel];
+		T2* out = outBuf[channel];
 
 		uint processed = 0;
 		uint iterations = 0;
@@ -140,8 +140,8 @@ public:
 
 			mFFT.back(mConvolutionBuffer, mFFTBuffer);
 
-			outBuf.set(mFFTBuffer[0] + inputBufferPos, 0, processing, processed);
-			outBuf.add(mOverlapBuffer, processed, processing, inputBufferPos);
+			// outBuf.set(mFFTBuffer[0] + inputBufferPos, 0, processing, processed);
+			// outBuf.add(mOverlapBuffer, processed, processing, inputBufferPos);
 
 			mInputBufferFill += processing;
 			if (mInputBufferFill == mBlockSize) {
@@ -222,11 +222,8 @@ public:
 	 */
 	template <typename T2>
 	void load(const AudioBufferTpl<T2>& buffer, const uint blockSize) {
-		AudioBufferTpl<T2> in = { 1 };
-		const uint size = buffer.validSize();
 		for (uchar c = 0; c < buffer.channels(); c++) {
-			in.inject(buffer[c], size);
-			mConvolvers[c].load(in, blockSize);
+			mConvolvers[c].load(buffer, blockSize, c);
 		}
 	}
 
@@ -235,13 +232,8 @@ public:
 	 */
 	template <typename T2>
 	void process(const AudioBufferTpl<T2>& inBuf, AudioBufferTpl<T2>& outBuf) {
-		AudioBufferTpl<T2> in = { 1 };
-		AudioBufferTpl<T2> out = { 1 };
-		const uint size = inBuf.validSize();
 		for (uchar c = 0; c < inBuf.channels(); c++) {
-			in.inject(inBuf[c], size);
-			out.inject(outBuf[c], size);
-			mConvolvers[c].process(in, out);
+			mConvolvers[c].process(inBuf, outBuf, c);
 		}
 	}
 };

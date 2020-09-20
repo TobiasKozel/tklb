@@ -1,4 +1,5 @@
 #define TKLB_LEAKCHECKER_DISARM
+#define TKLB_MAXCHANNELS 16
 #include "BenchmarkCommon.h"
 #include "../../types/audio/TAudioBuffer.h"
 #include "../../types/audio/convolver/TConvolverOld.h"
@@ -6,24 +7,23 @@
 
 int main() {
 	{
-		Convolver<> con;
-		const int audioLength = 48000 * 10;
-		const int audioChannels = 2;
+		Convolver con;
+		const int audioLength = 520;
 		int blockSize = 128;
 
 		AudioBufferFloat ir, in, out;
-		ir.resize(1024, audioChannels);
+		ir.resize(1024, TKLB_MAXCHANNELS);
 		ir.set(0);
-		for (int c = 0; c < audioChannels; c++) {
+		for (int c = 0; c < TKLB_MAXCHANNELS; c++) {
 			ir[c][1] = 1.0; // perfect impulse delaying the signal by one sample
 			ir[c][512] = 1.0; // second delay to make the ir longer
 		}
-		con.loadIR(ir.getRaw(), 1024, 2);
+		con.load(ir, blockSize);
 
-		in.resize(audioLength, audioChannels);
+		in.resize(audioLength, TKLB_MAXCHANNELS);
 		out.resize(in);
 
-		for(int c = 0; c < audioChannels; c++) {
+		for(int c = 0; c < TKLB_MAXCHANNELS; c++) {
 			for(int i = 0; i < audioLength; i++) {
 				in[c][i] = (i + c) % 2;
 			}
@@ -31,7 +31,9 @@ int main() {
 
 		{
 			TIMER(Microseconds);
-			con.process(in.getRaw(), out.getRaw(), audioLength);
+			for(int i = 0; i < ITERATIONS; i++) {
+				con.process(in, out);
+			}
 		}
 
 	}

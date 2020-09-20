@@ -4,9 +4,9 @@
 
 int main() {
 	{
-		const int audioLength = 1024 * 1;
+		const int audioLength = 48000 * 10;
 		const int audioChannels = 2;
-		int blockSize = 128;
+		const int blockSize = 128;
 
 		using T = Convolver::sample;
 		Convolver con;
@@ -16,7 +16,7 @@ int main() {
 		for (int c = 0; c < audioChannels; c++) {
 			ir[c][1] = 1.0; // perfect impulse delaying the signal by one sample
 		}
-		con.load(ir, 128);
+		con.load(ir, blockSize);
 
 		in.resize(audioLength, audioChannels);
 		out.resize(in);

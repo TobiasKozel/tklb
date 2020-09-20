@@ -391,18 +391,22 @@ public:
 	}
 
 	T* get(const uchar channel) {
+		TKLB_ASSERT(channel < mChannels)
 		return mBuffers[channel].data();
 	};
 
 	const T* get(const uchar channel) const {
+		TKLB_ASSERT(channel < mChannels)
 		return mBuffers[channel].data();
 	};
 
 	const T* operator[](const uchar channel) const {
+		TKLB_ASSERT(channel < mChannels)
 		return mBuffers[channel].data();
 	}
 
 	T* operator[](const uchar channel) {
+		TKLB_ASSERT(channel < mChannels)
 		return mBuffers[channel].data();
 	}
 

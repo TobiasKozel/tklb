@@ -20,7 +20,7 @@ function test {
 		fi
 		rm $executable
 	else
-		echo "Compilation failed for ${1} ${source_file}"
+		echo -e "\e[31m${1} Error: Failed to compile ${source_file}\e[0m"
 		exit
 	fi
 }

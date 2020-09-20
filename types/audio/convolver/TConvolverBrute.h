@@ -28,12 +28,13 @@ public:
 	/**
 	 * @brief Load a impulse response and prepare the convolution
 	 * @param buffer The ir buffer. Only the first channel is used
+	 * @param channel Which channel to use from the AudioBuffer
 	 * @param blockSize Size of blocks ir will be divided in
 	 */
 	template <typename T2>
-	void load(const AudioBufferTpl<T2>& buffer, const uint blockSize) {
+	void load(const AudioBufferTpl<T2>& buffer, const uchar channel, const uint blockSize) {
+		const T2* ir = buffer[channel];
 		uint irLength = buffer.validSize();
-		const T2* ir = buffer[0];
 		// trim silence, since longer IRs increase CPU usage considerably
 		const T2 silence = 0.000001;
 		while (irLength > 0 && silence > fabs(ir[irLength])) { irLength--; }
@@ -48,17 +49,16 @@ public:
 	 * @brief Do the convolution
 	 */
 	template <typename T2>
-	void process(const AudioBufferTpl<T2>& in, AudioBufferTpl<T2>& out) {
+	void process(const AudioBufferTpl<T2>& in, AudioBufferTpl<T2>& out, const uchar channel) {
 		const uint nf = mIrLength;
 		const uint ng = in.size();
-		// const uint n = nf + ng - 1;
 		const uint n = out.size();
 		for(uint i = 0; i < n; i++) {
 			const int jmn = (i >= ng - 1) ? (i - (ng - 1)) : 0;
 			const int jmx = (i <  nf - 1) ?  i : (nf - 1);
 			for(int j = jmn; j <= jmx; j++) {
 				// nested loop goes brr
-				out[0][i] += (mIr[0][j] * in[0][i - j]);
+				out[channel][i] += (mIr[0][j] * in[channel][i - j]);
 			}
 		}
 	}
@@ -96,11 +96,8 @@ public:
 	 */
 	template <typename T2>
 	void load(const AudioBufferTpl<T2>& buffer, const uint blockSize) {
-		AudioBufferTpl<T2> in = { 1 };
-		const uint size = buffer.validSize();
 		for (uchar c = 0; c < buffer.channels(); c++) {
-			in.inject(buffer[c], size);
-			mConvolvers[c].load(in, blockSize);
+			mConvolvers[c].load(buffer, c, blockSize);
 		}
 	}
 
@@ -109,13 +106,8 @@ public:
 	 */
 	template <typename T2>
 	void process(const AudioBufferTpl<T2>& inBuf, AudioBufferTpl<T2>& outBuf) {
-		AudioBufferTpl<T2> in = { 1 };
-		AudioBufferTpl<T2> out = { 1 };
-		const uint size = inBuf.validSize();
 		for (uchar c = 0; c < inBuf.channels(); c++) {
-			in.inject(inBuf[c], size);
-			out.inject(outBuf[c], size);
-			mConvolvers[c].process(in, out);
+			mConvolvers[c].process(inBuf, outBuf, c);
 		}
 	}
 };
