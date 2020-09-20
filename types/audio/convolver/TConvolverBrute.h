@@ -32,7 +32,7 @@ public:
 	 * @param blockSize Size of blocks ir will be divided in
 	 */
 	template <typename T2>
-	void load(const AudioBufferTpl<T2>& buffer, const uchar channel, const uint blockSize) {
+	void load(const AudioBufferTpl<T2>& buffer, const uint blockSize, const uchar channel) {
 		const T2* ir = buffer[channel];
 		uint irLength = buffer.validSize();
 		// trim silence, since longer IRs increase CPU usage considerably
@@ -97,7 +97,7 @@ public:
 	template <typename T2>
 	void load(const AudioBufferTpl<T2>& buffer, const uint blockSize) {
 		for (uchar c = 0; c < buffer.channels(); c++) {
-			mConvolvers[c].load(buffer, c, blockSize);
+			mConvolvers[c].load(buffer, blockSize, c);
 		}
 	}
 

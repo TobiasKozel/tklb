@@ -55,7 +55,7 @@ public:
 	 * @param blockSize Size of blocks ir will be divided in
 	 */
 	template <typename T2>
-	void load(const AudioBufferTpl<T2>& buffer, const uchar channel, const uint blockSize) {
+	void load(const AudioBufferTpl<T2>& buffer, const uint blockSize, const uchar channel) {
 		uint irLength = buffer.validSize();
 		const T2* ir = buffer[channel];
 		// trim silence, since longer IRs increase CPU usage considerably
@@ -142,6 +142,11 @@ public:
 
 			// outBuf.set(mFFTBuffer[0] + inputBufferPos, 0, processing, processed);
 			// outBuf.add(mOverlapBuffer, processed, processing, inputBufferPos);
+			for (int i = 0; i < processing; i++) {
+				out[i + processed] =
+					mFFTBuffer[0][i + inputBufferPos] +
+					mOverlapBuffer[0][i + inputBufferPos];
+			}
 
 			mInputBufferFill += processing;
 			if (mInputBufferFill == mBlockSize) {

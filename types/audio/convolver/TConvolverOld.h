@@ -56,7 +56,7 @@ public:
 	 * @param blockSize Size of blocks ir will be divided in
 	 */
 	template <typename T2>
-	void load(const AudioBufferTpl<T2>& buffer, const uchar channel, const uint blockSize) {
+	void load(const AudioBufferTpl<T2>& buffer, const uint blockSize, const uchar channel) {
 		const fftconvolver::Sample* ir = nullptr;
 		const uint irLength = buffer.validSize();
 		if (std::is_same<T2, fftconvolver::Sample>::value) {
@@ -127,7 +127,7 @@ public:
 	void load(const AudioBufferTpl<T2>& buffer, const uint blockSize) {
 		const uint size = buffer.validSize();
 		for (uchar c = 0; c < buffer.channels(); c++) {
-			mConvolvers[c].load(buffer, c, blockSize);
+			mConvolvers[c].load(buffer, blockSize, c);
 		}
 	}
 
