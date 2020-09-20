@@ -11,6 +11,8 @@ esac
 
 source_file=$1
 
+exit_code=0
+
 function test {
 	if $1 $source_file >> /dev/null 2>&1 ; then
 		$executable
@@ -19,7 +21,7 @@ function test {
 			echo "Passed: ${1} ${source_file}"
 		else
 			echo -e "\e[31mError: Test failed for ${source_file} ${1}. Returned ${result}\e[0m"
-			exit $result
+			exit_code=$result
 		fi
 		rm $executable
 	else
@@ -44,3 +46,4 @@ test "clang++ -march=native -Ofast -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD"
 # 	test "cl /O2 /arch:AVX /DTKLB_SAMPLE_FLOAT"
 # fi
 
+exit $exit_code
