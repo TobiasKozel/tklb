@@ -25,5 +25,7 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Run Tests
         run: |
-          chmod +x ./tests/all.sh
-          ./tests/all.sh
+          cd ./tests
+          chmod +x ./all.sh
+          chmod +x ./run.sh
+          ./all.sh
