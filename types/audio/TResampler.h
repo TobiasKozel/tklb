@@ -85,8 +85,8 @@ public:
 			for (uchar c = 0; c < in.channels(); c++) {
 				uint countIn = in.validSize();
 				uint countOut = out.size();
-				const float* inBuf = reinterpret_cast<const float*>(in.get(c));
-				float* outBuf = reinterpret_cast<float*>(out.get(c));
+				const float* inBuf = reinterpret_cast<const float*>(in[c]);
+				float* outBuf = reinterpret_cast<float*>(out[c]);
 				speex_resampler_process_float(mState, c, inBuf, &countIn, outBuf, &countOut);
 				samplesOut = countOut;
 			}
@@ -95,13 +95,13 @@ public:
 			for (uchar c = 0; c < in.channels(); c++) {
 				uint countIn = in.validSize();
 				uint countOut = mConvertOut.size();
-				const float* inBuf = mConvertIn.get(c);
-				float* outBuf = mConvertOut.get(c);
+				const float* inBuf = mConvertIn[c];
+				float* outBuf = mConvertOut[c];
 				speex_resampler_process_float(mState, c, inBuf, &countIn, outBuf, &countOut);
 				samplesOut = countOut;
 				TKLB_ASSERT(mConvertOut.size() >= countOut);
 			}
-			out.set(mConvertOut, 0, samplesOut);
+			out.set(mConvertOut, samplesOut);
 		}
 		TKLB_ASSERT(out.size() >= samplesOut);
 		out.setValidSize(samplesOut);

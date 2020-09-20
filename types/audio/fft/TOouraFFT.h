@@ -16,8 +16,8 @@ class FFTOoura {
 	// No idea what this is
 	AudioBuffer::Buffer<int> mIp;
 	// or this, prolly lookup tables
-	AudioBufferDouble mW = { 1 };
-	AudioBufferDouble mBuffer { 1 };
+	AudioBufferDouble mW;
+	AudioBufferDouble mBuffer;
 
 public:
 	FFTOoura(uint size = 0) {
@@ -39,15 +39,15 @@ public:
 
 	template <typename T>
 	void forward(const AudioBufferTpl<T>& input, AudioBufferTpl<T>& result) {
-		T* real = result.get(0);
-		T* imaginary = result.get(1);
+		T* real = result[0];
+		T* imaginary = result[1];
 		/**
 		 * converts or copies the data
 		 * we shouldn't use the original buffer since
-		 * mBuffer gets written toby the fft
+		 * mBuffer gets written to by the ooura
 		 */
 		mBuffer.set(input);
-		ooura::rdft(mSize, +1, mBuffer[0], mIp.data(), mW.get(0));
+		ooura::rdft(mSize, +1, mBuffer[0], mIp.data(), mW[0]);
 
 		// Convert back to split-complex
 		{
@@ -68,11 +68,11 @@ public:
 
 	template <typename T>
 	void back(const AudioBufferTpl<T>& input, AudioBufferTpl<T>& result) {
-		T* data = result.get(0);
-		const T* real = input.get(0);
-		const T* imaginary = input.get(1);
+		T* data = result[0];
+		const T* real = input[0];
+		const T* imaginary = input[1];
 		{
-			double* b = mBuffer.get(0);
+			double* b = mBuffer[0];
 			double* bEnd = b + mSize;
 			const T* r = real;
 			const T* i = imaginary;
@@ -82,15 +82,15 @@ public:
 			}
 			mBuffer[0][1] = real[mSize / 2];
 		}
-		ooura::rdft(int(mSize), -1, mBuffer.get(0), mIp.data(), mW.get(0));
+		ooura::rdft(int(mSize), -1, mBuffer[0], mIp.data(), mW[0]);
 
 		const T volume = 2.0 / T(mSize);
 		if (std::is_same<T, double>::value) {
 			mBuffer.multiply(volume); // scale the output
-			mBuffer.put(reinterpret_cast<double*>(data), 0, mSize);
+			mBuffer.put(reinterpret_cast<double*>(data), mSize);
 		} else {
 			// or the old fashioned way if we need to convert sample types anyways
-			const double* buf = mBuffer.get(0);
+			const double* buf = mBuffer[0];
 			for (uint i = 0; i < mSize; i++) {
 				data[i] = buf[i] * volume;
 			}

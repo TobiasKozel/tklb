@@ -15,10 +15,10 @@ int deinterleave(AudioBuffer& buffer) {
 		noconvInterleaved[i + 1] = 0.0;
 	}
 
-	buffer.setFromInterleaved(noconvInterleaved, channels, length);
+	buffer.setFromInterleaved(noconvInterleaved, length, channels);
 
-	auto deinterleavedL = buffer.get(0);
-	auto deinterleavedR = buffer.get(1);
+	auto deinterleavedL = buffer[0];
+	auto deinterleavedR = buffer[1];
 
 	for (int i = 0; i < length; i++) {
 		if (!close(deinterleavedL[i], 1.0)) {
@@ -41,23 +41,24 @@ int deinterleave(AudioBuffer& buffer) {
 
 template <typename T>
 int conversion(AudioBuffer& buffer) {
-	buffer.resize(0, 0);
+	buffer.resize(0);
 	buffer.resize(length, channels);
+	buffer.set(0); // important
 	T fsamples[channels * length];
-	std::fill_n(fsamples, channels * length, 1.0);
+	std::fill_n(fsamples, channels * length, 1.0); // only set part of it to one
 	T* fbuf[channels] = { };
 
 	for (int c = 0; c < channels; c++) {
 		fbuf[c] = fsamples + (length * c);
 	}
 
-	buffer.set(fbuf, channels, length, length / 2);
+	buffer.set(fbuf, length, channels, length / 2);
 
-	auto l = buffer.get(0);
-	auto r = buffer.get(1);
+	AudioBuffer::sample* l = buffer[0];
+	AudioBuffer::sample* r = buffer[1];
 
 	for (int i = 0; i < length; i++) {
-		AudioBuffer::sample expected = i >= length / 2 ? 1.0 : 0;
+		AudioBuffer::sample expected = (i >= (length / 2)) ? 1.0 : 0;
 		if (!close(expected, l[i])) {
 			return 5;
 		}
@@ -72,7 +73,7 @@ int conversion(AudioBuffer& buffer) {
 int add() {
 	AudioBuffer buffer, buffer2;
 	buffer.resize(length, channels);
-	buffer2.resize(length, channels);
+	buffer2.resize(buffer);
 
 	AudioBuffer::sample fsamples[channels * length];
 	AudioBuffer::sample* fbuf[channels] = { };
@@ -84,18 +85,18 @@ int add() {
 	for (int c = 0; c < channels; c++) {
 		fbuf[c] = fsamples + (length * c);
 	}
-	buffer.set(fbuf, channels, length, length / 2);
+	buffer.set(fbuf, length, channels, length / 2);
 
 	/**
 	 * Fill the first half with 1.0 of the second buffer
 	 */
 	fill_n(fsamples, channels * length, 0.0);
 	for (int c = 0; c < channels; c++) {
-		for (int i = 0; i < length / 2; i++) {
+		for (int i = 0; i < (length / 2); i++) {
 			fbuf[c][i] = 1.0;
 		}
 	}
-	buffer2.set(fbuf, channels, length);
+	buffer2.set(fbuf, length, channels);
 
 	/**
 	 * Add them together
@@ -119,9 +120,9 @@ int casts() {
 	AudioBufferDouble d1, d2;
 	AudioBufferFloat f1, f2;
 	d1.resize(length, channels);
-	d2.resize(length, channels);
-	f1.resize(length, channels);
-	f2.resize(length, channels);
+	d2.resize(d1);
+	f1.resize(d1);
+	f2.resize(d1);
 
 	d1.add(d2);
 	d1.set(d2);

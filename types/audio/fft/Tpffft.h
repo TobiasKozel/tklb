@@ -58,15 +58,15 @@ public:
 		pffft_transform(mSetup, data, mRc[0], nullptr, PFFFT_FORWARD);
 		// Split real and complex in two channels
 		const uint sizeHalf = mSize / 2;
-		result.set(mRc[0], 0, sizeHalf);
-		result.set(mRc[0] + sizeHalf, 1, sizeHalf);
+		result.set(mRc[0], sizeHalf, 0);
+		result.set(mRc[0] + sizeHalf, sizeHalf, 1);
 	}
 
 	template <typename T>
 	void back(const AudioBufferTpl<T>& input, AudioBufferTpl<T>& result) {
 		const uint sizeHalf = mSize / 2;
-		mRc.set(input[0], 0, sizeHalf);
-		mRc.set(input[1], 0, sizeHalf, sizeHalf);
+		mRc.set(input[0], sizeHalf);
+		mRc.set(input[1], sizeHalf, 0, sizeHalf);
 		const T volume = 1.0 / double(mSize);
 		if (std::is_same<T, float>::value) {
 			float* out = reinterpret_cast<float*>(result[0]);

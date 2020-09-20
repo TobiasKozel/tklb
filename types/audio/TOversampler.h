@@ -75,6 +75,7 @@ public:
 	using uchar = unsigned char;
 	using uint = unsigned int;
 
+	// TODO Use the buffer instead
 	using ProcessFunction = std::function<void(T**, T**, uint)>;
 
 private:

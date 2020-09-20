@@ -64,7 +64,7 @@ public:
 		} else {
 
 			mConversion.resize(irLength);
-			mConversion.set(buffer[channel], 0, irLength);
+			mConversion.set(buffer[channel], irLength);
 			ir = mConversion[0];
 		}
 		mConversion.resize(blockSize); // incase we need to convert
@@ -87,8 +87,8 @@ public:
 				in = reinterpret_cast<const fftconvolver::Sample*>(inBuf[channel] + i);
 				out = reinterpret_cast<fftconvolver::Sample*>(outBuf[channel] + i);
 			} else {
-				mConversion.set(inBuf[channel] + i, 0, remaining);
-				mConversion.set(outBuf[channel] + i, 1, remaining);
+				mConversion.set(inBuf[channel] + i, remaining, 0);
+				mConversion.set(outBuf[channel] + i, remaining, 1);
 				in = mConversion[0];
 				out = mConversion[1];
 			}

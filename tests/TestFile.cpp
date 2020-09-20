@@ -3,9 +3,8 @@
 
 int main() {
 	{
-		FileInfo file("C:\\dev\\git\\tklb");
+		FileInfo file("./");
 		file.scan();
-		file.print();
 	}
 	memcheck()
 	return 0;

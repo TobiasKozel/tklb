@@ -84,7 +84,7 @@ public:
 			const uint remaining = std::min(irLength - (i * mBlockSize), mBlockSize);
 			mFFTBuffer.set(0);
 			// Put the segment in the fft buffer, might do type conversion
-			mFFTBuffer.set(ir + (i * mBlockSize), 0, remaining);
+			mFFTBuffer.set(ir + (i * mBlockSize), remaining);
 			mSegmentsIR[i].resize(mFFTComplexSize, 2); // make space in the result buffer
 			mSegments[i].resize(mFFTComplexSize, 2); // and the input signal buffer
 			mFFT.forward(mFFTBuffer, mSegmentsIR[i]); // save the fft result for each segment
@@ -92,8 +92,8 @@ public:
 
 		mPremultipliedBuffer.resize(mFFTComplexSize, 2);
 		mConvolutionBuffer.resize(mFFTComplexSize, 2);
-		mOverlapBuffer.resize(mBlockSize, 1);
-		mInputBuffer.resize(mBlockSize, 1);
+		mOverlapBuffer.resize(mBlockSize);
+		mInputBuffer.resize(mBlockSize);
 
 		mCurrentPosition = 0;
 		mInputBufferFill = 0;
@@ -123,7 +123,7 @@ public:
 			mInputBuffer.set(in + processed, inputBufferPos, processing);
 
 			mFFTBuffer.set(0);
-			mFFTBuffer.set(in, 0, mBlockSize);
+			mFFTBuffer.set(in, mBlockSize);
 			mFFT.forward(mFFTBuffer, mSegments[mCurrentPosition]);
 
 			if (inputBufferWasEmpty) {
@@ -152,7 +152,7 @@ public:
 			if (mInputBufferFill == mBlockSize) {
 				mInputBuffer.set(0);
 				mInputBufferFill = 0;
-				mOverlapBuffer.set(mFFTBuffer[0] + mBlockSize, 0, mBlockSize);
+				mOverlapBuffer.set(mFFTBuffer[0] + mBlockSize, mBlockSize);
 				mCurrentPosition = (mCurrentPosition > 0) ? (mCurrentPosition - 1) : (mSegmentCount - 1);
 			}
 
@@ -166,12 +166,12 @@ private:
 		const Buffer& bufferA, const Buffer& bufferB, Buffer& bufferOut
 	) {
 		const uint size = bufferOut.size();
-		const T* aReal = bufferA.get(0);
-		const T* aImag = bufferA.get(1);
-		const T* bReal = bufferB.get(0);
-		const T* bImag = bufferB.get(1);
-		T* outReal = bufferOut.get(0);
-		T* outImag = bufferOut.get(1);
+		const T* aReal = bufferA[0];
+		const T* aImag = bufferA[1];
+		const T* bReal = bufferB[0];
+		const T* bImag = bufferB[1];
+		T* outReal = bufferOut[0];
+		T* outImag = bufferOut[1];
 		#ifdef TKLB_NO_SIMD
 			for (uint i = 0; i < size; i++) {
 				outReal[i] += aReal[i] * bReal[i] - aImag[i] * bImag[i];

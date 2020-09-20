@@ -41,7 +41,8 @@ namespace wave {
 			return false;
 		}
 		out.sampleRate = wav.sampleRate;
-		out.setFromInterleaved(sampleData, wav.channels, length);
+		out.resize(length, wav.channels);
+		out.setFromInterleaved(sampleData, length, wav.channels);
 		out.setValidSize(length);
 		free(sampleData);
 		drwav_uninit(&wav);
