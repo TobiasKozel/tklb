@@ -1,6 +1,6 @@
 #define TKLB_LEAKCHECKER_DISARM
-#include "TestCommon.h"
 #define TKLB_USE_OOURA
+#include "TestCommon.h"
 // #define TKLB_NO_SIMD
 #include "../types/audio/convolver/TConvolverNew.h"
 

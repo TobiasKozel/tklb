@@ -145,7 +145,7 @@ public:
 			for (int i = 0; i < processing; i++) {
 				out[i + processed] =
 					(mFFTBuffer[0][i + inputBufferPos] +
-					mOverlapBuffer[0][i + inputBufferPos]) * 2;
+					mOverlapBuffer[0][i + inputBufferPos]);
 			}
 
 			mInputBufferFill += processing;
