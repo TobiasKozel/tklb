@@ -58,7 +58,7 @@ public:
 		pffft_transform(mSetup, data, mRc[0], nullptr, PFFFT_FORWARD);
 		// Split real and complex in two channels
 		const uint sizeHalf = mSize / 2;
-		result.set(mRc[0], sizeHalf, 0);
+		result.set(mRc[0],            sizeHalf, 0);
 		result.set(mRc[0] + sizeHalf, sizeHalf, 1);
 	}
 

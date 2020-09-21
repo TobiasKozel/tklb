@@ -120,15 +120,15 @@ public:
 			const uint processing = std::min(length - processed, mBlockSize - mInputBufferFill);
 			const uint inputBufferPos = mInputBufferFill;
 
-			mInputBuffer.set(in + processed, inputBufferPos, processing);
+			mInputBuffer.set(in + processed, processing, 0, inputBufferPos);
 
-			mFFTBuffer.set(0);
-			mFFTBuffer.set(in, mBlockSize);
+			mFFTBuffer.set(mInputBuffer, mBlockSize);
+			mFFTBuffer.set(0, 0, mBlockSize); // pad the rest with 0
 			mFFT.forward(mFFTBuffer, mSegments[mCurrentPosition]);
 
 			if (inputBufferWasEmpty) {
 				mPremultipliedBuffer.set(0);
-				for (uint i = 0; i < mSegmentCount; i++) {
+				for (uint i = 1; i < mSegmentCount; i++) {
 					const size_t indexIr = i;
 					const size_t indexAudio = (mCurrentPosition + i) % mSegmentCount;
 					complexMultiply(mPremultipliedBuffer, mSegmentsIR[indexIr], mSegments[indexAudio]);
@@ -136,23 +136,23 @@ public:
 			}
 
 			mConvolutionBuffer.set(mPremultipliedBuffer);
-			complexMultiply(mConvolutionBuffer, mSegments[mCurrentPosition], mSegmentsIR[0]);
+			complexMultiply(mConvolutionBuffer, mSegmentsIR[0], mSegments[mCurrentPosition]);
 
 			mFFT.back(mConvolutionBuffer, mFFTBuffer);
 
-			// outBuf.set(mFFTBuffer[0] + inputBufferPos, 0, processing, processed);
-			// outBuf.add(mOverlapBuffer, processed, processing, inputBufferPos);
+			// outBuf.set(mFFTBuffer[0] + inputBufferPos, processing, 0, processed);
+			// outBuf.add(mOverlapBuffer, processing, processed, inputBufferPos);
 			for (int i = 0; i < processing; i++) {
 				out[i + processed] =
-					mFFTBuffer[0][i + inputBufferPos] +
-					mOverlapBuffer[0][i + inputBufferPos];
+					(mFFTBuffer[0][i + inputBufferPos] +
+					mOverlapBuffer[0][i + inputBufferPos]) * 2;
 			}
 
 			mInputBufferFill += processing;
 			if (mInputBufferFill == mBlockSize) {
 				mInputBuffer.set(0);
 				mInputBufferFill = 0;
-				mOverlapBuffer.set(mFFTBuffer[0] + mBlockSize, mBlockSize);
+				mOverlapBuffer.set(mFFTBuffer, mBlockSize, 0, mBlockSize);
 				mCurrentPosition = (mCurrentPosition > 0) ? (mCurrentPosition - 1) : (mSegmentCount - 1);
 			}
 
@@ -163,7 +163,7 @@ public:
 
 private:
 	static void complexMultiply(
-		const Buffer& bufferA, const Buffer& bufferB, Buffer& bufferOut
+		Buffer& bufferOut, const Buffer& bufferA, const Buffer& bufferB
 	) {
 		const uint size = bufferOut.size();
 		const T* aReal = bufferA[0];

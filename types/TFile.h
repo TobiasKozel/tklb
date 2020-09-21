@@ -35,7 +35,8 @@ struct FileInfo {
 	FileInfo(const char* path) {
 		if (isRelative(path)) {
 			relative = path;
-			TKLB_ASSERT(false)
+			absolute = path;
+			// TKLB_ASSERT(false)
 			// TODO figure out the absolute path
 		} else {
 			absolute = path;

@@ -41,7 +41,7 @@ public:
 		if (irLength == 0) { return; }
 		irLength++; // index to size
 		mIr.resize(irLength, 1);
-		mIr.set(ir, 0, irLength);
+		mIr.set(ir, irLength);
 		mIrLength = irLength;
 	}
 

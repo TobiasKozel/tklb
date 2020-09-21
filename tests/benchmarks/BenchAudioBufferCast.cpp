@@ -27,7 +27,7 @@ int main() {
 	{
 		TIMER(Microseconds);
 		for(int i = 0; i < ITERATIONS; i++) {
-			abuffer.set(buf, channels, length);
+			abuffer.set(buf, length, channels);
 		}
 	}
 	return 0;

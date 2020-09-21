@@ -44,7 +44,7 @@ public:
 
 private:
 	fftconvolver::FFTConvolver mConvolver;
-	AudioBufferTpl<fftconvolver::Sample> mConversion = { 2 };
+	AudioBufferTpl<fftconvolver::Sample> mConversion;
 	uint mBlockSize;
 
 public:
@@ -62,8 +62,7 @@ public:
 		if (std::is_same<T2, fftconvolver::Sample>::value) {
 			ir = reinterpret_cast<const fftconvolver::Sample*>(buffer[channel]);
 		} else {
-
-			mConversion.resize(irLength);
+			mConversion.resize(irLength, 2);
 			mConversion.set(buffer[channel], irLength);
 			ir = mConversion[0];
 		}
@@ -87,7 +86,7 @@ public:
 				in = reinterpret_cast<const fftconvolver::Sample*>(inBuf[channel] + i);
 				out = reinterpret_cast<fftconvolver::Sample*>(outBuf[channel] + i);
 			} else {
-				mConversion.set(inBuf[channel] + i, remaining, 0);
+				mConversion.set(inBuf[channel]  + i, remaining, 0);
 				mConversion.set(outBuf[channel] + i, remaining, 1);
 				in = mConversion[0];
 				out = mConversion[1];

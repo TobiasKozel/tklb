@@ -1,5 +1,6 @@
 #define TKLB_LEAKCHECKER_DISARM
 #define TKLB_MAXCHANNELS 16
+#define TKLB_USE_OOURA
 #include "BenchmarkCommon.h"
 #include "../../types/audio/TAudioBuffer.h"
 #include "../../types/audio/convolver/TConvolverNew.h"
@@ -31,7 +32,9 @@ int main() {
 
 		{
 			TIMER(Microseconds);
-			con.process(in, out);
+			for(int i = 0; i < ITERATIONS; i++) {
+				con.process(in, out);
+			}
 		}
 
 	}

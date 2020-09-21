@@ -145,10 +145,13 @@ public:
 	/**
 	 * @brief Set the entire buffer to a constant value
 	 * @param value Value to fill the buffer with
+	 * @param length Samples to set. 0 Sets all
+	 * @param offset Start offset in the target buffer
 	 */
-	void set(T value = 0) {
+	void set(T value = 0, uint length = 0, const uint offset = 0) {
+		length = std::min(size() - offset, length ? length : size());
 		for (uchar c = 0; c < channels(); c++) {
-			fill_n(get(c), size(), value);
+			fill_n(get(c) + offset, length, value);
 		}
 	}
 
