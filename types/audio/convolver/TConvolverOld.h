@@ -92,7 +92,7 @@ public:
 				out = mConversion[1];
 			}
 			mConvolver.process(in, out, remaining);
-			samplesLeft -= mBlockSize;
+			samplesLeft -= remaining;
 		}
 	}
 

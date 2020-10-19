@@ -11,6 +11,16 @@
 #include "../THeapBuffer.h"
 #include "../../util/TAssert.h"
 
+#ifdef TKLB_MAXCHANNELS
+	#if TKLB_MAXCHANNELS == 1
+		#error Setting TKLB_MAXCHANNELS lower than 2 will break FFTs and Convolution.
+	#endif
+
+	#if TKLB_MAXCHANNELS == 0
+		#error Setting TKLB_MAXCHANNELS to 0 is not an option.
+	#endif
+#endif
+
 namespace tklb {
 
 /**
