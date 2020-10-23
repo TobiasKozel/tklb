@@ -17,6 +17,9 @@ namespace tklb {
 template <typename T, class Allocator = std::allocator<T>>
 class HeapBuffer {
 	using uint = unsigned int;
+#if TKLB_HEAP_DEBUG_SIZE > 0
+	T DEBUF_BUF[TKLB_HEAP_DEBUG_SIZE];
+#endif
 	T* mBuf = nullptr;
 	uint mSize = 0; // size of elements requested
 	uint mRealSize = 0; // the actually allocated size
@@ -75,6 +78,9 @@ public:
 
 	T* data() {
 		// Don't use non const access when using injected const memory
+#if TKLB_HEAP_DEBUG_SIZE > 0
+		memcpy(DEBUF_BUF, mBuf, sizeof(T) * std::min(100u, mSize));
+#endif
 		TKLB_ASSERT(!IS_CONST)
 		return mBuf;
 	}
@@ -89,6 +95,9 @@ public:
 
 	T& operator[](const uint index) {
 		// Don't use non const access when using injected const memory
+#if TKLB_HEAP_DEBUG_SIZE > 0
+		memcpy(DEBUF_BUF, mBuf, sizeof(T) * std::min(100u, mSize));
+#endif
 		TKLB_ASSERT(!IS_CONST)
 		return mBuf[index];
 	}
@@ -145,6 +154,7 @@ public:
 	uint size() const {
 		return mSize;
 	}
+
 };
 
 } // namespace

@@ -1,6 +1,6 @@
+#define TKLB_HEAP_DEBUG_SIZE 200
 #include "TestCommon.h"
 #include "../types/audio/fft/TFFT.h"
-
 
 int main() {
 	{
@@ -13,7 +13,7 @@ int main() {
 		result.resize(bufferLength, 2);
 
 		for (int i = 0; i < bufferLength; i++) {
-			input[0][i] = sin(i * 0.1);
+			input[0][i] = sin(i);
 		}
 
 		con.forward(input, result);
@@ -21,8 +21,7 @@ int main() {
 
 		for (int i = 2; i < bufferLength; i++) {
 			if (!close(input[0][i], output[0][i], 0.2)) {
-				// return 1;
-				int a = 0;
+				return 1;
 			}
 		}
 	}

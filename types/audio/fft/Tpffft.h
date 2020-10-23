@@ -6,9 +6,9 @@
 	#define PFFFT_SIMD_DISABLE
 #endif
 
-#define PFFFT_NO_ALIGNMENT_CHECK
 #include "../../../external/pffft/pffft.h"
 #include "../../../external/pffft/pffft.c"
+#include "../../../external/pffft/pffft_common.c"
 
 #include <cmath>
 #include <vector>
@@ -64,7 +64,7 @@ public:
 				data = mBuffer[0];
 			}
 
-			pffft_transform(mSetup, data, mRc[0], nullptr, PFFFT_FORWARD);
+			pffft_transform_ordered(mSetup, data, mRc[0], nullptr, PFFFT_FORWARD);
 
 			// Split real and complex in two channels
 			const uint sizeHalf = mSize / 2;
@@ -96,14 +96,10 @@ public:
 			const T volume = 1.0 / double(mSize);
 			if (std::is_same<T, float>::value) {
 				float* out = reinterpret_cast<float*>(result[0]) + processed;
-
 				pffft_transform_ordered(mSetup, mRc[0], out, nullptr, PFFFT_BACKWARD);
-
 				result.multiply(volume); // scale the result
 			} else {
-
 				pffft_transform_ordered(mSetup, mRc[0], mBuffer[0], nullptr, PFFFT_BACKWARD);
-
 				const float* buf = mBuffer[0];
 				T* out = result[0] + processed;
 				for (uint i = 0; i < mSize; i++) {
