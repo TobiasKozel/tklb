@@ -74,20 +74,20 @@ public:
 	/**
 	 * @brief Empty buffer with no memory allocated yet
 	 */
-	AudioBufferTpl() { };
+	AudioBufferTpl() { }
 
 	/**
 	 * @brief Buffer with memory allocated
 	 */
 	AudioBufferTpl(const uint length, const uchar channels) {
 		resize(length, channels);
-	};
+	}
 
 	/**
-	 * @brief * Set a single channel from a array
-	 * @param samples An Array containing the interleaved audio samples
-	 * @param length The length
-	 * @param channel Channelindex
+	 * @brief Set a single channel from an array
+	 * @param samples An Array containing the audio samples
+	 * @param length Amount of sample to copy
+	 * @param channel Channel index
 	 * @param offset The offset for the traget buffer
 	 */
 	template <typename T2>
@@ -97,9 +97,9 @@ public:
 		const uchar channel = 0,
 		const uint offset = 0
 	) {
-		TKLB_ASSERT(mChannels > channel)
 		if (mChannels <= channel) { return; }
-		length = std::min(length - offset, size() - offset);
+		TKLB_ASSERT(size() >= offset)
+		length = std::min(length, size() - offset);
 		T* out = get(channel);
 		if (std::is_same<T2, T>::value) {
 			memcpy(out + offset, samples, sizeof(T) * length);
@@ -158,7 +158,12 @@ public:
 	 * @param length Samples to set. 0 Sets all
 	 * @param offset Start offset in the target buffer
 	 */
-	void set(T value = 0, uint length = 0, const uint offset = 0) {
+	void set(
+		T value = 0,
+		uint length = 0,
+		const uint offset = 0
+	) {
+		TKLB_ASSERT(size() >= offset)
 		length = std::min(size() - offset, length ? length : size());
 		for (uchar c = 0; c < channels(); c++) {
 			fill_n(get(c) + offset, length, value);
@@ -168,7 +173,7 @@ public:
 	/**
 	 * @brief Set multiple channels from an interleaved array
 	 * @param samples A 1D Array containing the interleaved audio samples (float or double)
-	 * @param length The length (single channel)
+	 * @param length The length of a single channel
 	 * @param channels Channel count
 	 * @param offset Start offset in the target buffer
 	 * @param offsetIn Start offset in the source buffer
@@ -181,12 +186,13 @@ public:
 		const uint offset = 0,
 		uint offsetIn = 0
 	) {
-		length = std::min(length - offset, size() - offset);
+		TKLB_ASSERT(size() >= offset)
+		length = std::min(size() - offset, length);
 		offsetIn *= channels;
 		for (uchar c = 0; c < std::min(channels, mChannels); c++) {
 			T* out = get(c);
 			for(uint i = 0, j = c + offsetIn; i < length; i++, j+= channels) {
-				out[i + offset] = T(samples[j]);
+				out[i + offset] = static_cast<T>(samples[j]);
 			}
 		}
 	}
@@ -244,9 +250,10 @@ public:
 		uint offset = 0,
 		uint offsetIn = 0
 	) {
-		if (length == 0) {
-			length = std::min(buffer.size() - offsetIn, size() - offset);
-		}
+		TKLB_ASSERT(size() >= offset)
+		TKLB_ASSERT(buffer.size() >= offsetIn)
+		length = length == 0 ? buffer.size() - offsetIn : length;
+		length = std::min(buffer.size() - offsetIn, size() - offset);
 		const uchar channelCount = std::min(buffer.channels(), channels());
 
 		#ifndef TKLB_NO_SIMD
@@ -291,9 +298,10 @@ public:
 		uint offset = 0,
 		uint offsetIn = 0
 	) {
-		if (length == 0) {
-			length = std::min(buffer.size() - offsetIn, size() - offset);
-		}
+		TKLB_ASSERT(size() >= offset)
+		TKLB_ASSERT(buffer.size() >= offsetIn)
+		length = length == 0 ? buffer.size() - offsetIn : length;
+		length = std::min(buffer.size() - offsetIn, size() - offset);
 		const uchar channelsCount = std::min(buffer.channels(), channels());
 
 		#ifndef TKLB_NO_SIMD
@@ -475,16 +483,19 @@ public:
 	 * @param target The arry to fill
 	 * @param channel Which source channel to use
 	 * @param length The length of the output
-	 * @param offset Start offset in the source buffer
+	 * @param offset Start offset in the source (this) buffer
+	 * @return The amount of samples written, might be less than requested
 	 */
 	template <typename T2>
-	void put(
+	uint put(
 		T2* target,
-		uint length,
+		uint length = 0,
 		const uchar channel = 0,
 		const uint offset = 0
 	) const {
-		if (mChannels <= channel) { return; }
+		if (mChannels <= channel) { return 0; }
+		TKLB_ASSERT(size() >= offset)
+		length = length == 0 ? size() : length;
 		length = std::min(length, size() - offset);
 		const T2* source = get(channel) + offset;
 		if (std::is_same<T2, T>::value) {
@@ -494,22 +505,53 @@ public:
 				target[i] = T2(source[i]);
 			}
 		}
+		return length;
 	}
 
 	/**
 	 * @brief Fill the provided 2D array with the contents of this buffer
-	 * @param target The arry to fill
+	 * @param target The array to fill
 	 * @param channels How many channels there are in the target buffer
 	 * @param length The length of the output
+	 * @return The amount of samples written, might be less than requested
 	 */
 	template <typename T2>
-	void put(T2** target,
-		const uint length,
-		const uchar channels,
+	uint put(T2** target,
+		const uint length = 0,
+		uchar channels = 0,
 		const uint offset = 0
-		) const {
+	) const {
+		uint res = 0;
+		channels = (channels == 0) ? mChannels : channels;
 		for (uchar c = 0; c < channels; c++) {
-			put(target[c], length, c, offset);
+			res = put(target[c], length, c, offset);
+		}
+		return res;
+	}
+
+	/**
+	 * @brief Puts the interleaved contents in the target buffer
+	 * @param buffer The array to fill with interleaved audio
+	 * @param length Frames to interleave (not the length of the inerleaved result)
+	 * @param offset Offset for the sourcebuffer (this)
+	 * @return The total length of the interleaved result
+	 */
+	template <typename T2>
+	uint putInterleaved(
+		T2* buffer,
+		uint length = 0,
+		const uint offset = 0
+	) const {
+		TKLB_ASSERT(size() >= offset)
+		const uchar chan = channels();
+		length = (length == 0) ? size() : length;
+		length = std::min(size() - offset, length);
+		uint out = 0;
+		for (int i = 0; i < length; i++) {
+			for (uchar c = 0; c < chan; c++) {
+				buffer[out] = mBuffers[c][i];
+				out++;
+			}
 		}
 	}
 };
