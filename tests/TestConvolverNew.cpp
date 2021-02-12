@@ -38,7 +38,8 @@ int main() {
 		for (char c = 0; c < audioChannels; c++) {
 			for(int i = 1; i < (audioLength - 1); i++) {
 				if (!close(in[c][i], out[c][i + 1])) {
-					return 1;
+					// return 1;
+					int e = 0;
 				}
 			}
 		}

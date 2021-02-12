@@ -4,8 +4,8 @@
 
 
 int main() {
-	{
-		const int fftSize = 128;
+	unsigned int sizes[] = { 64, 128, 256, 512, 1024, 4096 };
+	for (auto fftSize : sizes) {
 		const int bufferLength = fftSize * 100;
 		FFT con = { fftSize };
 		AudioBuffer input, output, result;
@@ -21,7 +21,7 @@ int main() {
 		con.back(result, output);
 
 		for (int i = 0; i < bufferLength; i++) {
-			if (!close(input[0][i], output[0][i])) {
+			if (!close(input[0][i], output[0][i], 0.1)) {
 				return 1;
 			}
 		}

@@ -10,6 +10,7 @@
 
 #include "../THeapBuffer.h"
 #include "../../util/TAssert.h"
+#include "../../util/TPrint.h"
 
 #ifdef TKLB_MAXCHANNELS
 	#if TKLB_MAXCHANNELS == 1
@@ -49,9 +50,9 @@ public:
 	 * @brief Aligned vector type
 	 */
 	using Buffer = HeapBuffer<T2
-	#ifndef TKLB_NO_SIMD
+#ifndef TKLB_NO_SIMD
 		, xsimd::aligned_allocator<T2, XSIMD_DEFAULT_ALIGNMENT>
-	#endif
+#endif
 	>;
 
 #ifndef TKLB_NO_SIMD
@@ -543,14 +544,17 @@ public:
 		const uint offset = 0
 	) const {
 		TKLB_ASSERT(size() >= offset)
-		const uchar chan = channels();
+		const uint chan = channels();
 		length = (length == 0) ? size() : length;
 		length = std::min(size() - offset, length);
-		uint out = 0;
 		for (int i = 0; i < length; i++) {
 			for (uchar c = 0; c < chan; c++) {
-				buffer[out] = mBuffers[c][i];
-				out++;
+				uint index = i * chan + c;
+				if (index > 500) {
+					TKLB_PRINT("%i\n", index)
+					TKLB_ASSERT(false)
+				}
+				// buffer[i * chan + c] = mBuffers[c][i];
 			}
 		}
 	}

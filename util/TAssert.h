@@ -4,7 +4,9 @@
 	#define TKLB_ASSERT(condition)
 	#define TKLB_ASSERT_STATE(condition)
 #else
+	// TKLB_INCLUDE_STD_START
 	#include <cassert>
+	// TKLB_INCLUDE_STD_END
 	#define TKLB_ASSERT(condition) assert((condition));
 	/**
 	 * @brief This can be used to write some additional code
