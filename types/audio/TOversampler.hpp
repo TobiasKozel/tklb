@@ -1,11 +1,9 @@
-#ifndef TKLB_OVERSAMPLER
-#define TKLB_OVERSAMPLER
+#ifndef TKLBZ_OVERSAMPLER
+#define TKLBZ_OVERSAMPLER
 
 #include <functional>
-#include "../../util/TNoCopy.h"
 #include "../../util/TAssert.h"
-#include "../TPointerList.h"
-#include "./TAudioBuffer.h"
+#include "./TAudioBuffer.hpp"
 
 #ifdef TKLB_SAMPLE_FLOAT
 	#define TKLB_OVERSAMPLE_FLOAT
@@ -104,7 +102,6 @@ private:
 	uchar mFactor = 1;
 	ProcessFunction mProc;
 public:
-	TKLB_NO_COPY(Oversampler)
 
 	Oversampler() {
 		for (uchar c = 0; c < CHANNELS; c++) {

@@ -1,7 +1,7 @@
 #define TKLB_MAXCHANNELS 16
-#include "../../types/audio/TOversampler.h"
+#include "../../types/audio/TOversampler.hpp"
 
-#include "BenchmarkCommon.h"
+#include "BenchmarkCommon.hpp"
 #include <cmath>
 
 int main() {

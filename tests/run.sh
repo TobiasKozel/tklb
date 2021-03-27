@@ -40,10 +40,11 @@ test "clang++ -march=native -Ofast -DTKLB_SAMPLE_FLOAT"
 test "clang++ -march=native -Ofast -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD"
 
 # TODO figure out how to get into dev shell for windows
-# if [ "$executable" == "./a.exe" ]; then
-# 	test "cl /O2 /arch:AVX"
-# 	test "cl /O2 /arch:AVX /DTKLB_NO_SIMD"
-# 	test "cl /O2 /arch:AVX /DTKLB_SAMPLE_FLOAT"
-# fi
+if [ "$executable" == "./a.exe" ]; then
+	cmd /C "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\VsDevCmd.bat"
+	test "cl /O2 /arch:AVX"
+	test "cl /O2 /arch:AVX /DTKLB_NO_SIMD"
+	test "cl /O2 /arch:AVX /DTKLB_SAMPLE_FLOAT"
+fi
 
 exit $exit_code

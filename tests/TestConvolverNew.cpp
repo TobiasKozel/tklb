@@ -1,8 +1,8 @@
 #define TKLB_LEAKCHECKER_DISARM
 #define TKLB_USE_OOURA
-#include "TestCommon.h"
+#include "TestCommon.hpp"
 // #define TKLB_NO_SIMD
-#include "../types/audio/convolver/TConvolverNew.h"
+#include "../types/audio/convolver/TConvolverNew.hpp"
 
 
 int main() {
@@ -38,8 +38,7 @@ int main() {
 		for (char c = 0; c < audioChannels; c++) {
 			for(int i = 1; i < (audioLength - 1); i++) {
 				if (!close(in[c][i], out[c][i + 1])) {
-					// return 1;
-					int e = 0;
+					return 1;
 				}
 			}
 		}

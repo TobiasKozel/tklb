@@ -1,10 +1,10 @@
 #define TKLB_HEAP_DEBUG_SIZE 200
-#include "TestCommon.h"
-#include "../types/audio/fft/TFFT.h"
+#include "TestCommon.hpp"
+#include "../types/audio/fft/TFFT.hpp"
 
 int main() {
-	unsigned int sizes[] = { 64, 128, 256, 512, 1024, 4096 };
-	for (auto fftSize : sizes) {
+	{
+		const int fftSize = 128;
 		const int bufferLength = fftSize * 100;
 		FFT con = { fftSize };
 		AudioBuffer input, output, result;
@@ -13,17 +13,15 @@ int main() {
 		result.resize(bufferLength, 2);
 
 		for (int i = 0; i < bufferLength; i++) {
-			input[0][i] = sin(i + 2.0);
+			input[0][i] = sin(i);
 		}
 
 		con.forward(input, result);
 		con.back(result, output);
 
-		for (int i = 0; i < bufferLength; i++) {
-			if (!close(input[0][i], output[0][i])) {
-				AudioBuffer::sample in = input[0][i];
-				AudioBuffer::sample out = output[0][i];
-				// return 1;
+		for (int i = 2; i < bufferLength; i++) {
+			if (!close(input[0][i], output[0][i], 0.2)) {
+				return 1;
 			}
 		}
 	}

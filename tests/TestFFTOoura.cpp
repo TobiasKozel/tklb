@@ -1,11 +1,11 @@
-#include "TestCommon.h"
+#include "TestCommon.hpp"
 #define TKLB_USE_OOURA
-#include "../types/audio/fft/TFFT.h"
+#include "../types/audio/fft/TFFT.hpp"
 
 
 int main() {
-	unsigned int sizes[] = { 64, 128, 256, 512, 1024, 4096 };
-	for (auto fftSize : sizes) {
+	{
+		const int fftSize = 128;
 		const int bufferLength = fftSize * 100;
 		FFT con = { fftSize };
 		AudioBuffer input, output, result;
@@ -21,7 +21,7 @@ int main() {
 		con.back(result, output);
 
 		for (int i = 0; i < bufferLength; i++) {
-			if (!close(input[0][i], output[0][i], 0.1)) {
+			if (!close(input[0][i], output[0][i])) {
 				return 1;
 			}
 		}
