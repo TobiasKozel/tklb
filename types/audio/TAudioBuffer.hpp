@@ -407,9 +407,13 @@ namespace tklb {
 		 * @param channel The channel index
 		 */
 		void inject(T* mem, const uint size, const uchar channel = 0) {
+			TKLB_ASSERT(channel < TKLB_MAXCHANNELS)
 			mBuffers[channel].inject(mem, size);
 			mSize = size;
 			mValidSize = size;
+			if (mChannels < channel + 1) {
+				mChannels = channel + 1;
+			}
 		}
 
 		/**
@@ -420,9 +424,13 @@ namespace tklb {
 		 * @param channel The channel index
 		 */
 		void inject(const T* mem, const uint size, const uchar channel = 0) {
+			TKLB_ASSERT(channel < TKLB_MAXCHANNELS)
 			mBuffers[channel].inject(mem, size);
 			mSize = size;
 			mValidSize = size;
+			if (mChannels < channel + 1) {
+				mChannels = channel + 1;
+			}
 		}
 
 		/**

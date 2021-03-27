@@ -13,8 +13,16 @@ namespace tklb {
 		uint mTail = 0;
 
 	public:
+		AudioRingBufferTpl() { }
+
 		AudioRingBufferTpl(const uint length, const uchar channels)
 			: AudioBufferTpl<T>(length, channels) { }
+
+		void reset() {
+			Base::set(0.0);
+			mHead = 0;
+			mTail = 0;
+		}
 
 		/**
 		 * @brief Puts a number of elements in the buffer provided
@@ -24,15 +32,19 @@ namespace tklb {
 		 * @param offsetDst Where to start in the destination buffer
 		 * @return How many elements where retrieved
 		 */
-		uint peek(AudioBufferTpl<T>& out, uint elements, uint offsetSrc = 0, uint offsetDst = 0) {
+		template <typename T2>
+		uint peek(AudioBufferTpl<T2>& out, uint elements, uint offsetSrc = 0, uint offsetDst = 0) {
 			const uint head = mHead - offsetSrc; // Offset the head
 			if (elements > head) {
 				elements = head; // Clamp the elements to peek to the elements in the buffer
 			}
 			if (elements > 0) {
 				uint tailStart = mTail - head; // This should always be negative when the offset is 0
-				if (tailStart < 0) {
-					tailStart += Base::size(); // So move it back
+				if (mTail < head) {
+					// So move it back
+					// TODO
+					// this does overflow, which is a little mad
+					tailStart += Base::size();
 				}
 				const uint spaceLeft = Base::size() - tailStart;
 				if (spaceLeft < elements) {
@@ -56,7 +68,8 @@ namespace tklb {
 		 * @param offsetDst Where to start in the destination buffer
 		 * @return How many elements where retrieved
 		 */
-		uint pop(AudioBufferTpl<T>& out, const uint elements, uint offsetSrc = 0, uint offsetDst = 0) {
+		template <typename T2>
+		uint pop(AudioBufferTpl<T2>& out, const uint elements, uint offsetSrc = 0, uint offsetDst = 0) {
 			const uint elementsOut = peek(out, elements, offsetSrc, offsetDst);
 			mHead -= elementsOut; // Move the head back, can't exceed bounds since it was clamped in peek
 			return elementsOut;
@@ -69,7 +82,8 @@ namespace tklb {
 		 * @param offsetSrc Where to start in the source buffer
 		 * @return How many elements where stored in the ring buffer
 		 */
-		uint push(AudioBufferTpl<T>& in, uint elements, uint offsetSrc = 0) {
+		template <typename T2>
+		uint push(const AudioBufferTpl<T2>& in, uint elements, uint offsetSrc = 0) {
 			const uint spaceLeftHead = Base::size() - mHead; // Space left before exceeding upper buffer bounds
 			if (elements > spaceLeftHead) {
 				/**

@@ -21,7 +21,7 @@
 
 static inline void *speex_alloc (int size) {
 	void* ptr = TKLB_MALLOC(size);
-	memory::set(ptr, 0, size);
+	::tklb::memory::set(ptr, 0, size);
 	return ptr;
 }
 
@@ -39,12 +39,8 @@ static inline void *speex_realloc (void *ptr, int size) {
 
 namespace tklb {
 
-	#ifdef TKLB_SAMPLE_FLOAT
-	template <typename T = float>
-	#else
-	template <typename T = double>
-	#endif
-	class Resampler {
+	template <typename T>
+	class ResamplerTpl {
 		using uchar = unsigned char;
 		using uint = unsigned int;
 		uint mRateIn, mRateOut;
@@ -53,13 +49,13 @@ namespace tklb {
 		SpeexResamplerState* mState = nullptr;
 
 	public:
-		Resampler(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
+		ResamplerTpl(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
 			init(rateIn, rateOut, maxBlock, quality);
 		}
 
-		Resampler() = default;
+		ResamplerTpl() = default;
 
-		~Resampler() {
+		~ResamplerTpl() {
 			speex_resampler_destroy(mState);
 		}
 
@@ -170,11 +166,21 @@ namespace tklb {
 
 			buffer.resize(calculateBufferSize(rateIn, rateOut, samples));
 
-			Resampler<T> resampler;
+			ResamplerTpl<T> resampler;
 			resampler.init(rateIn, rateOut, copy.size(), quality);
 			resampler.process(copy, buffer);
 		}
 	};
+
+	typedef ResamplerTpl<float> ResamplerFloat;
+	typedef ResamplerTpl<double> ResamplerDouble;
+
+	// Default type
+#ifdef TKLB_SAMPLE_FLOAT
+	typedef ResamplerFloat Resampler;
+#else
+	typedef ResamplerDouble Resampler;
+#endif
 
 } // namespace
 

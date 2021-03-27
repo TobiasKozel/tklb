@@ -791,12 +791,12 @@ fail:
    return RESAMPLER_ERR_ALLOC_FAILED;
 }
 
-EXPORT SpeexResamplerState *speex_resampler_init(spx_uint32_t nb_channels, spx_uint32_t in_rate, spx_uint32_t out_rate, int quality, int *err)
+SpeexResamplerState *speex_resampler_init(spx_uint32_t nb_channels, spx_uint32_t in_rate, spx_uint32_t out_rate, int quality, int *err)
 {
    return speex_resampler_init_frac(nb_channels, in_rate, out_rate, in_rate, out_rate, quality, err);
 }
 
-EXPORT SpeexResamplerState *speex_resampler_init_frac(spx_uint32_t nb_channels, spx_uint32_t ratio_num, spx_uint32_t ratio_den, spx_uint32_t in_rate, spx_uint32_t out_rate, int quality, int *err)
+SpeexResamplerState *speex_resampler_init_frac(spx_uint32_t nb_channels, spx_uint32_t ratio_num, spx_uint32_t ratio_den, spx_uint32_t in_rate, spx_uint32_t out_rate, int quality, int *err)
 {
    SpeexResamplerState *st;
    int filter_err;
@@ -865,7 +865,7 @@ fail:
    return NULL;
 }
 
-EXPORT void speex_resampler_destroy(SpeexResamplerState *st)
+void speex_resampler_destroy(SpeexResamplerState *st)
 {
    speex_free(st->mem);
    speex_free(st->sinc_table);
@@ -922,9 +922,9 @@ static int speex_resampler_magic(SpeexResamplerState *st, spx_uint32_t channel_i
 }
 
 #ifdef FIXED_POINT
-EXPORT int speex_resampler_process_int(SpeexResamplerState *st, spx_uint32_t channel_index, const spx_int16_t *in, spx_uint32_t *in_len, spx_int16_t *out, spx_uint32_t *out_len)
+int speex_resampler_process_int(SpeexResamplerState *st, spx_uint32_t channel_index, const spx_int16_t *in, spx_uint32_t *in_len, spx_int16_t *out, spx_uint32_t *out_len)
 #else
-EXPORT int speex_resampler_process_float(SpeexResamplerState *st, spx_uint32_t channel_index, const float *in, spx_uint32_t *in_len, float *out, spx_uint32_t *out_len)
+int speex_resampler_process_float(SpeexResamplerState *st, spx_uint32_t channel_index, const float *in, spx_uint32_t *in_len, float *out, spx_uint32_t *out_len)
 #endif
 {
    int j;
@@ -963,9 +963,9 @@ EXPORT int speex_resampler_process_float(SpeexResamplerState *st, spx_uint32_t c
 }
 
 #ifdef FIXED_POINT
-EXPORT int speex_resampler_process_float(SpeexResamplerState *st, spx_uint32_t channel_index, const float *in, spx_uint32_t *in_len, float *out, spx_uint32_t *out_len)
+int speex_resampler_process_float(SpeexResamplerState *st, spx_uint32_t channel_index, const float *in, spx_uint32_t *in_len, float *out, spx_uint32_t *out_len)
 #else
-EXPORT int speex_resampler_process_int(SpeexResamplerState *st, spx_uint32_t channel_index, const spx_int16_t *in, spx_uint32_t *in_len, spx_int16_t *out, spx_uint32_t *out_len)
+int speex_resampler_process_int(SpeexResamplerState *st, spx_uint32_t channel_index, const spx_int16_t *in, spx_uint32_t *in_len, spx_int16_t *out, spx_uint32_t *out_len)
 #endif
 {
    int j;
@@ -1035,7 +1035,7 @@ EXPORT int speex_resampler_process_int(SpeexResamplerState *st, spx_uint32_t cha
    return st->resampler_ptr == resampler_basic_zero ? RESAMPLER_ERR_ALLOC_FAILED : RESAMPLER_ERR_SUCCESS;
 }
 
-EXPORT int speex_resampler_process_interleaved_float(SpeexResamplerState *st, const float *in, spx_uint32_t *in_len, float *out, spx_uint32_t *out_len)
+int speex_resampler_process_interleaved_float(SpeexResamplerState *st, const float *in, spx_uint32_t *in_len, float *out, spx_uint32_t *out_len)
 {
    spx_uint32_t i;
    int istride_save, ostride_save;
@@ -1058,7 +1058,7 @@ EXPORT int speex_resampler_process_interleaved_float(SpeexResamplerState *st, co
    return st->resampler_ptr == resampler_basic_zero ? RESAMPLER_ERR_ALLOC_FAILED : RESAMPLER_ERR_SUCCESS;
 }
 
-EXPORT int speex_resampler_process_interleaved_int(SpeexResamplerState *st, const spx_int16_t *in, spx_uint32_t *in_len, spx_int16_t *out, spx_uint32_t *out_len)
+int speex_resampler_process_interleaved_int(SpeexResamplerState *st, const spx_int16_t *in, spx_uint32_t *in_len, spx_int16_t *out, spx_uint32_t *out_len)
 {
    spx_uint32_t i;
    int istride_save, ostride_save;
@@ -1081,12 +1081,12 @@ EXPORT int speex_resampler_process_interleaved_int(SpeexResamplerState *st, cons
    return st->resampler_ptr == resampler_basic_zero ? RESAMPLER_ERR_ALLOC_FAILED : RESAMPLER_ERR_SUCCESS;
 }
 
-EXPORT int speex_resampler_set_rate(SpeexResamplerState *st, spx_uint32_t in_rate, spx_uint32_t out_rate)
+int speex_resampler_set_rate(SpeexResamplerState *st, spx_uint32_t in_rate, spx_uint32_t out_rate)
 {
    return speex_resampler_set_rate_frac(st, in_rate, out_rate, in_rate, out_rate);
 }
 
-EXPORT void speex_resampler_get_rate(SpeexResamplerState *st, spx_uint32_t *in_rate, spx_uint32_t *out_rate)
+void speex_resampler_get_rate(SpeexResamplerState *st, spx_uint32_t *in_rate, spx_uint32_t *out_rate)
 {
    *in_rate = st->in_rate;
    *out_rate = st->out_rate;
@@ -1104,7 +1104,7 @@ static inline spx_uint32_t compute_gcd(spx_uint32_t a, spx_uint32_t b)
    return a;
 }
 
-EXPORT int speex_resampler_set_rate_frac(SpeexResamplerState *st, spx_uint32_t ratio_num, spx_uint32_t ratio_den, spx_uint32_t in_rate, spx_uint32_t out_rate)
+int speex_resampler_set_rate_frac(SpeexResamplerState *st, spx_uint32_t ratio_num, spx_uint32_t ratio_den, spx_uint32_t in_rate, spx_uint32_t out_rate)
 {
    spx_uint32_t fact;
    spx_uint32_t old_den;
@@ -1144,13 +1144,13 @@ EXPORT int speex_resampler_set_rate_frac(SpeexResamplerState *st, spx_uint32_t r
    return RESAMPLER_ERR_SUCCESS;
 }
 
-EXPORT void speex_resampler_get_ratio(SpeexResamplerState *st, spx_uint32_t *ratio_num, spx_uint32_t *ratio_den)
+void speex_resampler_get_ratio(SpeexResamplerState *st, spx_uint32_t *ratio_num, spx_uint32_t *ratio_den)
 {
    *ratio_num = st->num_rate;
    *ratio_den = st->den_rate;
 }
 
-EXPORT int speex_resampler_set_quality(SpeexResamplerState *st, int quality)
+int speex_resampler_set_quality(SpeexResamplerState *st, int quality)
 {
    if (quality > 10 || quality < 0)
       return RESAMPLER_ERR_INVALID_ARG;
@@ -1162,42 +1162,42 @@ EXPORT int speex_resampler_set_quality(SpeexResamplerState *st, int quality)
    return RESAMPLER_ERR_SUCCESS;
 }
 
-EXPORT void speex_resampler_get_quality(SpeexResamplerState *st, int *quality)
+void speex_resampler_get_quality(SpeexResamplerState *st, int *quality)
 {
    *quality = st->quality;
 }
 
-EXPORT void speex_resampler_set_input_stride(SpeexResamplerState *st, spx_uint32_t stride)
+void speex_resampler_set_input_stride(SpeexResamplerState *st, spx_uint32_t stride)
 {
    st->in_stride = stride;
 }
 
-EXPORT void speex_resampler_get_input_stride(SpeexResamplerState *st, spx_uint32_t *stride)
+void speex_resampler_get_input_stride(SpeexResamplerState *st, spx_uint32_t *stride)
 {
    *stride = st->in_stride;
 }
 
-EXPORT void speex_resampler_set_output_stride(SpeexResamplerState *st, spx_uint32_t stride)
+void speex_resampler_set_output_stride(SpeexResamplerState *st, spx_uint32_t stride)
 {
    st->out_stride = stride;
 }
 
-EXPORT void speex_resampler_get_output_stride(SpeexResamplerState *st, spx_uint32_t *stride)
+void speex_resampler_get_output_stride(SpeexResamplerState *st, spx_uint32_t *stride)
 {
    *stride = st->out_stride;
 }
 
-EXPORT int speex_resampler_get_input_latency(SpeexResamplerState *st)
+int speex_resampler_get_input_latency(SpeexResamplerState *st)
 {
   return st->filt_len / 2;
 }
 
-EXPORT int speex_resampler_get_output_latency(SpeexResamplerState *st)
+int speex_resampler_get_output_latency(SpeexResamplerState *st)
 {
   return ((st->filt_len / 2) * st->den_rate + (st->num_rate >> 1)) / st->num_rate;
 }
 
-EXPORT int speex_resampler_skip_zeros(SpeexResamplerState *st)
+int speex_resampler_skip_zeros(SpeexResamplerState *st)
 {
    spx_uint32_t i;
    for (i=0;i<st->nb_channels;i++)
@@ -1205,7 +1205,7 @@ EXPORT int speex_resampler_skip_zeros(SpeexResamplerState *st)
    return RESAMPLER_ERR_SUCCESS;
 }
 
-EXPORT int speex_resampler_reset_mem(SpeexResamplerState *st)
+int speex_resampler_reset_mem(SpeexResamplerState *st)
 {
    spx_uint32_t i;
    for (i=0;i<st->nb_channels;i++)
@@ -1219,7 +1219,7 @@ EXPORT int speex_resampler_reset_mem(SpeexResamplerState *st)
    return RESAMPLER_ERR_SUCCESS;
 }
 
-EXPORT const char *speex_resampler_strerror(int err)
+const char *speex_resampler_strerror(int err)
 {
    switch (err)
    {

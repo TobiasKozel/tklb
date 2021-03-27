@@ -30,6 +30,7 @@ mv ./speexdsp-master/include/speex/speex_resampler.h ./speex_resampler/speex_res
 sed -e '/static void \*speex_alloc/ s/^\/*/\/\//' -i ./speex_resampler/resample.c
 sed -e '/static void \*speex_realloc/ s/^\/*/\/\//' -i ./speex_resampler/resample.c
 sed -e '/static void speex_free/ s/^\/*/\/\//' -i ./speex_resampler/resample.c
+sed -i 's/EXPORT\ //g' -b -i ./speex_resampler/resample.c
 rm -rf ./speexdsp-master/
 
 echo "Updating dirent"
