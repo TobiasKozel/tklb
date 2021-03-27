@@ -35,10 +35,10 @@ http://sam.zoy.org/wtfpl/COPYING for more details.
 
 /*\\\ INCLUDE FILES \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
-#include "./def.h"
-#include "./StageDataF64Avx512.h"
+#include "hiir/def.h"
+#include "hiir/StageDataF64Avx512.h"
 
-#include <immintrin.h>
+#include <immintrin.h> 
 
 #include <array>
 
@@ -60,9 +60,8 @@ class Upsampler2x8F64Avx512
 public:
 
 	typedef double DataType;
-	static const int  _nbr_chn = 8;
-
-	enum {         NBR_COEFS = NC };
+	static constexpr int _nbr_chn  = 8;
+	static constexpr int NBR_COEFS = NC;
 
 	               Upsampler2x8F64Avx512 ();
 	               Upsampler2x8F64Avx512 (const Upsampler2x8F64Avx512 <NC> &other) = default;
@@ -113,7 +112,7 @@ private:
 
 
 
-#include "./Upsampler2x8F64Avx512.hpp"
+#include "hiir/Upsampler2x8F64Avx512.hpp"
 
 
 

@@ -36,8 +36,8 @@ http://sam.zoy.org/wtfpl/COPYING for more details.
 
 /*\\\ INCLUDE FILES \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
-#include "./def.h"
-#include "./StageDataF64Sse2.h"
+#include "hiir/def.h"
+#include "hiir/StageDataF64Sse2.h"
 
 #include <emmintrin.h>
 
@@ -61,9 +61,8 @@ class Upsampler2x2F64Sse2
 public:
 
 	typedef double DataType;
-	static const int  _nbr_chn = 2;
-
-	enum {         NBR_COEFS = NC };
+	static constexpr int _nbr_chn  = 2;
+	static constexpr int NBR_COEFS = NC;
 
 	               Upsampler2x2F64Sse2 ();
 	               Upsampler2x2F64Sse2 (const Upsampler2x2F64Sse2 <NC> &other) = default;
@@ -115,7 +114,7 @@ private:
 
 
 
-#include "./Upsampler2x2F64Sse2.hpp"
+#include "hiir/Upsampler2x2F64Sse2.hpp"
 
 
 

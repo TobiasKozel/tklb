@@ -35,8 +35,8 @@ http://sam.zoy.org/wtfpl/COPYING for more details.
 
 /*\\\ INCLUDE FILES \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
-#include "./def.h"
-#include "./StageDataAvx512.h"
+#include "hiir/def.h"
+#include "hiir/StageDataAvx512.h"
 
 #include <immintrin.h>
 
@@ -60,9 +60,8 @@ class Upsampler2x16Avx512
 public:
 
 	typedef float DataType;
-	static const int  _nbr_chn = 16;
-
-	enum {         NBR_COEFS = NC };
+	static constexpr int _nbr_chn  = 16;
+	static constexpr int NBR_COEFS = NC;
 
 	               Upsampler2x16Avx512 ();
 	               Upsampler2x16Avx512 (const Upsampler2x16Avx512 <NC> &other) = default;
@@ -113,7 +112,7 @@ private:
 
 
 
-#include "./Upsampler2x16Avx512.hpp"
+#include "hiir/Upsampler2x16Avx512.hpp"
 
 
 

@@ -22,7 +22,7 @@ operators as for single values. It also provides accelerated implementation of c
 You can find out more about this implementation of C++ wrappers for SIMD intrinsics at the `The C++ Scientist`_. The mathematical functions are a
 lightweight implementation of the algorithms also used in `boost.SIMD`_.
 
-`xsimd` requires a C++14 compliant compiler. The following C++ compilers are supported:
+`xsimd` requires a C++11 compliant compiler. The following C++ compilers are supported:
 
 +-------------------------+-------------------------------+
 | Compiler                | Version                       |
@@ -77,6 +77,7 @@ This software is licensed under the BSD-3-Clause license. See the LICENSE file f
    api/instr_macros
    api/batch_index
    api/data_transfer
+   api/batch_manip
    api/math_index
    api/aligned_allocator
 

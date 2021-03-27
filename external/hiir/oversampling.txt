@@ -218,3 +218,16 @@ total_dly_both = dly_21 + dly_42 / 2 + dly_84 / 4 + dly_168 / 8
  4x <-> 2x: TBW = (0.06916)/2 + 1/4              = 0.28458
  8x <-> 4x: TBW = (0.06916)/4 + 1/8  + 1/4       = 0.39229
 16x <-> 8x: TBW = (0.06916)/8 + 1/16 + 1/8 + 1/4 = 0.446145
+
+Candidate for 16x <-> 8x, 1 coef:
+
+Coefficients: 1
+Attenuation : 76.1806 dB
+Trans BW:     0.44582
+Group delay:  0.994601 spl
+GD rel freq:  0.00141723
+Coefficient list:
+        0.33576377603533708
+
+FIR, 8x -> 4x, -90.4 dB, 8 coefs, 3.5 spl group delay, linear phase
+tbw = 0.39229; n = 8; att = 10^(-100*20); b = firpm (n - 1, [0 0.5-tbw 0.5+tbw 1], [1 1 att att], [1 100]); freqz (b);

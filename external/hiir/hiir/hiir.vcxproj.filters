@@ -211,6 +211,7 @@
     <ClInclude Include="Upsampler2xNeonOld.h" />
     <ClInclude Include="Upsampler2xNeonOld.hpp" />
     <ClInclude Include="StageDataNeonV2.h" />
+    <ClInclude Include="StageDataFpu.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PolyphaseIir2Designer.cpp" />

@@ -1,7 +1,7 @@
 ﻿==============================================================================
 
         hiir
-        Version 1.31
+        Version 1.33
 
         An oversampling and Hilbert transform library in C++
 
@@ -94,8 +94,10 @@ For some reason, with GCC (not Clang), the NEON versions are slow as hell on
 32-bit ARM. With full optimisation, the FPU versions are faster in almost all
 cases (tested on Cortex A53 and A72 processors).
 
-Note that all SIMD versions (except 3DNow!) require the processing object to be
-aligned on a 16-, 32- or 64-byte boundary. Data haven’t to be aligned.
+Note that all SIMD versions (except 3DNow!) require the processing objects to
+be aligned on a 16-, 32- or 64-byte boundary. Now this should be automatically
+taken care of by the compiler anyway, excepted if you use “placement new” for
+creation. Processed data haven’t to be aligned.
 
 As you can see, almost all classes are templates based on the number of
 coefficients. This means it is not possible to change this number at run-time.
@@ -111,10 +113,10 @@ code. So far, it has been built and tested on:
 
     – MS Windows (x86, x64) / MS Visual C++ 2019 (FPU/SSEx/AVX/3DNow)
     – MS Windows (x86, x64) / GCC 9.2.0 (FPU/SSEx/AVX only) on MSYS 2
-    – MS Windows (x86, x64) / Clang 9.0.0 (FPU/SSEx/AVX only) on MSYS 2
+    – MS Windows (x86, x64) / Clang 10.0.1 (FPU/SSEx/AVX only) on MSYS 2
     – MacOS 10.5 (x86, x64) / GCC 4 (FPU/SSE only, old HIIR version)
     – Linux (ARM32, ARM64) / GCC 8.3.0 (FPU/NEON)
-    – Linux (ARM32, ARM64) / Clang 9.0.0 (FPU/NEON)
+    – Linux (ARM32, ARM64) / Clang 10.0.1 (FPU/NEON)
 
 If you happen to have another system and tweak it to make it run successfully,
 pleeeeease send me your modification so I can include it to the main
@@ -144,7 +146,7 @@ Typical use for a 8-coefficient downsampler:
     ...
 
 // Coefficient calculation
-const int nbr_coef = 8;
+constexpr int nbr_coef = 8;
 double coefs [nbr_coef];
 hiir::PolyphaseIir2Designer::compute_coefs_spec_order_tbw (
     coefs, nbr_coef, 0.04
@@ -193,7 +195,7 @@ Release mode:
 g++ -std=c++11 -mavx -I. -o ./hiir_release.exe -DNDEBUG -O3 hiir/*.cpp hiir/test/*.cpp
 clang++ -D_X86_ -std=c++11 -mavx512f -I. -o ./hiir_release.exe -DNDEBUG -O3 hiir/*.cpp hiir/test/*.cpp
 
-The “-mavx512f” option enables the compilation of the intel intrinsics. If you
+The “-mavx512f” option enables the compilation of the Intel intrinsics. If you
 want to compile for other instruction sets, use “-mavx”, “-msse2”, “-msse” or
 “-m3dnow”.
 
@@ -211,24 +213,27 @@ there is not guarantee it will always work.
 Ref: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=54412
 
     – AVX-512 may produce assembler errors. Use the following as a workaround:
-“-fno-asynchronous-unwind-tables -fno-exception”.
+“-fno-asynchronous-unwind-tables -fno-exception”. This issue should be fixed
+on the most recent compiler versions.
 Ref: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65782
 
 The included test bench checks roughly the accuracy of the filters. It also
-tests the speed of every available function. Therefore, implementing new
+tests the speed of every available function. Therefore, implementing a new
 instruction set should be facilitated.
 
 If you want to compile and run the test bench, please first edit the
 test/conf.h file, in order to select the instruction sets available for your
-CPU using #define/#undef. There is now an automatic detection, but you can
+CPU using #define/#undef. There is now an automatic detection, but the the
+whole program compiled with all the available instruction sets could not even
+start on a platform which doesn’t support them all. With the marcros you can
 manually disable sets you can’t or don’t want to test.
 
 In the same file, you have also testing options. You can save on the disk all
-the samples generated during tests in order to check them in a sample editor.
-However the files may take a lot of space on the disk, so it is recommended to
-disable this option if it is not required. The “long tests” options are
-intended to provide extensive checks on various filter sizes (it takes longer
-to compile, but is safer if you want to change anything in the lib).
+the samples generated during tests in order to check them in an audio editor.
+However the files may take a lot of space on the disk, so it is recommended
+to disable this option if it is not required. The “long tests” options are
+intended to provide extensive checks on various filter sizes. It takes longer
+to compile, but is safer if you want to change anything in the lib.
 
 
 
@@ -236,9 +241,9 @@ to compile, but is safer if you want to change anything in the lib).
 --------------------------------
 
 It is possible to oversample a signal at a higher ratio than 2. You just have
-to cascade up- or down-samplers to achieve a power-of-2 ratio. Depending on your
-requirements, you can reduce the filter order as the sampling rate is getting
-bigger by reducing the transition bandwidth (TBW).
+to cascade up- or down-samplers to achieve a power-of-2 ratio. Depending on
+your requirements, you can reduce the filter order as the sampling rate is
+getting bigger by reducing the transition bandwidth (TBW).
 
 For example, let’s suppose one wants 16x downsampling, with 96 dB of stopband
 attenuation and a 0.49*Fs passband. You’ll need the following specifications
@@ -284,6 +289,14 @@ integer.
 
 6. History
 ----------
+
+v1.33 (2020-11-19)
+    – Fixed occasional link error related to hiir::StageProcF64Sse2
+
+v1.32 (2020-10-10)
+    – Slight speed improvement for the FPU implementations
+    – Standard and easier object alignment with the help of alignas()
+    – Replacement of the internal enum constants with static constexpr int
 
 v1.31 (2020-07-15)
     – Added a function to design a filter based on a group delay constraint

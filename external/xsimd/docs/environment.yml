@@ -1,7 +1,7 @@
 name: xsimd-docs
 
 channels:
-  - QuantStack
+  - conda-forge
 
 dependencies:
-  - breathe
+  - breathe==4.25.1

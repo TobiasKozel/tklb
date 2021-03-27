@@ -13,16 +13,24 @@ cmake_minimum_required(VERSION 3.1)
 if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     project(xsimd-test)
 
+    enable_testing()
+
     find_package(xsimd REQUIRED CONFIG)
     set(XSIMD_INCLUDE_DIR ${xsimd_INCLUDE_DIRS})
 endif ()
 
-message(STATUS "Forcing tests build type to Release")
-set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+if(NOT CMAKE_BUILD_TYPE)
+    message(STATUS "Setting tests build type to Release")
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+else()
+    message(STATUS "Tests build type is ${CMAKE_BUILD_TYPE}")
+endif()
 
 include(CheckCXXCompilerFlag)
 
 string(TOUPPER "${CMAKE_BUILD_TYPE}" U_CMAKE_BUILD_TYPE)
+
+OPTION(XSIMD_ENABLE_WERROR "Turn on -Werror" OFF)
 
 ################
 # ARM SETTINGS #
@@ -38,23 +46,44 @@ set(ARM_GCC_VER "4.7.3" CACHE STRING "ARM GCC header dir")
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Intel")
     if (CROSS_COMPILE_ARM)
-        # We're cross-compiling with clang++ on Travis, this is all pretty specific and just for testing
+        # We're cross-compiling with clang++ on Azure Pipelines, this is all pretty specific and just for testing
         set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS)
         set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)
         set(CMAKE_THREAD_LIBS_INIT)
 
+        set(CMAKE_SYSTEM_PROCESSOR arm)
+        set(CMAKE_C_COMPILER_TARGET arm-linux-gnueabi)
+        set(CMAKE_CXX_COMPILER_TARGET arm-linux-gnueabi)
+        
         include_directories(/usr/${ARM_ARCH_DIRECTORY}/include/c++/${ARM_GCC_VER}/${ARM_ARCH_DIRECTORY}/)
         include_directories(/usr/${ARM_ARCH_DIRECTORY}/include/c++/${ARM_GCC_VER}/)
         include_directories(/usr/${ARM_ARCH_DIRECTORY}/include/)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${TARGET_ARCH} -Wunused-parameter -Wextra -Wreorder -std=c++11")
+        if(NOT CMAKE_CXX_FLAGS MATCHES "-march")
+            message(STATUS "SETTING ARCH TO ${TARGET_ARCH}")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${TARGET_ARCH}")
+        endif()
+        if(ARM_ARCH_DIRECTORY MATCHES "arm-linux-gnueabi")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpu=neon -mfloat-abi=softfp -target arm-linux-gnueabi")
+        else ()
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -target aarch64-linux-gnueabi")
+            set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -maarch64linux")
+            message(STATUS "CMAKE_CXX_LINK_FLAGS: ${CMAKE_CXX_LINK_FLAGS}")
+            set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_LINKER> <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
+        endif()
+        message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
+        message(STATUS "CMAKE_CXX_LINK_EXECUTABLE: ${CMAKE_CXX_LINK_EXECUTABLE}")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wunused-parameter -Wextra -Wreorder -std=c++11")
     elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "^ppc64")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC -mcpu=${TARGET_ARCH} -mtune=${TARGET_ARCH} -Wunused-parameter -Wextra -Wreorder -std=c++11")
     elseif(NOT WIN32)
+        if(NOT CMAKE_CXX_FLAGS MATCHES "-march")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${TARGET_ARCH}")
+        endif()
         CHECK_CXX_COMPILER_FLAG("-std=c++11" HAS_CPP11_FLAG)
         if (ENABLE_XTL_COMPLEX)
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC -march=${TARGET_ARCH} -Wunused-parameter -Wextra -Wreorder -std=c++14")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC -Wunused-parameter -Wextra -Wreorder -std=c++14")
         elseif (HAS_CPP11_FLAG)
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC -march=${TARGET_ARCH} -Wunused-parameter -Wextra -Wreorder -std=c++11")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC -Wunused-parameter -Wextra -Wreorder -std=c++11")
         else()
             message(FATAL_ERROR "Unsupported compiler -- xsimd requires C++11 support!")
         endif()
@@ -94,14 +123,17 @@ if(DOWNLOAD_GTEST OR GTEST_SRC_DIR)
     endif()
 
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    
+
     # Add googletest directly to our build. This defines
     # the gtest and gtest_main targets.
     add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
                      ${CMAKE_CURRENT_BINARY_DIR}/googletest-build EXCLUDE_FROM_ALL)
 
     set(GTEST_INCLUDE_DIRS "${gtest_SOURCE_DIR}/include")
-    set(GTEST_BOTH_LIBRARIES  gtest_main gtest)
+    add_library(GTest::GTest INTERFACE IMPORTED)
+    target_link_libraries(GTest::GTest INTERFACE gtest)
+    add_library(GTest::Main INTERFACE IMPORTED)
+    target_link_libraries(GTest::Main INTERFACE gtest_main)
 else()
     find_package(GTest REQUIRED)
 endif()
@@ -112,7 +144,35 @@ include_directories(${GTEST_INCLUDE_DIRS})
 
 set(XSIMD_TESTS
     main.cpp
-    xsimd_api_test.hpp
+    test_algorithms.cpp
+    test_api.cpp
+    test_basic_math.cpp
+    test_batch.cpp
+    test_batch_bool.cpp
+    test_batch_cast.cpp
+    test_batch_complex.cpp
+    test_batch_float.cpp
+    test_batch_int.cpp
+    test_bitwise_cast.cpp
+    test_constant_batch.cpp
+    test_complex_exponential.cpp
+    test_complex_hyperbolic.cpp
+    test_complex_power.cpp
+    test_complex_trigonometric.cpp
+    test_conversion.cpp
+    test_error_gamma.cpp
+    test_exponential.cpp
+    test_fp_manipulation.cpp
+    test_hyperbolic.cpp
+    test_load_store.cpp
+    test_memory.cpp
+    test_poly_evaluation.cpp
+    test_power.cpp
+    test_rounding.cpp
+    test_select.cpp
+    test_trigonometric.cpp
+    test_utils.hpp
+    #[[    xsimd_api_test.hpp
     xsimd_api_test.cpp
     xsimd_algorithms.cpp
     xsimd_basic_test.hpp
@@ -148,12 +208,13 @@ set(XSIMD_TESTS
     xsimd_tester.hpp
     xsimd_test_utils.hpp
     xsimd_trigonometric_test.hpp
-    xsimd_trigonometric_test.cpp
+    xsimd_trigonometric_test.cpp]]
 )
 
-add_executable(test_xsimd EXCLUDE_FROM_ALL ${XSIMD_TESTS} ${XSIMD_HEADERS})
-target_link_libraries(test_xsimd xsimd ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+add_executable(test_xsimd ${XSIMD_TESTS} ${XSIMD_HEADERS})
+target_link_libraries(test_xsimd xsimd GTest::GTest GTest::Main ${CMAKE_THREAD_LIBS_INIT})
 target_include_directories(test_xsimd PRIVATE ${XSIMD_INCLUDE_DIR})
+add_test(NAME test_xsimd COMMAND test_xsimd)
 
 if(DEFINED XSIMD_FORCE_X86_INSTR_SET)
     message("Forcing XSIMD_FORCE_X86_INSTR_SET to ${XSIMD_FORCE_X86_INSTR_SET}")
@@ -179,4 +240,8 @@ if (CROSS_COMPILE_ARM)
     add_custom_target(xtest COMMAND qemu-arm -L /usr/arm-linux-gnueabi/ test_xsimd DEPENDS test_xsimd)
 else()
     add_custom_target(xtest COMMAND test_xsimd DEPENDS test_xsimd)
+endif()
+
+if (XSIMD_ENABLE_WERROR)
+    target_compile_options(test_xsimd PRIVATE -Werror -Wall -DXSIMD_SKIP_ON_WERROR)
 endif()

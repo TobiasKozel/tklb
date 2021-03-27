@@ -32,8 +32,8 @@ http://sam.zoy.org/wtfpl/COPYING for more details.
 
 /*\\\ INCLUDE FILES \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
-#include "./def.h"
-#include "./StageData3dnow.h"
+#include "hiir/def.h"
+#include "hiir/StageData3dnow.h"
 
 #include <array>
 
@@ -55,9 +55,8 @@ class Upsampler2x3dnow
 public:
 
 	typedef float DataType;
-	static const int  _nbr_chn = 1;
-
-	enum {         NBR_COEFS = NC };
+	static constexpr int _nbr_chn  = 1;
+	static constexpr int NBR_COEFS = NC;
 
 	               Upsampler2x3dnow ();
 	               Upsampler2x3dnow (const Upsampler2x3dnow <NC> &other) = default;
@@ -87,8 +86,9 @@ protected:
 
 private:
 
-	enum {         STAGE_WIDTH = 2 };
-	enum {         NBR_STAGES  = (NBR_COEFS + STAGE_WIDTH - 1) / STAGE_WIDTH };
+	static constexpr int STAGE_WIDTH = 2;
+	static constexpr int NBR_STAGES  =
+		(NBR_COEFS + STAGE_WIDTH - 1) / STAGE_WIDTH;
 
 	typedef std::array <StageData3dnow, NBR_STAGES + 1> Filter; // Stage 0 contains only input memory
 
@@ -111,7 +111,7 @@ private:
 
 
 
-#include "./Upsampler2x3dnow.hpp"
+#include "hiir/Upsampler2x3dnow.hpp"
 
 
 

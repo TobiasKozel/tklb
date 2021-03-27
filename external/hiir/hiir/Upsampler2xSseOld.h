@@ -37,8 +37,8 @@ http://sam.zoy.org/wtfpl/COPYING for more details.
 
 /*\\\ INCLUDE FILES \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
-#include "./def.h"
-#include "./StageDataSse.h"
+#include "hiir/def.h"
+#include "hiir/StageDataSse.h"
 
 #include <xmmintrin.h>
 
@@ -62,9 +62,8 @@ class Upsampler2xSseOld
 public:
 
 	typedef float DataType;
-	static const int  _nbr_chn = 1;
-
-	enum {         NBR_COEFS = NC };
+	static constexpr int _nbr_chn  = 1;
+	static constexpr int NBR_COEFS = NC;
 
 	               Upsampler2xSseOld ();
 	               Upsampler2xSseOld (const Upsampler2xSseOld <NC> &other) = default;
@@ -96,8 +95,9 @@ protected:
 
 private:
 
-	enum {         STAGE_WIDTH = 4 };
-	enum {         NBR_STAGES  = (NBR_COEFS + STAGE_WIDTH - 1) / STAGE_WIDTH };
+	static constexpr int STAGE_WIDTH = 4;
+	static constexpr int NBR_STAGES  =
+		(NBR_COEFS + STAGE_WIDTH - 1) / STAGE_WIDTH;
 
 	typedef std::array <StageDataSse, NBR_STAGES + 1> Filter;   // Stage 0 contains only input memory
 
@@ -120,7 +120,7 @@ private:
 
 
 
-#include "./Upsampler2xSseOld.hpp"
+#include "hiir/Upsampler2xSseOld.hpp"
 
 
 

@@ -38,7 +38,7 @@ http://sam.zoy.org/wtfpl/COPYING for more details.
 #include "./def.h"
 #include "./StageDataF64Avx512.h"
 
-#include <immintrin.h>
+#include <immintrin.h> 
 
 #include <array>
 
@@ -60,9 +60,8 @@ class Downsampler2x8F64Avx512
 public:
 
 	typedef double DataType;
-	static const int  _nbr_chn = 8;
-
-	enum {         NBR_COEFS = NC };
+	static constexpr int _nbr_chn  = 8;
+	static constexpr int NBR_COEFS = NC;
 
 	               Downsampler2x8F64Avx512 ();
 	               Downsampler2x8F64Avx512 (const Downsampler2x8F64Avx512 <NC> &other) = default;

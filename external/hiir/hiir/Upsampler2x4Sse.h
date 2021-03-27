@@ -35,8 +35,8 @@ http://sam.zoy.org/wtfpl/COPYING for more details.
 
 /*\\\ INCLUDE FILES \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
-#include "./def.h"
-#include "./StageDataSse.h"
+#include "hiir/def.h"
+#include "hiir/StageDataSse.h"
 
 #include <xmmintrin.h>
 
@@ -60,9 +60,8 @@ class Upsampler2x4Sse
 public:
 
 	typedef float DataType;
-	static const int  _nbr_chn = 4;
-
-	enum {         NBR_COEFS = NC };
+	static constexpr int _nbr_chn  = 4;
+	static constexpr int NBR_COEFS = NC;
 
 	               Upsampler2x4Sse ();
 	               Upsampler2x4Sse (const Upsampler2x4Sse <NC> &other) = default;
@@ -113,7 +112,7 @@ private:
 
 
 
-#include "./Upsampler2x4Sse.hpp"
+#include "hiir/Upsampler2x4Sse.hpp"
 
 
 

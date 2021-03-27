@@ -35,8 +35,8 @@ http://sam.zoy.org/wtfpl/COPYING for more details.
 
 /*\\\ INCLUDE FILES \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
-#include "./def.h"
-#include "./StageDataNeonV4.h"
+#include "hiir/def.h"
+#include "hiir/StageDataNeonV4.h"
 
 #include <arm_neon.h>
 
@@ -60,9 +60,8 @@ class Upsampler2x4Neon
 public:
 
 	typedef float DataType;
-	static const int  _nbr_chn = 4;
-
-	enum {         NBR_COEFS = NC };
+	static constexpr int _nbr_chn  = 4;
+	static constexpr int NBR_COEFS = NC;
 
 	               Upsampler2x4Neon ();
 	               Upsampler2x4Neon (const Upsampler2x4Neon <NC> &other) = default;
@@ -114,7 +113,7 @@ private:
 
 
 
-#include "./Upsampler2x4Neon.hpp"
+#include "hiir/Upsampler2x4Neon.hpp"
 
 
 

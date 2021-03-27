@@ -33,6 +33,7 @@ http://sam.zoy.org/wtfpl/COPYING for more details.
 /*\\\ INCLUDE FILES \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
 #include "./def.h"
+#include "./StageDataFpu.h"
 
 #include <array>
 
@@ -54,19 +55,8 @@ class Downsampler2xFpuTpl
 public:
 
 	typedef DT DataType;
-	static const int  _nbr_chn = 1;
-
-	enum {         NBR_COEFS = NC };
-
-	               Downsampler2xFpuTpl ();
-	               Downsampler2xFpuTpl (const Downsampler2xFpuTpl <NC, DT> &other) = default;
-	               Downsampler2xFpuTpl (Downsampler2xFpuTpl <NC, DT> &&other) = default;
-	               ~Downsampler2xFpuTpl ()                                = default;
-
-	Downsampler2xFpuTpl <NC, DT> &
-	               operator = (const Downsampler2xFpuTpl <NC, DT> &other) = default;
-	Downsampler2xFpuTpl <NC, DT> &
-	               operator = (Downsampler2xFpuTpl <NC, DT> &&other)      = default;
+	static constexpr int _nbr_chn  = 1;
+	static constexpr int NBR_COEFS = NC;
 
 	void           set_coefs (const double coef_arr []);
 
@@ -92,11 +82,10 @@ protected:
 
 private:
 
-	typedef	std::array <DataType, NBR_COEFS>	HyperGluar;
+	// Stages 0 and 1 contain only input memories
+	typedef std::array <StageDataFpu <DataType>, NBR_COEFS + 2> Filter;
 
-	HyperGluar     _coef;
-	HyperGluar     _x;
-	HyperGluar     _y;
+	Filter         _filter;
 
 
 

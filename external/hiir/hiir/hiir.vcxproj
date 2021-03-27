@@ -181,6 +181,7 @@
     <ClInclude Include="StageDataAvx512.h" />
     <ClInclude Include="StageDataF64Avx.h" />
     <ClInclude Include="StageDataF64Avx512.h" />
+    <ClInclude Include="StageDataFpu.h" />
     <ClInclude Include="StageDataNeonV2.h" />
     <ClInclude Include="StageDataNeonV4.h" />
     <ClInclude Include="StageDataSse.h" />
