@@ -129,7 +129,8 @@ namespace tklb {
 		};
 
 		/**
-		 * @brief Set from another buffer object
+		 * @brief Set from another buffer object, will not adjust size and channel count!
+		 * Use clone() instead.
 		 * e.g. offset=10 and length=15 will copy 15 samples into the buffer starting at the 10th sample
 		 * @param buffer Source buffer object
 		 * @param length Samples to copy in
@@ -200,7 +201,7 @@ namespace tklb {
 		 */
 		template <typename T2>
 		void clone(const AudioBufferTpl<T2>& buffer) {
-			resize(buffer.size(), buffer.channels());
+			resize(buffer);
 			set(buffer);
 		}
 
@@ -407,7 +408,7 @@ namespace tklb {
 		 * @param channel The channel index
 		 */
 		void inject(T* mem, const uint size, const uchar channel = 0) {
-			TKLB_ASSERT(channel < TKLB_MAXCHANNELS)
+			TKLB_ASSERT(channel < MAX_CHANNELS)
 			mBuffers[channel].inject(mem, size);
 			mSize = size;
 			mValidSize = size;
@@ -424,7 +425,7 @@ namespace tklb {
 		 * @param channel The channel index
 		 */
 		void inject(const T* mem, const uint size, const uchar channel = 0) {
-			TKLB_ASSERT(channel < TKLB_MAXCHANNELS)
+			TKLB_ASSERT(channel < MAX_CHANNELS)
 			mBuffers[channel].inject(mem, size);
 			mSize = size;
 			mValidSize = size;
