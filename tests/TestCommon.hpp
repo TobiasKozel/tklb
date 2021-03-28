@@ -15,5 +15,9 @@ int ret;
 #define memcheck() 	if (::tklb::memory::Allocated != 0) { return 100; }
 
 bool close(float a, float b, float epsylon = 0.01) {
-	return std::abs(a - b) < epsylon;
+	if (std::abs(a - b) < epsylon) {
+		return true;
+	} else {
+		return false; // Easy to set a breakpoint
+	}
 }

@@ -158,7 +158,10 @@ namespace tklb {
 
 		T* data() {
 			#if TKLB_HEAP_DEBUG_SIZE > 0
-				memory::copy(DEBUF_BUF, mBuf, sizeof(T) * std::min((size_t) 100, mSize));
+				memory::copy(
+					DEBUF_BUF, mBuf,
+					sizeof(T) * std::min((size_t) TKLB_HEAP_DEBUG_SIZE, mSize)
+				);
 			#endif
 			// Don't use non const access when using injected const memory
 			TKLB_ASSERT(!IS_CONST)
@@ -174,7 +177,10 @@ namespace tklb {
 		T& operator[](const size_t index) {
 			// Don't use non const access when using injected const memory
 			#if TKLB_HEAP_DEBUG_SIZE > 0
-				memory::copy(DEBUF_BUF, mBuf, sizeof(T) * std::min((size_t) 100, mSize));
+				memory::copy(
+					DEBUF_BUF, mBuf,
+					sizeof(T) * std::min((size_t) TKLB_HEAP_DEBUG_SIZE, mSize)
+				);
 			#endif
 			TKLB_ASSERT(!IS_CONST)
 			return mBuf[index];

@@ -30,6 +30,7 @@ mv ./speexdsp-master/include/speex/speex_resampler.h ./speex_resampler/speex_res
 sed -e '/static void \*speex_alloc/ s/^\/*/\/\//' -i ./speex_resampler/resample.c
 sed -e '/static void \*speex_realloc/ s/^\/*/\/\//' -i ./speex_resampler/resample.c
 sed -e '/static void speex_free/ s/^\/*/\/\//' -i ./speex_resampler/resample.c
+# export macro creates some issues with iplug2 vst
 sed -i 's/EXPORT\ //g' -b -i ./speex_resampler/resample.c
 rm -rf ./speexdsp-master/
 
@@ -50,5 +51,6 @@ curl -LO http://ldesoras.free.fr/src/$HIIR > /dev/null 2>&1
 unzip ./$HIIR > /dev/null 2>&1
 rm ./$HIIR
 cd ./hiir
+# Make the includes relative
 sed -i 's/include\ "hiir/include\ "./g' *
 cd ../..
