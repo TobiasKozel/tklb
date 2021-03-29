@@ -3,7 +3,7 @@
 #define ITERATIONS 20
 #include "BenchmarkCommon.hpp"
 #include "../../types/audio/TAudioBuffer.hpp"
-#include "../../types/audio/convolver/TConvolverBrute.h"
+#include "../../types/audio/convolver/TConvolverBrute.hpp"
 
 
 int main() {

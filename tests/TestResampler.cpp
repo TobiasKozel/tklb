@@ -13,8 +13,8 @@ int main() {
 		const int blockSize = 256;
 		const int channels = TKLB_MAXCHANNELS;
 
-		Resampler<> resamplerUp(rateLow, rateHigh, blockSize);
-		Resampler<> resamplerDown(rateHigh, rateLow, blockSize);
+		Resampler resamplerUp(rateLow, rateHigh, blockSize);
+		Resampler resamplerDown(rateHigh, rateLow, blockSize);
 
 		int latency = resamplerDown.getLatency();
 		latency += resamplerUp.getLatency();
@@ -24,7 +24,7 @@ int main() {
 		bufHigh.sampleRate = rateHigh;
 
 		bufLow.resize(length + 10, channels); // add some padding
-		bufHigh.resize(Resampler<>::calculateBufferSize(rateLow, rateHigh, length) , channels);
+		bufHigh.resize(Resampler::calculateBufferSize(rateLow, rateHigh, length) , channels);
 
 		// generate sine test signal
 		for (int c = 0; c < channels; c++) {

@@ -3,7 +3,7 @@
 #define TKLB_USE_OOURA
 #include "BenchmarkCommon.hpp"
 #include "../../types/audio/TAudioBuffer.hpp"
-#include "../../types/audio/convolver/TConvolverNew.h"
+#include "../../types/audio/convolver/TConvolverNew.hpp"
 
 
 int main() {

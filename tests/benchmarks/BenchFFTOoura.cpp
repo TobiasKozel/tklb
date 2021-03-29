@@ -1,6 +1,6 @@
 #define TKLB_MAXCHANNELS 16
 #define TKLB_USE_OOURA
-#include "../../types/audio/fft/TFFT.h"
+#include "../../types/audio/fft/TFFT.hpp"
 
 #include "BenchmarkCommon.hpp"
 

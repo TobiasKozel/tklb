@@ -75,9 +75,9 @@ namespace tklb {
 				const uchar irChannel = c % mIr.channels();
 
 				for(uint i = 0; i < n; i++) {
-					const int jmn = (i >= ng - 1) ? (i - (ng - 1)) : 0;
-					const int jmx = (i <  nf - 1) ?  i : (nf - 1);
-					for(int j = jmn; j <= jmx; j++) {
+					const uint jmn = (i >= ng - 1) ? (i - (ng - 1)) : 0;
+					const uint jmx = (i <  nf - 1) ?  i : (nf - 1);
+					for(uint j = jmn; j <= jmx; j++) {
 						// nested loop goes brr
 						out[c][i] += (mIr[irChannel][j] * in[inChannel][i - j]);
 					}

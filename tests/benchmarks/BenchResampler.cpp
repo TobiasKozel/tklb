@@ -1,6 +1,6 @@
 #define TKLB_MAXCHANNELS 16
 
-#include "../../types/audio/TResampler.h"
+#include "../../types/audio/TResampler.hpp"
 #include "BenchmarkCommon.hpp"
 
 int main() {
@@ -9,15 +9,15 @@ int main() {
 		const int channels = TKLB_MAXCHANNELS;
 		const int rate1 = 44100;
 		const int rate2 = 48000;
-		Resampler<> up(rate1, rate2, length);
-		Resampler<> down(rate2, rate1, length * 2); // Bigger max block obviously
+		Resampler up(rate1, rate2, length);
+		Resampler down(rate2, rate1, length * 2); // Bigger max block obviously
 
 		AudioBuffer in, out;
 		in.sampleRate = rate1;
 		out.sampleRate = rate2;
 
-		in.resize(Resampler<>::calculateBufferSize(rate1, rate1, length), channels);
-		out.resize(Resampler<>::calculateBufferSize(rate1, rate2, length) , channels); // same here
+		in.resize(Resampler::calculateBufferSize(rate1, rate1, length), channels);
+		out.resize(Resampler::calculateBufferSize(rate1, rate2, length) , channels); // same here
 
 		// generate sine test signal
 		for (int c = 0; c < channels; c++) {
