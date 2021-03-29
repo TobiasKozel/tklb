@@ -113,7 +113,7 @@ namespace tklb {
 		/**
 		 * @breif Returns how many more elements the buffer can hold
 		 */
-		uint free() const { return Base::size() - mHead; }
+		uint remaining() const { return Base::size() - mHead; }
 
 		/**
 		 * @brief Returns how many elements are in the buffer

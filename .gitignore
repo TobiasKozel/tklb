@@ -1,5 +1,4 @@
 external/hiir/hiir/test
-.vscode
 *.out
 *.exe
 *.obj

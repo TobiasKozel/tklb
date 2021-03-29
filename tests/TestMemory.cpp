@@ -1,0 +1,45 @@
+#include "./TestCommon.hpp"
+#include <vector>
+#include "../types/THeapBuffer.hpp"
+
+unsigned int objectCount = 0;
+
+class Test {
+public:
+	int asd; // great, this leaks in the size variable of a memory block
+	Test() {
+		// asd = objectCount;
+		// objectCount++;
+	}
+};
+
+int test() {
+	constexpr int size = sizeof(Test);
+	{
+		std::vector<Test> asd;
+		asd.resize(2);
+		asd.push_back(Test());
+		asd.push_back(Test());
+		asd.push_back(Test());
+		asd.push_back(Test());
+		asd.push_back(Test());
+		asd.push_back(Test());
+		asd.push_back(Test());
+		asd.push_back(Test());
+	}
+
+	{
+		tklb::HeapBuffer<Test> asd(0, 1);
+		asd.resize(2);
+		asd.push(Test());
+		asd.push(Test());
+		asd.push(Test());
+		asd.push(Test());
+		asd.push(Test());
+		asd.push(Test());
+		asd.push(Test());
+		asd.push(Test());
+	}
+
+	return 0;
+}

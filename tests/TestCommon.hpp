@@ -1,3 +1,5 @@
+#define TKLB_MEM_TRACE
+#define TKLB_MEM_OVERLOAD_ALL
 #include "../util/TMemoryManager.hpp"
 #include <cmath>
 #include "../util/TTimer.hpp"
@@ -6,13 +8,8 @@
 using namespace tklb;
 using namespace std;
 
-int ret;
-#define returnNonZero(val) ret = val; if(ret != 0) { return ret; }
-
-// #define memcheck() 	if (allocationCount != 0) { return 100; } \
-// 					else if (curruptions != 0) { return 101; }
-
-#define memcheck() 	if (::tklb::memory::Allocated != 0) { return 100; }
+int retn0;
+#define returnNonZero(val) retn0 = val; if(retn0 != 0) { return retn0; }
 
 bool close(float a, float b, float epsylon = 0.01) {
 	if (std::abs(a - b) < epsylon) {
@@ -20,4 +17,15 @@ bool close(float a, float b, float epsylon = 0.01) {
 	} else {
 		return false; // Easy to set a breakpoint
 	}
+}
+
+int test();
+
+int main() {
+	memory::manager::use();
+	int ret = test();
+	if (tklb::memory::Allocated != 0) {
+		return 100;
+	}
+	return ret;
 }

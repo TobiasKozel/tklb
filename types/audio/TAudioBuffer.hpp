@@ -560,6 +560,7 @@ namespace tklb {
 					out++;
 				}
 			}
+			return out;
 		}
 	};
 

@@ -200,6 +200,9 @@ private:
 			appendDelimiter(root);
 			for (int i = 0; i < count; i++) {
 				const struct dirent* ent = files[i];
+				if (ent == nullptr) {
+					continue;
+				}
 				if (ent->d_name[0] != '.') {
 					FileInfo info;
 					info.isFolder = ent->d_type == DT_DIR;

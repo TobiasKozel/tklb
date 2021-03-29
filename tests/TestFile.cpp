@@ -1,12 +1,8 @@
-#define TKLB_LEAKCHECKER_DISARM
 #include "./TestCommon.hpp"
 #include "../types/TFile.hpp"
 
-int main() {
-	{
-		FileInfo file("./");
-		file.scan();
-	}
-	memcheck()
+int test() {
+	FileInfo file("./");
+	file.scan();
 	return 0;
 }

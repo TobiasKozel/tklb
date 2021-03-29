@@ -140,21 +140,15 @@ int casts() {
 	return 0;
 }
 
-int main() {
+int test() {
+	AudioBuffer buffer;
 
+	returnNonZero(deinterleave(buffer))
+	returnNonZero(conversion<float>(buffer))
+	returnNonZero(conversion<double>(buffer))
 
-	{
-		AudioBuffer buffer;
+	returnNonZero(add())
 
-		returnNonZero(deinterleave(buffer))
-		returnNonZero(conversion<float>(buffer))
-		returnNonZero(conversion<double>(buffer))
-
-		returnNonZero(add())
-
-		returnNonZero(casts())
-	}
-
-	memcheck()
+	returnNonZero(casts())
 	return 0;
 }

@@ -19,7 +19,7 @@ public:
 	}
 };
 
-int main() {
+int test() {
 	{
 		HeapBuffer<LifeCycleTest> heap;
 
@@ -77,7 +77,6 @@ int main() {
 	if (ObjectCount != 0) {
 		return 8;
 	}
-	memcheck()
 
 	{
 		HeapBuffer<int> heap;
@@ -85,7 +84,6 @@ int main() {
 		heap.resize(0);
 		heap.resize(2);
 	}
-	memcheck()
 
 	{
 		HeapBuffer<LifeCycleTest*> heap;
@@ -93,15 +91,12 @@ int main() {
 		heap.resize(0);
 		heap.resize(2);
 	}
-	memcheck()
 
 	{
-		{
 		HeapBuffer<LifeCycleTest*> heap;
 		heap.reserve(4);
 		heap.resize(0);
 		heap.resize(2);
-	}
 	}
 	return 0;
 }
