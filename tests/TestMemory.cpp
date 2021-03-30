@@ -6,10 +6,10 @@ unsigned int objectCount = 0;
 
 class Test {
 public:
-	int asd; // great, this leaks in the size variable of a memory block
+	int id;
 	Test() {
-		// asd = objectCount;
-		// objectCount++;
+		id = objectCount;
+		objectCount++;
 	}
 };
 

@@ -28,26 +28,27 @@ namespace tklb {
 		// stdlib or external allocation functions would need to be wrapped
 		size_t Allocated = 0;
 
-		void* (*allocate)(size_t) =
-		#ifndef TKLB_MEM_NO_STD
-			malloc;
-		#else
-			nullptr;
-		#endif
+	#ifdef TKLB_MEM_NO_STD
+		void* (*allocate)(size_t) = nullptr;
+		void* (*reallocate)(void*, size_t) = nullptr;
+		void (*deallocate)(void*) = nullptr;
 
-		void* (*reallocate)(void*, size_t) =
-		#ifndef TKLB_MEM_NO_STD
-			realloc;
-		#else
-			nullptr;
-		#endif
+		// They will stay empty
+		void* (*std_allocate)(size_t) = nullptr;
+		void* (*std_reallocate)(void*, size_t) = nullptr;
+		void (*std_deallocate)(void*) = nullptr;
+	#else
+		void* (*allocate)(size_t) = malloc;
+		void* (*reallocate)(void*, size_t) = realloc;
+		void (*deallocate)(void*) = free;
 
-		void (*deallocate)(void*) =
-		#ifndef TKLB_MEM_NO_STD
-			free;
-		#else
-			nullptr;
-		#endif
+		// Store these away in case they are needed
+		// when interacting with linked libs
+		// the ones above might be replaced with a custom one
+		void* (*std_allocate)(size_t) = malloc;
+		void* (*std_reallocate)(void*, size_t) = realloc;
+		void (*std_deallocate)(void*) = free;
+	#endif
 
 		/**
 		 * @brief memcpy wrapper

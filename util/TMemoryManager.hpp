@@ -7,6 +7,8 @@
 #define TKLB_MEM_CUSTOM_MALLOC
 #include "./TMemory.hpp"
 
+#include <cstdint>
+
 namespace tklb {
 	namespace memory {
 		/**
@@ -85,6 +87,9 @@ namespace tklb {
 
 			void deallocate(void* ptr) {
 				if (ptr == nullptr) { return; }
+				TKLB_ASSERT((uintptr_t) CustomMemory <= (uintptr_t) ptr)
+				TKLB_ASSERT((uintptr_t) ptr < (uintptr_t) CustomMemory + (uintptr_t)CustomSize)
+
 				Block& block = *reinterpret_cast<Block*>(
 					reinterpret_cast<Byte*>(ptr) - sizeof(Size)
 				);
