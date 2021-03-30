@@ -12,18 +12,29 @@ namespace tklb {
 		/**
 		 * @brief Extremely basic Memorymanager which works with a preallocated
 		 * chunk of memory. Fragmentation is probably quite an issue.
+		 * From a security standpoint this is horrible since the whole memorylayout
+		 * is part of the memory.
 		 * [size|data],[size|data],[0|size of free block]
 		 * example:
 		 * size is stored in a 4 byte int and includes itself
 		 * [12|Space of 8 bytes],
 		 * [8|space of 4 bytes],
-		 * [0,8](4 byte of actual free space),
+		 * [0,2](4 byte of actual free space),
 		 * [0,0](free space till end of buffer)
 		 */
 		namespace manager {
 			using Size = unsigned int;
-			const Size CustomSize = 1024 * 1024 * 300;
-			unsigned char* CustomMemory = new unsigned char[CustomSize];
+			using Byte = unsigned char;
+
+			struct Block {
+				Size size;
+				Size space;
+			};
+
+			Size CustomSize = 0;
+			// gdb watch expression to see whatc going on
+			// *(unsigned int(*)[200])tklb::memory::manager::CustomMemory
+			Byte* CustomMemory = nullptr;
 
 
 			void* allocate(size_t size) {
@@ -32,20 +43,40 @@ namespace tklb {
 					// min block size since the space will be used when it's free
 					size = sizeof(Size);
 				}
-				size += sizeof(Size); // add space allocated size
-				Size* mem = reinterpret_cast<Size*>(CustomMemory);
-				for (Size i = 0; i < CustomSize / sizeof(Size) -1;) {
-					if (mem[i] == 0) {
-						if (size <= mem[i + 1] || mem[i + 1] == 0) {
-							mem[i] = size;
+
+				// add space for the size
+				// means we gotta be careful but can easily jump over gaps
+				size += sizeof(Size);
+
+				for (Size i = 0; i < CustomSize;) {
+					Block& block = *reinterpret_cast<Block*>(CustomMemory + i);
+					if (block.size == 0) {
+						// block is free
+						if (size <= block.space) {
+							// block has space
+							const Size oldSize = block.space;
+							if (oldSize <= size + sizeof(Size)) {
+								// not enough space to mark a spare block
+								// after, so just take the space of the old block
+								size = oldSize;
+							} else {
+								// Enough space to mark a new block
+								Block& freeBlock = *reinterpret_cast<Block*>(
+									reinterpret_cast<Byte*>(&block) + size
+								);
+								freeBlock.size = 0;
+								// Mark the size of the new free block
+								freeBlock.space = oldSize - size;
+							}
+							block.size = size;
 							Allocated += size;
-							return &(mem[i + 1]); // * Found free spot
+							return &block.space; // * Found free spot
 						} else {
 							// Step over the free area which is too small
-							i += mem[i + 1];
+							i += block.space;
 						}
 					} else {
-						i += mem[i]; // Step over the already allocated area
+						i += block.size; // Step over the already allocated area
 					}
 				}
 				TKLB_ASSERT(false)
@@ -54,47 +85,88 @@ namespace tklb {
 
 			void deallocate(void* ptr) {
 				if (ptr == nullptr) { return; }
-				Size* index = reinterpret_cast<Size*>(ptr);
-				Size size = *(index - 1);
-				*(index - 1) = 0; // Mark the block as unallocated
+				Block& block = *reinterpret_cast<Block*>(
+					reinterpret_cast<Byte*>(ptr) - sizeof(Size)
+				);
+
+				// blocks can never be less than 2 * sizeof(Size)
+				TKLB_ASSERT(sizeof(Size) < block.size)
+
+				#ifdef TKLB_MEM_TRACE
+					Size* data = reinterpret_cast<Size*>(&block);
+					const Size end = block.size /  sizeof(Size);
+					// Set the freed memory to a pattern
+					// skip the first 8 bytes since they are 0 indecating the block is free
+					for (Size i = 2; i < end; i++) {
+						data[i] = 123;
+					}
+					data[end - 1] = 666; // end of free block
+				#endif
 
 				// Save how large is the gap in memory will be
 				// TODO check if the next block is free too
 				// These blocks should be merged or fragmentation gets worse
-				*index = size;
-				Allocated -= size;
+				block.space = block.size;
+				Allocated -= block.size;
+				block.size = 0; // Mark the block as unallocated
 			}
 
 			void* reallocate(void* ptr, size_t size) {
 				if (ptr == nullptr) { return allocate(size); }
 
-				Size* index = reinterpret_cast<Size*>(ptr);
-				const Size oldSize = *(index - 1);
+				Block& block = *reinterpret_cast<Block*>(
+					reinterpret_cast<Byte*>(ptr) - sizeof(Size)
+				);
+				const Size oldSize = block.size;
 				const Size newSize = size + sizeof(Size);
+
 				if (newSize <= oldSize) {
+					// Down size
 					if (oldSize <= newSize + sizeof(Size)) {
-						// * Don't do anything since there's not enough
-						// * space beeing freed to mark a spare block
-						return ptr;
+						// Don't do anything since there's not enough
+						// space beeing freed to mark a spare block
+						return ptr; // * return same block
 					}
-					*(index - 1) = newSize;
-					*(index + size) = 0; // Mark the start of a new block
-					// Mark the size of the new free block
-					*(index + newSize) = oldSize - newSize;
-					return ptr; // * Down size
+
+					// Enough space for new spare block
+					block.size = newSize; // down size current block
+					Block& freeBlock = *reinterpret_cast<Block*>(
+						reinterpret_cast<Byte*>(&block) + newSize
+					);
+					freeBlock.size = 0; // Mark the start of a new block
+					freeBlock.space = oldSize - newSize; // Mark the size of the new free block
+					return ptr; // * return same block
 				}
+
 				void* newPtr = allocate(size);
 				if (newPtr == nullptr) { return nullptr; }
-				const Size bytes = min(oldSize, newSize) - sizeof(Size);
+				const Size bytes = oldSize - sizeof(Size);
 				copy(ptr, newPtr, bytes);
 				deallocate(ptr);
 				return newPtr;
 			}
 
 			void use() {
+				// Allocate a fixed block if there are allocation function
+				// and no space already allocated
+				if (CustomMemory == nullptr && tklb::memory::allocate != nullptr) {
+					CustomSize = 1024 * 1024 * 300;
+					CustomMemory = new Byte[CustomSize];
+				}
+
+				// Replace the allocation functions with the managers
 				tklb::memory::allocate = allocate;
 				tklb::memory::reallocate = reallocate;
 				tklb::memory::deallocate = deallocate;
+
+				#ifdef TKLB_MEM_TRACE
+					set(CustomMemory, 0, CustomSize);
+				#endif
+
+				// Mark the whole area as a free block
+				Block& block = *reinterpret_cast<Block*>(CustomMemory);
+				block.size = 0;
+				block.space = CustomSize;
 			}
 		}
 	}
