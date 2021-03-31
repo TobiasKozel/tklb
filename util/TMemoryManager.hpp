@@ -25,17 +25,26 @@ namespace tklb {
 		 * [0,0](free space till end of buffer)
 		 */
 		namespace manager {
-			using Size = unsigned int;
+			// Type used to store sizes,
+			// seems wasteful on 64bit machines but memory needs to be aligned
+			// so it behaves like gcc malloc
+			using Size = uintptr_t;
 			using Byte = unsigned char;
 
+			/**
+			 * @brief Struct making the access of a memory block easier
+			 */
 			struct Block {
+				// Size stored before actual memory
 				Size size;
+				// Either the size of free space if size is 0
+				// or the start of the memory
 				Size space;
 			};
 
 			Size CustomSize = 0;
-			// gdb watch expression to see whatc going on
-			// *(unsigned int(*)[200])tklb::memory::manager::CustomMemory
+			// gdb watch expression for convenience
+			// *(unsigned uintptr_t(*)[200])tklb::memory::manager::CustomMemory
 			Byte* CustomMemory = nullptr;
 
 
@@ -43,12 +52,18 @@ namespace tklb {
 				if (size == 0) { return nullptr; }
 				if (size < sizeof(Size)) {
 					// min block size since the space will be used when it's free
+					// to store the distance to the next block
 					size = sizeof(Size);
 				}
 
 				// add space for the size
-				// means we gotta be careful but can easily jump over gaps
 				size += sizeof(Size);
+
+				// This needs to be enough for the Block struct
+				static_assert(sizeof(Block) <= 2 * sizeof(Size), "Not enough space to store spare block!");
+
+				// Make sure the size is aligned
+				size += sizeof(uintptr_t) - (size % sizeof(uintptr_t));
 
 				for (Size i = 0; i < CustomSize;) {
 					Block& block = *reinterpret_cast<Block*>(CustomMemory + i);
@@ -87,6 +102,8 @@ namespace tklb {
 
 			void deallocate(void* ptr) {
 				if (ptr == nullptr) { return; }
+
+				// Check if pointer is in memory range
 				TKLB_ASSERT((uintptr_t) CustomMemory <= (uintptr_t) ptr)
 				TKLB_ASSERT((uintptr_t) ptr < (uintptr_t) CustomMemory + (uintptr_t)CustomSize)
 
@@ -123,7 +140,9 @@ namespace tklb {
 					reinterpret_cast<Byte*>(ptr) - sizeof(Size)
 				);
 				const Size oldSize = block.size;
-				const Size newSize = size + sizeof(Size);
+				Size newSize = size + sizeof(Size);
+				// Make sure the size is aligned
+				newSize += sizeof(uintptr_t) - (newSize % sizeof(uintptr_t));
 
 				if (newSize <= oldSize) {
 					// Down size

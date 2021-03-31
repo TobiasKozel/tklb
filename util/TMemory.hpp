@@ -30,6 +30,12 @@ namespace tklb {
 		// stdlib or external allocation functions would need to be wrapped
 		size_t Allocated = 0;
 
+		#if !defined(TKLB_NO_SIMD) || defined(TKLB_ALIGNED_MEM)
+			constexpr unsigned int DEFAULT_ALIGN = XSIMD_DEFAULT_ALIGNMENT;
+		#else
+			constexpr unsigned int DEFAULT_ALIGN = sizeof(size_t);
+		#endif
+
 	#ifdef TKLB_MEM_NO_STD
 		void* (*allocate)(size_t) = nullptr;
 		void* (*reallocate)(void*, size_t) = nullptr;
@@ -92,6 +98,7 @@ namespace tklb {
 
 		void deallocateAligned(void* ptr) noexcept {
 			#if !defined(TKLB_NO_SIMD) || defined(TKLB_ALIGNED_MEM)
+				if (ptr == nullptr) { return; }
 				// Get the orignal allocation address to free the memory
 				deallocate(*(reinterpret_cast<void**>(ptr) - 1));
 			#else
@@ -103,31 +110,26 @@ namespace tklb {
 		 * @brief Allocate aligned if simd is enabled.
 		 * Does a normal allocation otherwise.
 		 */
-		void* allocateAligned(size_t bytes) noexcept {
+		void* allocateAligned(const size_t bytes, const size_t align = DEFAULT_ALIGN) noexcept {
 			#if !defined(TKLB_NO_SIMD) || defined(TKLB_ALIGNED_MEM)
-				// TODO replace this
-				// This is the aligned allocation routine from xsimd
-				// but using the internal allocate function instead
-				void* res = 0;
-				void* ptr = allocate(bytes + XSIMD_DEFAULT_ALIGNMENT);
-				if (ptr != 0 && XSIMD_DEFAULT_ALIGNMENT != 0) {
-					// Mask with zeroes at the end to snap to the next block
+				// malloc is already already aligned to sizeof(size_t)
+				void* result = allocate(bytes + align);
+				if (result != nullptr && align != 0) {
+					// Mask with zeroes at the end to floor the pointer to an aligned block
 					const size_t mask = ~(size_t(XSIMD_DEFAULT_ALIGNMENT - 1));
-					const size_t pointer = reinterpret_cast<size_t>(ptr);
-					const size_t snapped = pointer & mask;
-					const size_t aligned = snapped + XSIMD_DEFAULT_ALIGNMENT;
-					if (sizeof(size_t) > (aligned - pointer)) {
-						int asd = 0;
-						// This needs fixing
-					}
-					// TKLB_ASSERT()
-					res = reinterpret_cast<void*>(aligned);
-					void** test = reinterpret_cast<void**>(res);
-					test -= 1;
-					// store away the orignal address needed to free the memory
-					*(test) = ptr;
+					const size_t pointer = reinterpret_cast<size_t>(result);
+					const size_t floored = pointer & mask;
+					const size_t aligned = floored + align;
+
+					// Not enough space before aligned memory to store original ptr
+					// This only happens when malloc doesn't align to sizeof(size_t)
+					TKLB_ASSERT(sizeof(size_t) <= (aligned - pointer))
+
+					result = reinterpret_cast<void*>(aligned);
+					size_t* original = reinterpret_cast<size_t*>(result) - 1;
+					*(original) = pointer;
 				}
-				return res;
+				return result;
 			#else
 				return allocate(bytes);
 			#endif // defined(TKLB_NO_SIMD) || defined(TKLB_ALIGNED_MEM)
@@ -181,8 +183,8 @@ namespace tklb {
 			deallocateAligned(ptr);
 		};
 
-		void* allocateAlignedTrace(size_t bytes, const char* file, int line) noexcept {
-			return allocateAligned(bytes);
+		void* allocateAlignedTrace(const char* file, int line, size_t bytes, size_t align = DEFAULT_ALIGN) noexcept {
+			return allocateAligned(bytes, align);
 		};
 
 		template <class T, typename ... Args>
@@ -204,23 +206,23 @@ namespace tklb {
  *
  */
 #ifdef TKLB_MEM_TRACE
-	#define TKLB_MALLOC(size)			tklb::memory::allocateTrace(size, __FILE__, __LINE__)
-	#define TKLB_FREE(ptr)				tklb::memory::deallocateTrace(ptr, __FILE__, __LINE__)
-	#define TKLB_REALLOC(ptr, size) 	tklb::memory::reallocateTrace(ptr, size, __FILE__, __LINE__)
-	#define TKLB_CALLOC(num, size) 		tklb::memory::clearallocateTrace(num, size, __FILE__, __LINE__)
-	#define TKLB_MALLOC_ALIGNED(size)	tklb::memory::allocateAlignedTrace(size, __FILE__, __LINE__)
-	#define TKLB_FREE_ALIGNED(ptr)		tklb::memory::deallocateAlignedTrace(ptr, __FILE__, __LINE__)
-	#define TKLB_NEW(T, ...)			tklb::memory::createTrace<T>(__FILE__, __LINE__, ##__VA_ARGS__)
-	#define TKLB_DELETE(ptr)			tklb::memory::disposeTrace(ptr, __FILE__, __LINE__)
+	#define TKLB_MALLOC(size)				tklb::memory::allocateTrace(size, __FILE__, __LINE__)
+	#define TKLB_FREE(ptr)					tklb::memory::deallocateTrace(ptr, __FILE__, __LINE__)
+	#define TKLB_REALLOC(ptr, size) 		tklb::memory::reallocateTrace(ptr, size, __FILE__, __LINE__)
+	#define TKLB_CALLOC(num, size) 			tklb::memory::clearallocateTrace(num, size, __FILE__, __LINE__)
+	#define TKLB_MALLOC_ALIGNED(size, ...)	tklb::memory::allocateAlignedTrace(__FILE__, __LINE__, size, ##__VA_ARGS__)
+	#define TKLB_FREE_ALIGNED(ptr)			tklb::memory::deallocateAlignedTrace(ptr, __FILE__, __LINE__)
+	#define TKLB_NEW(T, ...)				tklb::memory::createTrace<T>(__FILE__, __LINE__, ##__VA_ARGS__)
+	#define TKLB_DELETE(ptr)				tklb::memory::disposeTrace(ptr, __FILE__, __LINE__)
 #else // TKLB_MEM_TRACE
-	#define TKLB_MALLOC(size)			tklb::memory::allocate(size)
-	#define TKLB_FREE(ptr)				tklb::memory::deallocate(ptr)
-	#define TKLB_REALLOC(ptr, size)		tklb::memory::reallocate(ptr, size)
-	#define TKLB_CALLOC(num, size) 		tklb::memory::clearallocate(num, size)
-	#define TKLB_MALLOC_ALIGNED(size)	tklb::memory::allocateAligned(size)
-	#define TKLB_FREE_ALIGNED(ptr)		tklb::memory::deallocateAligned(ptr)
-	#define TKLB_NEW(T, ...)			tklb::memory::create<T>(__VA_ARGS__)
-	#define TKLB_DELETE(ptr)			tklb::memory::dispose(ptr)
+	#define TKLB_MALLOC(size)				tklb::memory::allocate(size)
+	#define TKLB_FREE(ptr)					tklb::memory::deallocate(ptr)
+	#define TKLB_REALLOC(ptr, size)			tklb::memory::reallocate(ptr, size)
+	#define TKLB_CALLOC(num, size) 			tklb::memory::clearallocate(num, size)
+	#define TKLB_MALLOC_ALIGNED(size, ...)	tklb::memory::allocateAligned(size, ##__VA_ARGS__)
+	#define TKLB_FREE_ALIGNED(ptr)			tklb::memory::deallocateAligned(ptr)
+	#define TKLB_NEW(T, ...)				tklb::memory::create<T>(__VA_ARGS__)
+	#define TKLB_DELETE(ptr)				tklb::memory::dispose(ptr)
 #endif // TKLB_MEM_TRACE
 
 
@@ -228,14 +230,22 @@ namespace tklb {
  *
  * Force all other standart allocation operators to use the
  * ones provided by tklb. This is potentially dangerous
- * when linkin in libraries and passing memory to them.
+ * when linking in libraries and passing memory to them.
+ * This rarely ever works in practice but is interesting
+ * for educational purposes nevertheless.
  *
  */
 #ifdef TKLB_MEM_OVERLOAD_ALL
-	#define malloc(size)		TKLB_MALLOC(size)
-	#define free(ptr)			TKLB_FREE(ptr)
-	#define realloc(ptr, size)	TKLB_REALLOC(ptr, size)
-	#define calloc(num, size)	TKLB_CALLOC(num, size)
+	#define malloc(size)			TKLB_MALLOC(size)
+	#define free(ptr)				TKLB_FREE(ptr)
+	#define realloc(ptr, size)		TKLB_REALLOC(ptr, size)
+	#define calloc(num, size)		TKLB_CALLOC(num, size)
+
+	// Capturing these is actual madness
+	#define _MM_MALLOC_H_INCLUDED
+	#define __MM_MALLOC_H
+	#define _mm_malloc(size, align)	TKLB_MALLOC_ALIGNED(size, align)
+	#define _mm_free(ptr)			TKLB_FREE_ALIGNED(ptr)
 
 	void* operator new(size_t size) { return TKLB_MALLOC(size); }
 	void* operator new(size_t size, const std::nothrow_t& tag) noexcept { return TKLB_MALLOC(size); }
