@@ -17,6 +17,8 @@
 	#include "../external/xsimd/include/xsimd/config/xsimd_config.hpp"
 #endif
 
+#include "./TAssert.h"
+
 namespace tklb {
 	/**
 	 * Wraps allocation so using a custom memory manager
@@ -109,14 +111,21 @@ namespace tklb {
 				void* res = 0;
 				void* ptr = allocate(bytes + XSIMD_DEFAULT_ALIGNMENT);
 				if (ptr != 0 && XSIMD_DEFAULT_ALIGNMENT != 0) {
-					// some evil bitwise magic to align to the next block
-					res = reinterpret_cast<void*>(
-						(reinterpret_cast<size_t>(ptr) &
-						~(size_t(XSIMD_DEFAULT_ALIGNMENT - 1))) +
-						XSIMD_DEFAULT_ALIGNMENT
-					);
+					// Mask with zeroes at the end to snap to the next block
+					const size_t mask = ~(size_t(XSIMD_DEFAULT_ALIGNMENT - 1));
+					const size_t pointer = reinterpret_cast<size_t>(ptr);
+					const size_t snapped = pointer & mask;
+					const size_t aligned = snapped + XSIMD_DEFAULT_ALIGNMENT;
+					if (sizeof(size_t) > (aligned - pointer)) {
+						int asd = 0;
+						// This needs fixing
+					}
+					// TKLB_ASSERT()
+					res = reinterpret_cast<void*>(aligned);
+					void** test = reinterpret_cast<void**>(res);
+					test -= 1;
 					// store away the orignal address needed to free the memory
-					*(reinterpret_cast<void**>(res) - 1) = ptr;
+					*(test) = ptr;
 				}
 				return res;
 			#else

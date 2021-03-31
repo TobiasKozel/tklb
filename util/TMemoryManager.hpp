@@ -165,7 +165,10 @@ namespace tklb {
 				tklb::memory::deallocate = deallocate;
 
 				#ifdef TKLB_MEM_TRACE
-					set(CustomMemory, 0, CustomSize);
+					for (Size i = 0; i < CustomSize / sizeof(Size); i++) {
+						reinterpret_cast<Size*>(CustomMemory)[i] = i;
+					}
+					// set(CustomMemory, 0, CustomSize);
 				#endif
 
 				// Mark the whole area as a free block
