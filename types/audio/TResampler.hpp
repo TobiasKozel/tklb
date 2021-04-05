@@ -170,6 +170,8 @@ namespace tklb {
 			resampler.init(rateIn, rateOut, copy.size(), quality);
 			resampler.process(copy, buffer);
 		}
+
+		bool isInitialized() const { return mState != nullptr; }
 	};
 
 	typedef ResamplerTpl<float> ResamplerFloat;

@@ -80,6 +80,13 @@ namespace tklb {
 			resize(length, channels);
 		}
 
+		AudioBufferTpl(const AudioBufferTpl&) = delete;
+		AudioBufferTpl(const AudioBufferTpl*) = delete;
+		AudioBufferTpl(AudioBufferTpl&&) = delete;
+		AudioBufferTpl& operator= (const AudioBufferTpl&) = delete;
+		AudioBufferTpl& operator= (AudioBufferTpl&&) = delete;
+
+
 		/**
 		 * @brief Set a single channel from an array
 		 * @param samples An Array containing the audio samples
