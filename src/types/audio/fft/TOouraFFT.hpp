@@ -2,9 +2,8 @@
 #define TKLBZ_FFT_OOURA
 
 
-#include <vector>
 #include "../TAudioBuffer.hpp"
-#include "../../../external/Ouura.h"
+#include "../../../../external/Ouura.h"
 
 namespace tklb {
 
@@ -61,7 +60,7 @@ namespace tklb {
 
 				// Convert back to split-complex
 				{
-					// TODO make this mess readable
+					// TODO tklb make this mess readable
 					double* b = mBuffer[0];
 					double* bEnd = b + mSize;
 					T* r = real;
@@ -94,7 +93,7 @@ namespace tklb {
 			uint processed = 0;
 			while (processed < input.validSize()) {
 				{
-					// TODO make this mess readable
+					// TODO tklb make this mess readable
 					double* b = mBuffer[0];
 					double* bEnd = b + mSize;
 					const uint processedHalf = processed / 2;

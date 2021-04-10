@@ -1,9 +1,9 @@
-#ifndef TKLBZ_RESAMPLER
-#define TKLBZ_RESAMPLER
+#ifndef TKLBZ_RESAMPLER_SPEEX
+#define TKLBZ_RESAMPLER_SPEEX
 
-#include "./TAudioBuffer.hpp"
-#include "../../util/TAssert.h"
-#include "../../util/TMemory.hpp"
+#include "../../../util/TAssert.h"
+#include "../../../util/TMemory.hpp"
+#include "../TAudioBuffer.hpp"
 
 #define FLOATING_POINT
 
@@ -33,29 +33,33 @@ static inline void *speex_realloc (void *ptr, int size) {
 	return TKLB_REALLOC(ptr, size);
 }
 
-#include "../../external/speex_resampler/speex_resampler.h"
-#include "../../external/speex_resampler/resample.c"
+#include "../../../../external/speex_resampler/speex_resampler.h"
+#ifdef TKLBZ_RESAMPLER_IMPL
+	#include "../../../../external/speex_resampler/resample.c"
+#endif
 
 
 namespace tklb {
 
 	template <typename T>
-	class ResamplerTpl {
+	class ResamplerSpeexTpl {
 		using uchar = unsigned char;
 		using uint = unsigned int;
+		using Buffer = AudioBufferTpl<T>;
+
 		uint mRateIn, mRateOut;
 		AudioBufferFloat mConvertOut, mConvertIn;
 		static constexpr uchar MAX_CHANNELS = AudioBufferFloat::MAX_CHANNELS;
 		SpeexResamplerState* mState = nullptr;
 
 	public:
-		ResamplerTpl(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
+		ResamplerSpeexTpl(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
 			init(rateIn, rateOut, maxBlock, quality);
 		}
 
-		ResamplerTpl() = default;
+		ResamplerSpeexTpl() = default;
 
-		~ResamplerTpl() {
+		~ResamplerSpeexTpl() {
 			speex_resampler_destroy(mState);
 		}
 
@@ -66,7 +70,7 @@ namespace tklb {
 		 * @param maxBlock The maximum blocksize beeing passed into process().
 		 * Only relevant when doing non float resampling to allocate space for the
 		 * conversion buffers
-		 * @param quality Quality factor from 1-10. Higher results in better quality and higher CPU usage
+		 * @param quality Quality factor from 1-10. Higher results in better quality and higher CPU usage. Depending on implementataion may not do anything.
 		 * @return True on success
 		 */
 		bool init(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
@@ -133,9 +137,14 @@ namespace tklb {
 			return samplesOut;
 		}
 
+		/**
+		 * @brief Get the latency in samples
+		 */
 		uint getLatency() const {
 			return speex_resampler_get_input_latency(mState);
 		}
+
+		bool isInitialized() const { return mState != nullptr; }
 
 		/**
 		 * @brief Calculate a buffersize fit for the resampled result.
@@ -148,17 +157,17 @@ namespace tklb {
 		/**
 		 * @brief Resamples the provided buffer from its sampleRate
 		 * to the target rate
-		 * @param buffer Audiobuffer to resample
+		 * @param buffer Audiobuffer to resample, set the rate of the buffer object
 		 * @param rateOut Desired output samplerate in Hz
 		 * @param quality Quality from 1-10
 		 */
-		static void resample(AudioBufferTpl<T>& buffer, const uint rateOut, const uchar quality = 5) {
-			// TODO compensate delay
+		static void resample(Buffer& buffer, const uint rateOut, const uchar quality = 5) {
+			// TODO tklb compensate delay
 			const uint rateIn = buffer.sampleRate;
 			const uint samples = buffer.size();
 			TKLB_ASSERT(rateIn > 0)
 			// Make a copy, this could be skipped when a conversion to float is needed anyways
-			AudioBufferTpl<T> copy;
+			Buffer copy;
 			copy.resize(buffer);
 			copy.set(buffer);
 			copy.sampleRate = rateIn;
@@ -166,23 +175,22 @@ namespace tklb {
 
 			buffer.resize(calculateBufferSize(rateIn, rateOut, samples));
 
-			ResamplerTpl<T> resampler;
+			ResamplerSpeexTpl<T> resampler;
 			resampler.init(rateIn, rateOut, copy.size(), quality);
 			resampler.process(copy, buffer);
 		}
 
-		bool isInitialized() const { return mState != nullptr; }
 	};
 
-	typedef ResamplerTpl<float> ResamplerFloat;
-	typedef ResamplerTpl<double> ResamplerDouble;
+	using ResamplerSpeexFloat = ResamplerSpeexTpl<float>;
+	using ResamplerSpeexDouble = ResamplerSpeexTpl<double>;
 
 	// Default type
-#ifdef TKLB_SAMPLE_FLOAT
-	typedef ResamplerFloat Resampler;
-#else
-	typedef ResamplerDouble Resampler;
-#endif
+	#ifdef TKLB_SAMPLE_FLOAT
+		using ResamplerSpeex = ResamplerSpeexTpl<float>;
+	#else
+		using ResamplerSpeex = ResamplerSpeexTpl<double>;
+	#endif
 
 } // namespace
 

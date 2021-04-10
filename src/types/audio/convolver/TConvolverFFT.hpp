@@ -17,6 +17,7 @@ namespace tklb {
 	 * @brief Single stage mono convolver based on HiFi-Lofis convolver
 	 * The FFT and buffers use the tklb types and the simd
 	 * was replaced with xsimd
+	 * TODO tklb all broken
 	 */
 	template <typename T>
 	class ConvolverMonoTpl {
@@ -192,7 +193,6 @@ namespace tklb {
 				}
 			#endif
 		}
-
 	};
 
 	typedef ConvolverMonoTpl<float> ConvolverMonoFloat;
@@ -222,7 +222,6 @@ namespace tklb {
 
 		/**
 		 * @brief Load a impulse response and prepare the convolution
-		 * TODO make buffer const
 		 */
 		template <typename T2>
 		void load(const AudioBufferTpl<T2>& buffer, const uint blockSize) {

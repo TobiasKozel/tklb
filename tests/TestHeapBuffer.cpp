@@ -1,5 +1,5 @@
 #include "./TestCommon.hpp"
-#include "../types/THeapBuffer.hpp"
+#include "../src/types/THeapBuffer.hpp"
 
 int ObjectCount = 0;
 int ConstructorCount = 0;

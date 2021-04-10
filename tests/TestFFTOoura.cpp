@@ -1,6 +1,6 @@
-#include "TestCommon.hpp"
+#include "./TestCommon.hpp"
 #define TKLB_USE_OOURA
-#include "../types/audio/fft/TFFT.hpp"
+#include "../src/types/audio/fft/TFFT.hpp"
 
 
 int test() {

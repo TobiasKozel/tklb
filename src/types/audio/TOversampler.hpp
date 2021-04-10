@@ -12,27 +12,27 @@
 #ifndef TKLB_NO_SIMD
 	#ifdef __arm__
 		#ifdef TKLB_OVERSAMPLE_FLOAT
-			// TODO PERF maybe try Upsampler2x4Neon instead
-			#include "../../external/hiir/hiir/Upsampler2xNeon.h"
-			#include "../../external/hiir/hiir/Downsampler2xNeon.h"
+			// TODO tklb PERF maybe try Upsampler2x4Neon instead
+			#include "../../../external/hiir/hiir/Upsampler2xNeon.h"
+			#include "../../../external/hiir/hiir/Downsampler2xNeon.h"
 			#define TKLB_OVERSAMPLER_UP(coeffs) hiir::Upsampler2xNeon<coeffs>
 			#define TKLB_OVERSAMPLER_DOWN(coeffs) hiir::Downsampler2xNeon<coeffs>
 		#else
 			// Software implementation, there doesn't seem to be a double simd version
-			#include "../../external/hiir/hiir/Upsampler2xFpu.h"
-			#include "../../external/hiir/hiir/Downsampler2xFpu.h"
+			#include "../../../external/hiir/hiir/Upsampler2xFpu.h"
+			#include "../../../external/hiir/hiir/Downsampler2xFpu.h"
 			#define TKLB_OVERSAMPLER_UP(coeffs) hiir::Upsampler2xFpuTpl<coeffs, double>
 			#define TKLB_OVERSAMPLER_DOWN(coeffs) hiir::Downsampler2xFpuTpl<coeffs, double>
 		#endif
 	#else
-		// TODO PERF maybe try avx
+		// TODO tklb PERF maybe try avx
 	#ifdef TKLB_OVERSAMPLE_FLOAT
 		// #include "../../external/hiir/hiir/Upsampler2x8Avx.h"
 		// #include "../../external/hiir/hiir/Downsampler2x8Avx.h"
 		// #define TKLB_OVERSAMPLER_UP(coeffs) hiir::Upsampler2x8Avx<coeffs>
 		// #define TKLB_OVERSAMPLER_DOWN(coeffs) hiir::Downsampler2x8Avx<coeffs>
-		#include "../../external/hiir/hiir/Upsampler2xSse.h"
-		#include "../../external/hiir/hiir/Downsampler2xSse.h"
+		#include "../../../external/hiir/hiir/Upsampler2xSse.h"
+		#include "../../../external/hiir/hiir/Downsampler2xSse.h"
 		#define TKLB_OVERSAMPLER_UP(coeffs) hiir::Upsampler2xSse<coeffs>
 		#define TKLB_OVERSAMPLER_DOWN(coeffs) hiir::Downsampler2xSse<coeffs>
 	#else
@@ -40,16 +40,16 @@
 		// #include "../../external/hiir/hiir/Downsampler2x4F64Avx.h"
 		// #define TKLB_OVERSAMPLER_UP(coeffs) hiir::Upsampler2x4F64Avx<coeffs>
 		// #define TKLB_OVERSAMPLER_DOWN(coeffs) hiir::Downsampler2x4F64Avx<coeffs>
-		#include "../../external/hiir/hiir/Upsampler2xF64Sse2.h"
-		#include "../../external/hiir/hiir/Downsampler2xF64Sse2.h"
+		#include "../../../external/hiir/hiir/Upsampler2xF64Sse2.h"
+		#include "../../../external/hiir/hiir/Downsampler2xF64Sse2.h"
 		#define TKLB_OVERSAMPLER_UP(coeffs) hiir::Upsampler2xF64Sse2<coeffs>
 		#define TKLB_OVERSAMPLER_DOWN(coeffs) hiir::Downsampler2xF64Sse2<coeffs>
 	#endif
 	#endif
 #else
 	// Software implementation
-	#include "../../external/hiir/hiir/Upsampler2xFpu.h"
-	#include "../../external/hiir/hiir/Downsampler2xFpu.h"
+	#include "../../../external/hiir/hiir/Upsampler2xFpu.h"
+	#include "../../../external/hiir/hiir/Downsampler2xFpu.h"
 	#define TKLB_OVERSAMPLER_UP(coeffs) hiir::Upsampler2xFpuTpl<coeffs, T>
 	#define TKLB_OVERSAMPLER_DOWN(coeffs) hiir::Downsampler2xFpuTpl<coeffs, T>
 #endif
@@ -73,7 +73,7 @@ public:
 	using uchar = unsigned char;
 	using uint = unsigned int;
 
-	// TODO Use the buffer instead
+	// TODO tklb Use the buffer instead
 	using ProcessFunction = std::function<void(T**, T**, uint)>;
 
 private:
@@ -177,7 +177,8 @@ public:
 	static const char* getLicense() {
 		return
 			"HIIR Library by\n"
-			"WTFPL Licensed";
+			"WTFPL Licensed\n";
+			"Using iPlug2 filter coefficients."
 	}
 };
 

@@ -6,7 +6,7 @@
 #include "../../util/TMath.hpp"
 
 #ifndef TKLB_NO_SIMD
-	#include "../../external/xsimd/include/xsimd/xsimd.hpp"
+	#include "../../../external/xsimd/include/xsimd/xsimd.hpp"
 #endif
 
 #include "../THeapBuffer.hpp"
@@ -452,7 +452,8 @@ namespace tklb {
 		uint size() const { return mSize; }
 
 		/**
-		 * @brief fReturns the length of actually valid audio in the buffer
+		 * @brief fReturns the length of actually valid audio in the buffer.
+		 * TODO tklb make sure this is used consistently
 		 */
 		uint validSize() const {
 			return mValidSize ? mValidSize : size();
@@ -572,14 +573,14 @@ namespace tklb {
 	};
 
 
-	typedef AudioBufferTpl<float> AudioBufferFloat;
-	typedef AudioBufferTpl<double> AudioBufferDouble;
+	using AudioBufferFloat = AudioBufferTpl<float>;
+	using AudioBufferDouble = AudioBufferTpl<double>;
 
 	// Default type
 	#ifdef TKLB_SAMPLE_FLOAT
-		typedef AudioBufferFloat AudioBuffer;
+		using AudioBuffer = AudioBufferTpl<float>;
 	#else
-		typedef AudioBufferDouble AudioBuffer;
+		using AudioBuffer = AudioBufferTpl<double>;
 	#endif
 
 } // namespace

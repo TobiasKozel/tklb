@@ -1,5 +1,5 @@
 #include "./TestCommon.hpp"
-#include "../types/TFile.hpp"
+#include "../src/types/TFile.hpp"
 
 int test() {
 	FileInfo file("./");

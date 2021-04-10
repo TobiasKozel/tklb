@@ -13,12 +13,9 @@ namespace tklb {
 	 */
 	template <typename T>
 	class ConvolverBruteTpl {
-	public:
 		using uchar = unsigned char;
 		using uint = unsigned int;
 		using Buffer = AudioBufferTpl<T>;
-
-	private:
 		Buffer mIr; // Buffer holding the IR
 	public:
 
@@ -62,7 +59,7 @@ namespace tklb {
 		template <typename T2>
 		void process(const AudioBufferTpl<T2>& in, AudioBufferTpl<T2>& out) {
 			const uint nf = mIr.size();
-			const uint ng = in.size();
+			const uint ng = in.validSize();
 			const uint n = out.size();
 
 			for (uchar c = 0; c < out.channels(); c++) {
@@ -86,14 +83,14 @@ namespace tklb {
 		}
 	};
 
-	typedef ConvolverBruteTpl<float> ConvolverBruteFloat;
-	typedef ConvolverBruteTpl<double> ConvolverBruteDouble;
+	using ConvolverBruteFloat = ConvolverBruteTpl<float>;
+	using ConvolverBruteDouble = ConvolverBruteTpl<double>;
 
 	// Default type
 	#ifdef TKLB_SAMPLE_FLOAT
-		typedef ConvolverBruteFloat ConvolverBrute;
+		using ConvolverBrute = ConvolverBruteTpl<float>;
 	#else
-		typedef ConvolverBruteDouble ConvolverBrute;
+		using ConvolverBrute = ConvolverBruteTpl<double>;
 	#endif
 
 } // namespace

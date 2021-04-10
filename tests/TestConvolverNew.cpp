@@ -1,6 +1,6 @@
 #define TKLB_USE_OOURA
-#include "TestCommon.hpp"
-#include "../types/audio/convolver/TConvolverNew.hpp"
+#include "./TestCommon.hpp"
+#include "../src/types/audio/convolver/TConvolverNew.hpp"
 
 
 int test() {

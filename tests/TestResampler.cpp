@@ -1,7 +1,9 @@
 #define TKLB_MAXCHANNELS 16
 
-#include "TestCommon.hpp"
-#include "../types/audio/TResampler.hpp"
+#include "./TestCommon.hpp"
+
+#define TKLBZ_RESAMPLER_IMPL
+#include "../src/types/audio/resampler/TResampler.hpp"
 
 
 int test() {

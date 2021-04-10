@@ -112,7 +112,7 @@ void* tklbRealloc(void* ptr, size_t size, const char* file, int line) {
 
 }
 
-// TODO there seem to be some allocations missing
+// TODO tklb there seem to be some allocations missing
 #ifndef TKLB_LEAKCHECKER_DISARM
 /**
  * http://stevehanov.ca/blog/?id=10

@@ -1,5 +1,5 @@
 #define TKLB_MAXCHANNELS 16
-#include "../../types/audio/TAudioBuffer.hpp"
+#include "../../src/types/audio/TAudioBuffer.hpp"
 #include <algorithm>
 
 using namespace tklb;

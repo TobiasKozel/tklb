@@ -4,8 +4,11 @@
 #include "../../util/TMemory.hpp"
 #include "./TAudioBuffer.hpp"
 
-#define DR_WAV_IMPLEMENTATION
-#include "../../external/dr_wav.h"
+#ifdef TKLBZ_AUDIOFILE_IMPL
+	#define DR_WAV_IMPLEMENTATION
+#endif
+
+#include "../../../external/dr_wav.h"
 
 namespace tklb {
 	namespace wave {
@@ -22,7 +25,7 @@ namespace tklb {
 			drwav_allocation_callbacks drwaveCallbacks {
 				nullptr,		// No userdata
 				drwaveMalloc,
-				nullptr,		// TODO test and add the realloc
+				nullptr,		// TODO tklb test and add the realloc
 				drwaveFree
 			};
 		}
@@ -70,7 +73,7 @@ namespace tklb {
 
 		template <typename T>
 		bool write(const AudioBufferTpl<T>& in, char* path, size_t length = 0) {
-			// TODO
+			// TODO tklb
 			TKLB_ASSERT(false);
 		}
 

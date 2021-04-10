@@ -4,6 +4,9 @@
 #include <mutex>
 
 namespace tklb {
+	/**
+	 * @brief Mutex wrapper
+	 */
 	class Mutex {
 		std::mutex mMutex;
 	public:

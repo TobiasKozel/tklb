@@ -1,6 +1,6 @@
 #include "./TestCommon.hpp"
 #include <vector>
-#include "../types/THeapBuffer.hpp"
+#include "../src/types/THeapBuffer.hpp"
 
 unsigned int objectCount = 0;
 

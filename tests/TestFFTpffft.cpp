@@ -1,6 +1,6 @@
 #define TKLB_HEAP_DEBUG_SIZE 200
-#include "TestCommon.hpp"
-#include "../types/audio/fft/TFFT.hpp"
+#include "./TestCommon.hpp"
+#include "../src/types/audio/fft/TFFT.hpp"
 
 int test() {
 	const int fftSize = 128;

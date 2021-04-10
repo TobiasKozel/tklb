@@ -5,7 +5,6 @@
 #include "../util/TMemory.hpp"
 
 #include <cmath>
-#include <cstring>
 
 namespace tklb {
 
@@ -37,6 +36,7 @@ namespace tklb {
 			T* oldBuf = mBuf;
 			if (0 < chunk) {
 				T* newBuf = nullptr;
+				// TODO tklb Consider using realloc
 				if (Aligned) {
 					newBuf = reinterpret_cast<T*>(
 						TKLB_MALLOC_ALIGNED(chunk * sizeof(T))

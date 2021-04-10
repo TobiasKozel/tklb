@@ -2,8 +2,8 @@
 
 #define TKLB_MAXCHANNELS 16
 
-#include "../types/audio/TAudioBuffer.hpp"
-#include "../types/audio/TAudioRingBuffer.hpp"
+#include "../src/types/audio/TAudioBuffer.hpp"
+#include "../src/types/audio/TAudioRingBuffer.hpp"
 
 int test() {
 	const int size = 1024;

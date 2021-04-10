@@ -1,5 +1,5 @@
-#include "TestCommon.hpp"
-#include "../types/audio/convolver/TConvolverBrute.hpp"
+#include "./TestCommon.hpp"
+#include "../src/types/audio/convolver/TConvolverBrute.hpp"
 
 
 int test() {

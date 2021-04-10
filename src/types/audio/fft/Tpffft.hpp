@@ -6,12 +6,13 @@
 	#define PFFFT_SIMD_DISABLE
 #endif
 
-#include "../../../external/pffft/pffft.h"
-#include "../../../external/pffft/pffft.c"
-#include "../../../external/pffft/pffft_common.c"
+#include "../../../../external/pffft/pffft.h"
+#ifdef TKLBZ_FFT_PFFFT_IMPL
+	#include "../../../../external/pffft/pffft.c"
+	#include "../../../../external/pffft/pffft_common.c"
+#endif
 
 #include <cmath>
-#include <vector>
 #include "../TAudioBuffer.hpp"
 
 namespace tklb {

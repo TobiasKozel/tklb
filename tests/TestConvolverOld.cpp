@@ -1,6 +1,6 @@
-#include "TestCommon.hpp"
-#include "../types/audio/TAudioBuffer.hpp"
-#include "../types/audio/convolver/TConvolverOld.hpp"
+#include "./TestCommon.hpp"
+#include "../src/types/audio/TAudioBuffer.hpp"
+#include "../src/types/audio/convolver/TConvolverOld.hpp"
 
 
 int test() {

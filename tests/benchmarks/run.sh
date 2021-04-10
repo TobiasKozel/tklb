@@ -25,14 +25,14 @@ function test {
 	fi
 }
 echo "g++"
-test "g++ -O2 -march=native"
-test "g++ -O2 -march=native -DTKLB_NO_SIMD"
-test "g++ -O2 -march=native -DTKLB_SAMPLE_FLOAT"
-test "g++ -O2 -march=native -DTKLB_NO_SIMD -DTKLB_SAMPLE_FLOAT"
+test "g++ -std=c++17 -O2 -march=native"
+test "g++ -std=c++17 -O2 -march=native -DTKLB_NO_SIMD"
+test "g++ -std=c++17 -O2 -march=native -DTKLB_SAMPLE_FLOAT"
+test "g++ -std=c++17 -O2 -march=native -DTKLB_NO_SIMD -DTKLB_SAMPLE_FLOAT"
 echo "clang++"
 # TODO test -ffast-math
-test "clang++ -march=native -Ofast"
-test "clang++ -march=native -Ofast -DTKLB_NO_SIMD"
-test "clang++ -march=native -Ofast -DTKLB_SAMPLE_FLOAT"
-test "clang++ -march=native -Ofast -DTKLB_NO_SIMD -DTKLB_SAMPLE_FLOAT"
+test "clang++ -std=c++17 -march=native -Ofast"
+test "clang++ -std=c++17 -march=native -Ofast -DTKLB_NO_SIMD"
+test "clang++ -std=c++17 -march=native -Ofast -DTKLB_SAMPLE_FLOAT"
+test "clang++ -std=c++17 -march=native -Ofast -DTKLB_NO_SIMD -DTKLB_SAMPLE_FLOAT"
 echo ""

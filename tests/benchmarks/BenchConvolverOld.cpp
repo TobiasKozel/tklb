@@ -1,8 +1,8 @@
 #define TKLB_LEAKCHECKER_DISARM
 #define TKLB_MAXCHANNELS 16
-#include "BenchmarkCommon.hpp"
-#include "../../types/audio/TAudioBuffer.hpp"
-#include "../../types/audio/convolver/TConvolverOld.hpp"
+#include "./BenchmarkCommon.hpp"
+#include "../../src/types/audio/TAudioBuffer.hpp"
+#include "../../src/types/audio/convolver/TConvolverOld.hpp"
 
 
 int main() {

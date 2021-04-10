@@ -1,8 +1,8 @@
 #define TKLB_MEM_TRACE
 #define TKLB_MEM_OVERLOAD_ALL
-#include "../util/TMemoryManager.hpp"
+#include "../src/util/TMemoryManager.hpp"
 #include <cmath>
-#include "../util/TTimer.hpp"
+#include "../src/util/TTimer.hpp"
 
 using namespace tklb;
 using namespace std;

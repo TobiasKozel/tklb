@@ -126,7 +126,7 @@ namespace tklb {
 				#endif
 
 				// Save how large is the gap in memory will be
-				// TODO check if the next block is free too
+				// TODO tklb check if the next block is free too
 				// These blocks should be merged or fragmentation gets worse
 				block.space = block.size;
 				Allocated -= block.size;

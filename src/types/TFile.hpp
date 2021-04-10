@@ -2,14 +2,14 @@
 #define TKLBZ_FILE
 
 #ifdef _WIN32
-	#include "../external/dirent.h"
+	#include "../../external/dirent.h"
 #else
 	#include "dirent.h"
 	#include <sys/stat.h>
 #endif
 
-#include <string>
-#include <vector>
+#include <vector> // TODO tklb
+#include <string> // These need to go
 #include <sstream>
 #include <fstream>
 #include <iomanip>
@@ -37,7 +37,7 @@ namespace tklb {
 				relative = path;
 				absolute = path;
 				// TKLB_ASSERT(false)
-				// TODO figure out the absolute path
+				// TODO tklb figure out the absolute path
 			} else {
 				absolute = path;
 				relative = "./";
@@ -81,7 +81,7 @@ namespace tklb {
 			if (!isFolder) {
 				return std::remove(path) == 0;
 			}
-			// TODO Folder deleteion
+			// TODO tklb Folder deleteion
 			TKLB_ASSERT(false);
 			return false;
 		}
@@ -139,7 +139,7 @@ namespace tklb {
 
 		/**
 		 * @brief Concats multiple paths
-		 * TODO trim path dilimters
+		 * TODO tklb trim path dilimters
 		 */
 		static std::string joinPath(const std::initializer_list<std::string>& paths) {
 			std::string joined;

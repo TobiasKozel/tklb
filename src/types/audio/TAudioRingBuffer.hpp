@@ -42,7 +42,7 @@ namespace tklb {
 				uint tailStart = mTail - head; // This should always be negative when the offset is 0
 				if (mTail < head) {
 					// So move it back
-					// TODO
+					// TODO tklb
 					// this does overflow, which is a little mad
 					tailStart += Base::size();
 				}
@@ -121,14 +121,14 @@ namespace tklb {
 		uint filled() const { return mHead; }
 	};
 
-	typedef AudioRingBufferTpl<float> AudioRingBufferFloat;
-	typedef AudioRingBufferTpl<double> AudioRingBufferDouble;
+	using AudioRingBufferFloat = AudioRingBufferTpl<float>;
+	using AudioRingBufferDouble = AudioRingBufferTpl<double>;
 
 	// Default type
 	#ifdef TKLB_SAMPLE_FLOAT
-		typedef AudioRingBufferFloat AudioRingBuffer;
+		using AudioRingBuffer = AudioRingBufferTpl<float>;
 	#else
-		typedef AudioRingBufferDouble AudioRingBuffer;
+		using AudioRingBuffer = AudioRingBufferTpl<double>;
 	#endif
 }
 #endif

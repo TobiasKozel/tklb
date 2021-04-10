@@ -14,7 +14,7 @@
 #endif
 
 #if !defined(TKLB_NO_SIMD) || defined(TKLB_ALIGNED_MEM)
-	#include "../external/xsimd/include/xsimd/config/xsimd_config.hpp"
+	#include "../../external/xsimd/include/xsimd/config/xsimd_config.hpp"
 #endif
 
 #include "./TAssert.h"
@@ -28,7 +28,7 @@ namespace tklb {
 		// This can be used to keep track of allocations
 		// However only the custom memorymanager keeps track for now
 		// stdlib or external allocation functions would need to be wrapped
-		size_t Allocated = 0;
+		inline size_t Allocated = 0;
 
 		#if !defined(TKLB_NO_SIMD) || defined(TKLB_ALIGNED_MEM)
 			constexpr unsigned int DEFAULT_ALIGN = XSIMD_DEFAULT_ALIGNMENT;
@@ -37,31 +37,31 @@ namespace tklb {
 		#endif
 
 	#ifdef TKLB_MEM_NO_STD
-		void* (*allocate)(size_t) = nullptr;
-		void* (*reallocate)(void*, size_t) = nullptr;
-		void (*deallocate)(void*) = nullptr;
+		inline void* (*allocate)(size_t) = nullptr;
+		inline void* (*reallocate)(void*, size_t) = nullptr;
+		inline void (*deallocate)(void*) = nullptr;
 
 		// They will stay empty
-		void* (*std_allocate)(size_t) = nullptr;
-		void* (*std_reallocate)(void*, size_t) = nullptr;
-		void (*std_deallocate)(void*) = nullptr;
+		inline void* (*std_allocate)(size_t) = nullptr;
+		inline void* (*std_reallocate)(void*, size_t) = nullptr;
+		inline void (*std_deallocate)(void*) = nullptr;
 	#else
-		void* (*allocate)(size_t) = malloc;
-		void* (*reallocate)(void*, size_t) = realloc;
-		void (*deallocate)(void*) = free;
+		inline void* (*allocate)(size_t) = malloc;
+		inline void* (*reallocate)(void*, size_t) = realloc;
+		inline void (*deallocate)(void*) = free;
 
 		// Store these away in case they are needed
 		// when interacting with linked libs
 		// the ones above might be replaced with a custom one
-		void* (*std_allocate)(size_t) = malloc;
-		void* (*std_reallocate)(void*, size_t) = realloc;
-		void (*std_deallocate)(void*) = free;
+		inline void* (*std_allocate)(size_t) = malloc;
+		inline void* (*std_reallocate)(void*, size_t) = realloc;
+		inline void (*std_deallocate)(void*) = free;
 	#endif
 
 		/**
 		 * @brief memcpy wrapper
 		 */
-		inline void copy(void* dst, const void* src, const size_t size) {
+		static inline void copy(void* dst, const void* src, const size_t size) {
 		#ifdef TKLB_MEM_NO_STD
 			auto source = reinterpret_cast<const unsigned char*>(src);
 			auto destination = reinterpret_cast<unsigned char*>(dst);
@@ -76,7 +76,7 @@ namespace tklb {
 		/**
 		 * @brief memset wrapper
 		 */
-		inline void set(void* dst, const unsigned char val, size_t size) {
+		static inline void set(void* dst, const unsigned char val, size_t size) {
 		#ifdef TKLB_MEM_NO_STD
 			auto pointer = reinterpret_cast<unsigned char*>(dst);
 			for (size_t i = 0; i < size; i++) {
@@ -88,7 +88,7 @@ namespace tklb {
 		}
 
 
-		void* clearallocate(size_t num, size_t size) noexcept {
+		static inline void* clearallocate(size_t num, size_t size) noexcept {
 			const size_t total = size * num;
 			void* ptr = allocate(total);
 			if (ptr == nullptr) { return nullptr; }
@@ -96,7 +96,7 @@ namespace tklb {
 			return ptr;
 		}
 
-		void deallocateAligned(void* ptr) noexcept {
+		static inline void deallocateAligned(void* ptr) noexcept {
 			#if !defined(TKLB_NO_SIMD) || defined(TKLB_ALIGNED_MEM)
 				if (ptr == nullptr) { return; }
 				// Get the orignal allocation address to free the memory
@@ -110,7 +110,7 @@ namespace tklb {
 		 * @brief Allocate aligned if simd is enabled.
 		 * Does a normal allocation otherwise.
 		 */
-		void* allocateAligned(const size_t bytes, const size_t align = DEFAULT_ALIGN) noexcept {
+		static void* allocateAligned(const size_t bytes, const size_t align = DEFAULT_ALIGN) noexcept {
 			#if !defined(TKLB_NO_SIMD) || defined(TKLB_ALIGNED_MEM)
 				// malloc is already already aligned to sizeof(size_t)
 				void* result = allocate(bytes + align);
@@ -140,7 +140,7 @@ namespace tklb {
 		 * @param args Arguments passed to class contructor
 		 */
 		template <class T, typename ... Args>
-		T* create(Args&& ... args) {
+		static T* create(Args&& ... args) {
 			void* ptr = allocate(sizeof(T));
 			if (ptr != nullptr) {
 				T* test = new (ptr) T(std::forward<Args>(args)...);
@@ -152,7 +152,7 @@ namespace tklb {
 		 * @brief Destroy the object and dispose the memory
 		 */
 		template <class T>
-		void dispose(T* ptr) {
+		static void dispose(T* ptr) {
 			if (ptr != nullptr) {
 				ptr->~T();
 				deallocate(ptr);
@@ -163,37 +163,37 @@ namespace tklb {
 		 * Tracer functions also taking file and line as arguments
 		 */
 	#ifdef TKLB_MEM_TRACE
-		void* allocateTrace(size_t size, const char* file, int line) noexcept {
+		static inline void* allocateTrace(size_t size, const char* file, int line) noexcept {
 			return allocate(size);
 		};
 
-		void* reallocateTrace(void* ptr, size_t size, const char* file, int line) noexcept {
+		static inline void* reallocateTrace(void* ptr, size_t size, const char* file, int line) noexcept {
 			return reallocate(ptr, size);
 		};
 
-		void* clearallocateTrace(size_t num, size_t size, const char* file, int line) noexcept {
+		static inline void* clearallocateTrace(size_t num, size_t size, const char* file, int line) noexcept {
 			return clearallocate(num, size);
 		};
 
-		void deallocateTrace(void* ptr, const char* file, int line) noexcept {
+		static inline void deallocateTrace(void* ptr, const char* file, int line) noexcept {
 			deallocate(ptr);
 		};
 
-		void deallocateAlignedTrace(void* ptr, const char* file, int line) noexcept {
+		static inline void deallocateAlignedTrace(void* ptr, const char* file, int line) noexcept {
 			deallocateAligned(ptr);
 		};
 
-		void* allocateAlignedTrace(const char* file, int line, size_t bytes, size_t align = DEFAULT_ALIGN) noexcept {
+		static inline void* allocateAlignedTrace(const char* file, int line, size_t bytes, size_t align = DEFAULT_ALIGN) noexcept {
 			return allocateAligned(bytes, align);
 		};
 
 		template <class T, typename ... Args>
-		T* createTrace(const char* file, int line, Args&& ... args) {
+		static inline T* createTrace(const char* file, int line, Args&& ... args) {
 			return create<T>(std::forward<Args>(args)...);
 		}
 
 		template <class T>
-		void disposeTrace(T* ptr, const char* file, int line) {
+		static inline void disposeTrace(T* ptr, const char* file, int line) {
 			dispose(ptr);
 		}
 	#endif // TKLB_MEM_TRACE
