@@ -34,8 +34,9 @@ static inline void *speex_realloc (void *ptr, int size) {
 }
 
 #include "../../../../external/speex_resampler/speex_resampler.h"
+
 #ifdef TKLBZ_RESAMPLER_IMPL
-	#include "../../../../external/speex_resampler/resample.c"
+	#include "./TResamplerSpeex.cpp"
 #endif
 
 

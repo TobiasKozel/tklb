@@ -4,7 +4,7 @@ project(tklb VERSION 1.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17) # want inline variables
 
 add_library(tklb
-	external/speex_resampler/resample.c
+	src/types/audio/resampler/TResamplerSpeex.cpp
 )
 
 TARGET_INCLUDE_DIRECTORIES(tklb
