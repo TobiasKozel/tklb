@@ -241,9 +241,13 @@ namespace tklb {
 	#define realloc(ptr, size)		TKLB_REALLOC(ptr, size)
 	#define calloc(num, size)		TKLB_CALLOC(num, size)
 
-	// Capturing these is actual madness
+	// Capturing spcific variations of malloc is actual madness
 	#define _MM_MALLOC_H_INCLUDED
 	#define __MM_MALLOC_H
+
+	// Gets rif of compiler redefinition warnings
+	#undef _mm_malloc
+	#undef _mm_free
 	#define _mm_malloc(size, align)	TKLB_MALLOC_ALIGNED(size, align)
 	#define _mm_free(ptr)			TKLB_FREE_ALIGNED(ptr)
 

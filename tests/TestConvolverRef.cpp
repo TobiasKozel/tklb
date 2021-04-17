@@ -1,2 +1,2 @@
-#define TKLB_CONVOLVER_BRUTE
+#define TKLB_CONVOLVER_REF
 #include "./TestConvolver.hpp"

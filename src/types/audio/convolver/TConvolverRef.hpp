@@ -3,9 +3,6 @@
 
 #include "../../../util/TAssert.h"
 #include "../TAudioBuffer.hpp"
-#include "./TConvolver.hpp"
-
-#define TKLB_CONVOLUTION_FLOAT
 
 #ifdef TKLB_NO_SIMD
 	#define FFTCONVOLVER_DONT_USE_SSE
@@ -13,9 +10,7 @@
 	#define FFTCONVOLVER_USE_SSE
 #endif
 
-#include "../../../external/convolver/twoStageConvolver.h"
-
-#include <atomic>
+#include "../../../../external/convolver/twoStageConvolver.h"
 
 namespace tklb {
 	/**
@@ -23,14 +18,14 @@ namespace tklb {
 	 */
 	template <typename T>
 	class ConvolverRefTpl {
-		using uchar = unsigned char;
-		using uint = unsigned int;
 		using Buffer = AudioBufferTpl<T>;
+		using uchar = unsigned char;
+		using Size = typename Buffer::Size;
 
 		fftconvolver::FFTConvolver mConvolvers[AudioBufferTpl<T>::MAX_CHANNELS];
 		// IN case conversion to internal sample type is needed
 		AudioBufferTpl<fftconvolver::Sample> mConversion;
-		uint mBlockSize;
+		Size mBlockSize;
 		uchar mIrChannels = 0;
 
 	public:
@@ -43,13 +38,13 @@ namespace tklb {
 		 * @param blockSize Size of blocks ir will be divided in
 		 */
 		template <typename T2>
-		void load(const AudioBufferTpl<T2>& ir, const uint blockSize) {
+		void load(const AudioBufferTpl<T2>& ir, const Size blockSize) {
 			// trim silence, since longer IRs increase CPU usage considerably
-			uint irLength = ir.size();
+			Size irLength = ir.size();
 			if (irLength == 0) { return; }
 			const T2 silence = 0.0001;
 
-			for (uint i = irLength - 1; 0 < i; i--) {
+			for (Size i = irLength - 1; 0 < i; i--) {
 				for (uchar c = 0; c < ir.channels(); c++) {
 					if (silence < fabs(ir[c][i])) {
 						// if any of the channels are over the
@@ -70,7 +65,7 @@ namespace tklb {
 					mConvolvers[c].init(blockSize, buffer, irLength);
 				}
 			} else {
-				ir.clone(mConversion);
+				mConversion.clone(ir);
 				for (uchar c = 0; c < mIrChannels; c++) {
 					mConvolvers[c].init(blockSize, mConversion[c], irLength);
 				}
@@ -86,12 +81,12 @@ namespace tklb {
 		 */
 		template <typename T2>
 		void process(const AudioBufferTpl<T2>& in, AudioBufferTpl<T2>& out) {
-			const uint length = in.validSize();
-			const uint n = out.size();
-			uint samplesLeft = ng;
+			const Size length = in.validSize();
+			const Size n = out.size();
+			Size samplesLeft = n;
 
-			for (uint i = 0; i < length; i += mBlockSize) {
-				const uint remaining = std::min(mBlockSize, samplesLeft);
+			for (Size i = 0; i < length; i += mBlockSize) {
+				const Size remaining = std::min(mBlockSize, samplesLeft);
 				for (uchar c = 0; c < out.channels(); c++) {
 					// eg the input is mono, but the IR stereo
 					// the result will still be stereo

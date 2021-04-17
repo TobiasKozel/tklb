@@ -16,6 +16,7 @@ namespace tklb {
 		using uchar = unsigned char;
 		using uint = unsigned int;
 		using Buffer = AudioBufferTpl<T>;
+		using Size = typename Buffer::Size;
 		Buffer mIr; // Buffer holding the IR
 	public:
 
@@ -30,11 +31,11 @@ namespace tklb {
 		template <typename T2>
 		void load(const AudioBufferTpl<T2>& ir, const uint blockSize) {
 			// trim silence, since longer IRs increase CPU usage considerably
-			uint irLength = ir.size();
+			Size irLength = ir.size();
 			if (irLength == 0) { return; }
 			const T2 silence = 0.0001;
 
-			for (uint i = irLength - 1; 0 < i; i--) {
+			for (Size i = irLength - 1; 0 < i; i--) {
 				for (uchar c = 0; c < ir.channels(); c++) {
 					if (silence < fabs(ir[c][i])) {
 						// if any of the channels are over the
@@ -58,9 +59,9 @@ namespace tklb {
 		 */
 		template <typename T2>
 		void process(const AudioBufferTpl<T2>& in, AudioBufferTpl<T2>& out) {
-			const uint nf = mIr.size();
-			const uint ng = in.validSize();
-			const uint n = out.size();
+			const Size nf = mIr.size();
+			const Size ng = in.validSize();
+			const Size n = out.size();
 
 			for (uchar c = 0; c < out.channels(); c++) {
 				// eg the input is mono, but the IR stereo
@@ -70,11 +71,11 @@ namespace tklb {
 				// eg the ir is mono, it'll be used
 				// for all channels
 				const uchar irChannel = c % mIr.channels();
-
-				for(uint i = 0; i < n; i++) {
-					const uint jmn = (i >= ng - 1) ? (i - (ng - 1)) : 0;
-					const uint jmx = (i <  nf - 1) ?  i : (nf - 1);
-					for(uint j = jmn; j <= jmx; j++) {
+				// TODO tklb check for underflows
+				for(Size i = 0; i < n; i++) {
+					const Size jmn = (i >= ng - 1) ? (i - (ng - 1)) : 0;
+					const Size jmx = (i <  nf - 1) ?  i : (nf - 1);
+					for(Size j = jmn; j <= jmx; j++) {
 						// nested loop goes brr
 						out[c][i] += (mIr[irChannel][j] * in[inChannel][i - j]);
 					}

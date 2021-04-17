@@ -8,8 +8,12 @@
  */
 #ifdef TKLB_CONVOLVER_BRUTE
 	#include "./TConvolverBrute.hpp"
-#else
+#endif
+#ifdef TKLB_CONVOLVER_REF
 	#include "./TConvolverRef.hpp"
+#endif
+#ifdef TKLB_CONVOLVER_FFT
+	#include "./TConvolverFFT.hpp"
 #endif
 
 namespace tklb {
@@ -17,7 +21,13 @@ namespace tklb {
 	#ifdef TKLB_CONVOLVER_BRUTE
 		using ConvolverTpl = ConvolverBruteTpl<T>;
 		using Convolver = ConvolverBrute;
-	#else
+	#endif
+	#ifdef TKLB_CONVOLVER_REF
+		using ConvolverTpl = ConvolverRefTpl<T>;
+		using Convolver = ConvolverRef;
+	#endif
+	#ifdef TKLB_CONVOLVER_FFT
+		// TODO tklb
 		using ConvolverTpl = ConvolverRefTpl<T>;
 		using Convolver = ConvolverRef;
 	#endif

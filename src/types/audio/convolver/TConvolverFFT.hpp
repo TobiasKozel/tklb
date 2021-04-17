@@ -8,7 +8,7 @@
 #include "./../fft/TFFT.hpp"
 
 #ifndef TKLB_NO_SIMD
-	#include "../../../external/xsimd/include/xsimd/xsimd.hpp"
+	#include "../../../../external/xsimd/include/xsimd/xsimd.hpp"
 #endif
 
 namespace tklb {
@@ -17,7 +17,11 @@ namespace tklb {
 	 * @brief Single stage mono convolver based on HiFi-Lofis convolver
 	 * The FFT and buffers use the tklb types and the simd
 	 * was replaced with xsimd
-	 * TODO tklb all broken
+	 * TODO tklb all
+	 * ! FIX THIS MESS
+	 * ! FIX THIS MESS
+	 * ! FIX THIS MESS
+	 * ! FIX THIS MESS
 	 */
 	template <typename T>
 	class ConvolverMonoTpl {
@@ -25,14 +29,15 @@ namespace tklb {
 		using uchar = unsigned char;
 		using uint = unsigned int;
 		using Buffer = AudioBufferTpl<T>;
+		using Size = typename Buffer::Size;
 
 	private:
-		uint mBlockSize; // Power of 2 blocksize
-		uint mSegmentSize; // Double the block size, for overlap?
-		uint mSegmentCount; // number of blocks that fit in the IR length
-		uint mFFTComplexSize; // Blocksize + 1
-		uint mInputBufferFill; // How much is buffered
-		uint mCurrentPosition; // segment index
+		Size mBlockSize; // Power of 2 blocksize
+		Size mSegmentSize; // Double the block size, for overlap?
+		Size mSegmentCount; // number of blocks that fit in the IR length
+		Size mFFTComplexSize; // Blocksize + 1
+		Size mInputBufferFill; // How much is buffered
+		Size mCurrentPosition; // segment index
 		Buffer mComplexIr; // FFT of the impulse response
 		Buffer mFFTBuffer; // space for the FFT of the input signal
 

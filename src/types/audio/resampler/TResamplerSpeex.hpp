@@ -39,7 +39,6 @@ static inline void *speex_realloc (void *ptr, int size) {
 	#include "./TResamplerSpeex.cpp"
 #endif
 
-
 namespace tklb {
 
 	template <typename T>
@@ -47,6 +46,7 @@ namespace tklb {
 		using uchar = unsigned char;
 		using uint = unsigned int;
 		using Buffer = AudioBufferTpl<T>;
+		using Size = typename Buffer::Size;
 
 		uint mRateIn, mRateOut;
 		AudioBufferFloat mConvertOut, mConvertIn;
@@ -95,32 +95,32 @@ namespace tklb {
 		 * @brief Resample function
 		 * Make sure the out buffer has enough space
 		 */
-		uint process(const AudioBufferTpl<T>& in, AudioBufferTpl<T>& out) {
+		Size process(const AudioBufferTpl<T>& in, AudioBufferTpl<T>& out) {
 			TKLB_ASSERT(in.sampleRate == mRateIn);
 			TKLB_ASSERT(out.sampleRate == mRateOut);
 			TKLB_ASSERT(in.validSize() > 0)
-			uint samplesOut = 0;
+			Size samplesOut = 0;
 			if (std::is_same<T, float>::value) {
 				// Input output buffer must not overlap when working directly on them
 				TKLB_ASSERT(&in != &out)
 				for (uchar c = 0; c < in.channels(); c++) {
-					uint countIn = in.validSize();
-					uint countOut = out.size();
+					Size countIn = in.validSize();
+					Size countOut = out.size();
 					const float* inBuf = reinterpret_cast<const float*>(in[c]);
 					float* outBuf = reinterpret_cast<float*>(out[c]);
 					speex_resampler_process_float(mState, c, inBuf, &countIn, outBuf, &countOut);
 					samplesOut = countOut;
 				}
 			} else {
-				const uint countIn = in.validSize();
-				const uint blockSize = mConvertIn.size();
-				for (uint i = 0; i < countIn; i += blockSize) {
-					const uint blockLeft = min(blockSize, countIn - i);
-					uint samplesEmitted = 0;
+				const Size validSamples = in.validSize();
+				const Size blockSize = mConvertIn.size();
+				for (Size i = 0; i < validSamples; i += blockSize) {
+					const Size blockLeft = min(blockSize, validSamples - i);
+					Size samplesEmitted = 0;
 					mConvertIn.set(in, blockLeft, i);
 					for (uchar c = 0; c < in.channels(); c++) {
-						uint countIn = blockLeft;
-						uint countOut = mConvertOut.size();
+						spx_uint32_t countIn = blockLeft;
+						spx_uint32_t countOut = mConvertOut.size();
 						const float* inBuf = mConvertIn[c];
 						float* outBuf = mConvertOut[c];
 						speex_resampler_process_float(mState, c, inBuf, &countIn, outBuf, &countOut);
@@ -141,8 +141,15 @@ namespace tklb {
 		/**
 		 * @brief Get the latency in samples
 		 */
-		uint getLatency() const {
+		int getLatency() const {
 			return speex_resampler_get_input_latency(mState);
+		}
+
+		/**
+		 * @brief Estimate how many samples need to be put in to get n samples out.
+		 */
+		Size estimateNeed(const Size in) {
+			return in * (mRateIn / double(mRateOut));
 		}
 
 		bool isInitialized() const { return mState != nullptr; }
@@ -165,7 +172,7 @@ namespace tklb {
 		static void resample(Buffer& buffer, const uint rateOut, const uchar quality = 5) {
 			// TODO tklb compensate delay
 			const uint rateIn = buffer.sampleRate;
-			const uint samples = buffer.size();
+			const Size samples = buffer.size();
 			TKLB_ASSERT(rateIn > 0)
 			// Make a copy, this could be skipped when a conversion to float is needed anyways
 			Buffer copy;

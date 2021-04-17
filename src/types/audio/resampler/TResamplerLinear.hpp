@@ -9,6 +9,7 @@ namespace tklb {
 		using uchar = unsigned char;
 		using uint = unsigned int;
 		using Buffer = AudioBufferTpl<T>;
+		using Size = typename Buffer::Size;
 
 		uint mRateIn, mRateOut;
 		Buffer mBuffer;
@@ -35,7 +36,7 @@ namespace tklb {
 		 * @brief Resample function
 		 * Make sure the out buffer has enough space
 		 */
-		uint process(const Buffer& in, Buffer& out) {
+		Size process(const Buffer& in, Buffer& out) {
 			mBuffer.set(in);
 			if (mRateIn < mRateOut) {
 				// TODO tklb lerp
@@ -50,9 +51,16 @@ namespace tklb {
 		/**
 		 * @brief Get the latency in samples
 		 */
-		uint getLatency() const {
+		int getLatency() const {
 			return 1;
 		};
+
+		/**
+		 * @brief Estimate how many samples need to be put in to get n samples out.
+		 */
+		Size estimateNeed(const Size in) {
+			return in * (mRateIn / double(mRateOut));
+		}
 
 		bool isInitialized() const {
 			return true;
@@ -62,7 +70,7 @@ namespace tklb {
 		 * @brief Calculate a buffersize fit for the resampled result.
 		 * Also adds a bit of padding.
 		 */
-		static uint calculateBufferSize(uint rateIn, uint rateOut, uint initialSize) {
+		static Size calculateBufferSize(uint rateIn, uint rateOut, Size initialSize) {
 			return ceil(initialSize * (rateOut / double(rateIn))) + 10;
 		}
 
@@ -76,7 +84,7 @@ namespace tklb {
 		static void resample(Buffer& buffer, const uint rateOut, const uchar quality = 5) {
 			// TODO tklb compensate delay
 			const uint rateIn = buffer.sampleRate;
-			const uint samples = buffer.size();
+			const Size samples = buffer.size();
 			TKLB_ASSERT(rateIn > 0)
 			// Make a copy, this could be skipped when a conversion to float is needed anyways
 			Buffer copy;

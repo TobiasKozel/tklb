@@ -6,22 +6,21 @@
 namespace tklb {
 	template <typename T>
 	class AudioRingBufferTpl : public AudioBufferTpl<T> {
-		using uchar = unsigned char;
-		using uint = unsigned int;
 		using Base = AudioBufferTpl<T>;
-		uint mHead = 0;
-		uint mTail = 0;
+		using uchar = unsigned char;
+		using Size = typename Base::Size;
+		Size mHead = 0;
+		Size mTail = 0;
 
 	public:
 		AudioRingBufferTpl() { }
 
-		AudioRingBufferTpl(const uint length, const uchar channels)
+		AudioRingBufferTpl(const Size length, const uchar channels)
 			: AudioBufferTpl<T>(length, channels) { }
 
 		void reset() {
 			Base::set(0.0);
-			mHead = 0;
-			mTail = 0;
+			mTail = mHead = 0;
 		}
 
 		/**
@@ -33,20 +32,19 @@ namespace tklb {
 		 * @return How many elements where retrieved
 		 */
 		template <typename T2>
-		uint peek(AudioBufferTpl<T2>& out, uint elements, uint offsetSrc = 0, uint offsetDst = 0) {
-			const uint head = mHead - offsetSrc; // Offset the head
+		Size peek(AudioBufferTpl<T2>& out, Size elements, Size offsetSrc = 0, Size offsetDst = 0) {
+			const Size head = mHead - offsetSrc; // Offset the head
 			if (elements > head) {
 				elements = head; // Clamp the elements to peek to the elements in the buffer
 			}
 			if (elements > 0) {
-				uint tailStart = mTail - head; // This should always be negative when the offset is 0
+				Size tailStart = mTail - head; // This should always be negative when the offset is 0
 				if (mTail < head) {
 					// So move it back
-					// TODO tklb
-					// this does overflow, which is a little mad
+					// TODO tklb this does overflow, which is a little mad
 					tailStart += Base::size();
 				}
-				const uint spaceLeft = Base::size() - tailStart;
+				const Size spaceLeft = Base::size() - tailStart;
 				if (spaceLeft < elements) {
 					// Means it wraps around and split in two moves
 					out.set(*this, spaceLeft             , tailStart, offsetDst);
@@ -69,8 +67,8 @@ namespace tklb {
 		 * @return How many elements where retrieved
 		 */
 		template <typename T2>
-		uint pop(AudioBufferTpl<T2>& out, const uint elements, uint offsetSrc = 0, uint offsetDst = 0) {
-			const uint elementsOut = peek(out, elements, offsetSrc, offsetDst);
+		Size pop(AudioBufferTpl<T2>& out, const Size elements, Size offsetSrc = 0, Size offsetDst = 0) {
+			const Size elementsOut = peek(out, elements, offsetSrc, offsetDst);
 			mHead -= elementsOut; // Move the head back, can't exceed bounds since it was clamped in peek
 			return elementsOut;
 		}
@@ -83,8 +81,8 @@ namespace tklb {
 		 * @return How many elements where stored in the ring buffer
 		 */
 		template <typename T2>
-		uint push(const AudioBufferTpl<T2>& in, uint elements, uint offsetSrc = 0) {
-			const uint spaceLeftHead = Base::size() - mHead; // Space left before exceeding upper buffer bounds
+		Size push(const AudioBufferTpl<T2>& in, Size elements, Size offsetSrc = 0) {
+			const Size spaceLeftHead = Base::size() - mHead; // Space left before exceeding upper buffer bounds
 			if (elements > spaceLeftHead) {
 				/**
 				 * Clamp the elements added to the buffer to it's bounds
@@ -93,7 +91,7 @@ namespace tklb {
 				elements = spaceLeftHead;
 			}
 			if (elements > 0) {
-				const uint spaceLeftTail = Base::size() - mTail;
+				const Size spaceLeftTail = Base::size() - mTail;
 				if (spaceLeftTail < elements) {
 					// We'll need to wrap around since there's not enough space left
 					Base::set(in, spaceLeftTail             , 0 + offsetSrc            , mTail);
@@ -113,12 +111,12 @@ namespace tklb {
 		/**
 		 * @breif Returns how many more elements the buffer can hold
 		 */
-		uint remaining() const { return Base::size() - mHead; }
+		Size remaining() const { return Base::size() - mHead; }
 
 		/**
 		 * @brief Returns how many elements are in the buffer
 		 */
-		uint filled() const { return mHead; }
+		Size filled() const { return mHead; }
 	};
 
 	using AudioRingBufferFloat = AudioRingBufferTpl<float>;

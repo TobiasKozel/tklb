@@ -37,7 +37,7 @@ namespace tklb {
 		 * @param length The length of the wav file buffer if not reading from file
 		 */
 		template <typename T>
-		bool load(const char* path, AudioBufferTpl<T>& out, size_t length = 0) {
+		bool load(const char* path, AudioBufferTpl<T>& out, typename AudioBufferTpl<T>::Size length = 0) {
 			drwav wav;
 			if (length == 0) {
 				if (!drwav_init_file(&wav, path, &_::drwaveCallbacks)) {
@@ -72,7 +72,7 @@ namespace tklb {
 		}
 
 		template <typename T>
-		bool write(const AudioBufferTpl<T>& in, char* path, size_t length = 0) {
+		bool write(const AudioBufferTpl<T>& in, char* path, typename AudioBufferTpl<T> length = 0) {
 			// TODO tklb
 			TKLB_ASSERT(false);
 		}

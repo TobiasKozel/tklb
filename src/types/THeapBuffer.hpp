@@ -6,6 +6,7 @@
 
 #include <cmath>
 
+
 namespace tklb {
 
 	/**
@@ -14,16 +15,17 @@ namespace tklb {
 	 */
 	template <typename T, bool Aligned = false>
 	class HeapBuffer {
-		#if TKLB_HEAP_DEBUG_SIZE > 0
-		T DEBUF_BUF[TKLB_HEAP_DEBUG_SIZE];
-		#endif
+	public:
+		using Size = unsigned int; // everything using the heapbuffer uses this type
+		static constexpr Size DEFAULT_GRANULARITY = 64;
 
+	private:
 		T* mBuf = nullptr; // Underlying buffer
-		size_t mSize = 0; // size of elements requested
-		size_t mRealSize = 0; // the actually allocated size
-		size_t mGranularity; // the space actually allocated will be a multiple of this
-		bool mInjected = false; // True if the memory doesn't belong to this instance
-		bool mError = false;
+		Size mSize = 0; // size of elements requested
+		Size mRealSize = 0; // the actually allocated size
+		// the space actually allocated will be a multiple of this
+		// if it's 0 the memory is not actually owned by the buffer
+		Size mGranularity = DEFAULT_GRANULARITY; // can't be 0 at the start
 
 		// True when the foreign memory is const, only cheked in debug mode
 		TKLB_ASSERT_STATE(bool IS_CONST)
@@ -32,7 +34,7 @@ namespace tklb {
 		 * @brief Allocated the exact size requsted and copies existing objects.
 		 * Will not call their destructors or constructors!
 		 */
-		bool allocate(size_t chunk) noexcept {
+		bool allocate(Size chunk) noexcept {
 			T* oldBuf = mBuf;
 			if (0 < chunk) {
 				T* newBuf = nullptr;
@@ -48,7 +50,6 @@ namespace tklb {
 				}
 				if (newBuf == nullptr) {
 					TKLB_ASSERT(false)
-					mError = true;
 					return false; // ! Allocation failed
 				}
 				if (0 < mSize && oldBuf != nullptr && newBuf != nullptr) {
@@ -60,7 +61,7 @@ namespace tklb {
 				mBuf = nullptr;
 			}
 
-			if (oldBuf != nullptr && !mInjected && mRealSize > 0) {
+			if (oldBuf != nullptr && !injected() && mRealSize > 0) {
 				// Get rif of oldbuffer, object destructors were alredy called
 				if (Aligned) {
 					TKLB_FREE_ALIGNED(oldBuf);
@@ -69,14 +70,14 @@ namespace tklb {
 				}
 			}
 
-			mInjected = false; // we definetly own the memory now
+			mGranularity = DEFAULT_GRANULARITY; // we definetly own the memory now
 			TKLB_ASSERT_STATE(IS_CONST = false)
 			mRealSize = chunk;
-			mError = false;
 			return true;
 		}
 
-		size_t closestChunkSize(size_t chunk) const {
+		Size closestChunkSize(Size chunk) const {
+			TKLB_ASSERT(0 < mGranularity)
 			return mGranularity * std::ceil(chunk / double(mGranularity));
 		}
 
@@ -87,7 +88,7 @@ namespace tklb {
 		 * @param size Size in elements of the buffer
 		 * @param granularity How big the real allocated chunks are
 		 */
-		HeapBuffer(const size_t size = 0, const size_t granularity = 256) {
+		HeapBuffer(const Size size = 0, const Size granularity = DEFAULT_GRANULARITY) {
 			setGranularity(granularity);
 			if (size != 0) { resize(0); }
 		}
@@ -131,10 +132,10 @@ namespace tklb {
 		 * @param size Size of the memory in elements
 		 * @param realSize The actual size if it's chunk allocated
 		 */
-		void inject(T* mem, const size_t size, const size_t realSize = 0) {
-			if (!mInjected && mBuf != nullptr) { resize(0); };
+		void inject(T* mem, const Size size, const Size realSize = 0) {
+			if (!injected() && mBuf != nullptr) { resize(0); };
 			TKLB_ASSERT_STATE(IS_CONST = false)
-			mInjected = true;
+			mGranularity = 0;
 			mBuf = mem;
 			mSize = size;
 			mRealSize = realSize == 0 ? size : realSize;
@@ -147,22 +148,20 @@ namespace tklb {
 		 * @param size Size of the memory in elements
 		 * @param realSize The actual size if it's chunk allocated
 		 */
-		void inject(const T* mem, const size_t size, const size_t realSize = 0) {
+		void inject(const T* mem, const Size size, const Size realSize = 0) {
 			inject(const_cast<T*>(mem), size, realSize);
 			TKLB_ASSERT_STATE(IS_CONST = true)
 		}
 
-		void setGranularity(const size_t granularity) {
-			mGranularity = std::max((size_t) 1, granularity);
+		void setGranularity(const Size granularity) {
+			if (mGranularity == 0) {
+				TKLB_ASSERT(false)
+				return;
+			}
+			mGranularity = granularity;
 		}
 
 		T* data() {
-			#if TKLB_HEAP_DEBUG_SIZE > 0
-				memory::copy(
-					DEBUF_BUF, mBuf,
-					sizeof(T) * std::min((size_t) TKLB_HEAP_DEBUG_SIZE, mSize)
-				);
-			#endif
 			// Don't use non const access when using injected const memory
 			TKLB_ASSERT(!IS_CONST)
 			return mBuf;
@@ -170,18 +169,12 @@ namespace tklb {
 
 		const T* data() const { return mBuf; }
 
-		const T& operator[](const size_t index) const {
+		const T& operator[](const Size index) const {
 			return mBuf[index];
 		}
 
-		T& operator[](const size_t index) {
+		T& operator[](const Size index) {
 			// Don't use non const access when using injected const memory
-			#if TKLB_HEAP_DEBUG_SIZE > 0
-				memory::copy(
-					DEBUF_BUF, mBuf,
-					sizeof(T) * std::min((size_t) TKLB_HEAP_DEBUG_SIZE, mSize)
-				);
-			#endif
 			TKLB_ASSERT(!IS_CONST)
 			return mBuf[index];
 		}
@@ -190,7 +183,7 @@ namespace tklb {
 		 * @brief Will make sure the desired space is allocated
 		 * @return Whether the allocation was succesful
 		 */
-		bool reserve(const size_t size) {
+		bool reserve(const Size size) {
 			if (size  < mRealSize) { return true; }
 			return allocate(closestChunkSize(size));
 		}
@@ -203,11 +196,11 @@ namespace tklb {
 		 * @param downsize Whether to downsize and reallocate
 		 * @return Whether the allocation was successful
 		 */
-		bool resize(const size_t size, const bool downsize = true) {
-			const size_t chunked = closestChunkSize(size);
+		bool resize(const Size size, const bool downsize = true) {
+			const Size chunked = closestChunkSize(size);
 
 			if (size < mSize && mBuf != nullptr) { // downsize means destroy objects
-				for (size_t i = size; i < mSize; i++) {
+				for (Size i = size; i < mSize; i++) {
 					mBuf[i].~T(); // Call destructor
 				}
 			}
@@ -220,7 +213,7 @@ namespace tklb {
 			}
 
 			if (mSize < size) { // upsize means construct objects
-				for (size_t i = mSize; i < size; i++) {
+				for (Size i = mSize; i < size; i++) {
 					T* test = new (mBuf + i) T();
 				}
 			}
@@ -233,7 +226,7 @@ namespace tklb {
 		 * @brief Push the object to the back of the buffer
 		 */
 		bool push(const T& object) {
-			size_t newSize = mSize + 1;
+			Size newSize = mSize + 1;
 			if (mRealSize < newSize) {
 				if (allocate(closestChunkSize(newSize))) {
 					memory::copy(mBuf + mSize, &object, sizeof(T));
@@ -252,9 +245,7 @@ namespace tklb {
 		 * Will never shrink the buffer/allocate
 		 */
 		bool pop(T* object) {
-			if (0 == mSize) {
-				return false;
-			}
+			if (0 == mSize) { return false; }
 			memory::copy(object, mBuf + mSize - 1, sizeof(T));
 			mSize--;
 			return true;
@@ -264,7 +255,7 @@ namespace tklb {
 		 * @brief Removes the object at a given index and fills the gap with another
 		 * Will never shrink the buffer/allocate
 		 */
-		bool remove(const size_t index) {
+		bool remove(const Size index) {
 			if (mSize <= index) { return false; }
 			mBuf[index].~T(); // Call destructor
 			if (index != mSize - 1) { // fill the gap with the last element
@@ -275,7 +266,7 @@ namespace tklb {
 		}
 
 		bool remove(const T& object) {
-			for (size_t i = 0; i < mSize; i++) {
+			for (Size i = 0; i < mSize; i++) {
 				if (mBuf[i] == object) {
 					return remove(i);
 				}
@@ -286,24 +277,19 @@ namespace tklb {
 		/**
 		 * @brief Clears the buffer but doesn't free the memory
 		 */
-		void clear() {
-			resize(0, false);
-		}
+		void clear() { resize(0, false); }
+
+		bool injected() const { return mGranularity == 0; }
 
 		/**
 		 * @brief Returns the amount of elements in the container
 		 */
-		size_t size() const { return mSize; }
+		Size size() const { return mSize; }
 
 		/**
 		 * @brief Returns the real allocated size in elements
 		 */
-		size_t reserved() const { return mRealSize; }
-
-		/**
-		 * @brief Returns true if the most recent allocation failed
-		 */
-		bool error() const { return mError; }
+		Size reserved() const { return mRealSize; }
 
 	};
 

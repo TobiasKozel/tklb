@@ -72,9 +72,10 @@ public:
 
 	using uchar = unsigned char;
 	using uint = unsigned int;
+	using Size = AudioBuffer::Size;
 
 	// TODO tklb Use the buffer instead
-	using ProcessFunction = std::function<void(T**, T**, uint)>;
+	using ProcessFunction = std::function<void(T**, T**, Size)>;
 
 private:
 	TKLB_OVERSAMPLER_UP(12) mUp2x[CHANNELS];
@@ -132,7 +133,7 @@ public:
 		process(in.getRaw(), out.getRaw(), in.size());
 	}
 
-	void process(T** in, T** out, const uint frames) {
+	void process(T** in, T** out, const Size frames) {
 		TKLB_ASSERT(frames <= MAX_BLOCK)
 		/**
 		 * No OverSampling at all

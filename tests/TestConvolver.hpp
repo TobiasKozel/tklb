@@ -1,6 +1,5 @@
-#define TKLB_USE_OOURA
 #include "./TestCommon.hpp"
-#include "../src/types/audio/convolver/TConvolverNew.hpp"
+#include "../src/types/audio/convolver/TConvolver.hpp"
 
 
 int test() {
@@ -8,9 +7,8 @@ int test() {
 	const int audioChannels = 2;
 	const int blockSize = 128;
 
-	using T = Convolver::sample;
-	Convolver con;
-	AudioBuffer ir, in, out;
+	tklb::Convolver con;
+	tklb::AudioBuffer ir, in, out;
 	ir.resize(1024, audioChannels);
 	ir.set(0);
 	for (int c = 0; c < audioChannels; c++) {

@@ -1,7 +1,6 @@
 #ifndef TKLBZ_FFT
 #define TKLBZ_FFT
 
-// TODO tklb Turn into interface
 
 #ifdef TKLB_USE_OOURA
 	#include "./TOouraFFT.hpp"

@@ -7,6 +7,7 @@
 #define TKLB_MEM_CUSTOM_MALLOC
 #include "./TMemory.hpp"
 
+// For uintptr_t
 #include <cstdint>
 
 namespace tklb {
@@ -90,9 +91,11 @@ namespace tklb {
 							return &block.space; // * Found free spot
 						} else {
 							// Step over the free area which is too small
+							TKLB_ASSERT(0 < block.space)
 							i += block.space;
 						}
 					} else {
+						TKLB_ASSERT(0 < block.size)
 						i += block.size; // Step over the already allocated area
 					}
 				}

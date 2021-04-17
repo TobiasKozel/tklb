@@ -7,8 +7,14 @@
 	#define TKLB_ASSERT(condition);
 	#define TKLB_ASSERT_STATE(condition);
 #else
-	#include <cassert>
-	#define TKLB_ASSERT(condition) assert((condition));
+	#ifdef TKLB_ASSERT_SEGFAULT
+		// Triggers a segfault. Dumbest way to break in the debugger.
+		#define TKLB_ASSERT(condition) if (condition) { } else { reinterpret_cast<int*>(0)[0] = 0; };
+	#else
+		#include <cassert>
+		#define TKLB_ASSERT(condition) assert(condition);
+	#endif
+
 
 	/**
 	 * @brief This can be used to write some additional code

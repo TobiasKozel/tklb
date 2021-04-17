@@ -26,24 +26,6 @@ namespace tklb {
 			mMutex.unlock();
 		}
 	};
-
-	class LockGuard {
-		Mutex& mMutex;
-	public:
-		LockGuard(const LockGuard&) = delete;
-		LockGuard(const LockGuard*) = delete;
-		LockGuard(LockGuard&&) = delete;
-		LockGuard& operator= (const LockGuard&) = delete;
-		LockGuard& operator= (LockGuard&&) = delete;
-
-		LockGuard(Mutex& mutex) : mMutex(mutex) {
-			mutex.lock();
-		}
-
-		~LockGuard() {
-			mMutex.unlock();
-		}
-	};
 } // namespace
 
 #endif // TKLB_MUTEX

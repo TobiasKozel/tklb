@@ -32,14 +32,6 @@ namespace tklb {
 	class AudioBufferTpl {
 
 	public:
-		using uchar = unsigned char;
-		using uint = unsigned int;
-	#ifdef TKLB_MAXCHANNELS
-		static constexpr uchar MAX_CHANNELS = TKLB_MAXCHANNELS;
-	#else
-		static constexpr uchar MAX_CHANNELS = 2;
-	#endif
-
 		/**
 		 * @brief Sample type exposed for convenience
 		 */
@@ -51,16 +43,26 @@ namespace tklb {
 		 */
 		using Buffer = HeapBuffer<T2, true>;
 
+		using uchar = unsigned char;
+		using uint = unsigned int;
+		using Size = typename Buffer<T>::Size;
+
+	#ifdef TKLB_MAXCHANNELS
+		static constexpr uchar MAX_CHANNELS = TKLB_MAXCHANNELS;
+	#else
+		static constexpr uchar MAX_CHANNELS = 2;
+	#endif
+
 	#ifndef TKLB_NO_SIMD
-		static constexpr uint stride = xsimd::simd_type<T>::size;
+		static constexpr Size stride = xsimd::simd_type<T>::size;
 	#endif
 
 	private:
 		Buffer<T> mBuffers[MAX_CHANNELS];
 		T* mRawBuffers[MAX_CHANNELS];
 		uchar mChannels = 0;
-		uint mSize = 0;
-		uint mValidSize = 0;
+		Size mSize = 0;
+		Size mValidSize = 0;
 
 	public:
 		/**
@@ -76,7 +78,7 @@ namespace tklb {
 		/**
 		 * @brief Buffer with memory allocated
 		 */
-		AudioBufferTpl(const uint length, const uchar channels) {
+		AudioBufferTpl(const Size length, const uchar channels) {
 			resize(length, channels);
 		}
 
@@ -97,9 +99,9 @@ namespace tklb {
 		template <typename T2>
 		void set(
 			const T2* samples,
-			uint length,
+			Size length,
 			const uchar channel = 0,
-			const uint offsetDst = 0
+			const Size offsetDst = 0
 		) {
 			if (mChannels <= channel) { return; }
 			TKLB_ASSERT(size() >= offsetDst)
@@ -108,7 +110,7 @@ namespace tklb {
 			if (std::is_same<T2, T>::value) {
 				memory::copy(out + offsetDst, samples, sizeof(T) * length);
 			} else {
-				for (uint i = 0; i < length; i++) {
+				for (Size i = 0; i < length; i++) {
 					out[i + offsetDst] = static_cast<T>(samples[i]);
 				}
 			}
@@ -125,10 +127,10 @@ namespace tklb {
 		template <typename T2>
 		void set(
 			T2** const samples,
-			const uint length,
+			const Size length,
 			const uchar channels,
-			const uint offsetSrc = 0,
-			const uint offsetDst = 0
+			const Size offsetSrc = 0,
+			const Size offsetDst = 0
 		) {
 			for (uchar c = 0; c < channels; c++) {
 				set(samples[c] + offsetSrc, length, c, offsetDst);
@@ -147,9 +149,9 @@ namespace tklb {
 		template <typename T2>
 		void set(
 			const AudioBufferTpl<T2>& buffer,
-			uint length = 0,
-			const uint offsetSrc = 0,
-			const uint offsetDst = 0
+			Size length = 0,
+			const Size offsetSrc = 0,
+			const Size offsetDst = 0
 		) {
 			length = length == 0 ? buffer.size() : length;
 			for (uchar c = 0; c < buffer.channels(); c++) {
@@ -165,8 +167,8 @@ namespace tklb {
 		 */
 		void set(
 			T value = 0,
-			uint length = 0,
-			const uint offsetDst = 0
+			Size length = 0,
+			const Size offsetDst = 0
 		) {
 			TKLB_ASSERT(size() >= offsetDst)
 			length = std::min(size() - offsetDst, length ? length : size());
@@ -186,17 +188,17 @@ namespace tklb {
 		template <typename T2>
 		void setFromInterleaved(
 			const T2* samples,
-			uint length,
+			Size length,
 			const uchar channels,
-			uint offsetSrc = 0,
-			const uint offsetDst = 0
+			Size offsetSrc = 0,
+			const Size offsetDst = 0
 		) {
 			TKLB_ASSERT(size() >= offsetDst)
 			length = std::min(size() - offsetDst, length);
 			offsetSrc *= channels;
 			for (uchar c = 0; c < std::min(channels, mChannels); c++) {
 				T* out = get(c);
-				for(uint i = 0, j = c + offsetSrc; i < length; i++, j+= channels) {
+				for(Size i = 0, j = c + offsetSrc; i < length; i++, j+= channels) {
 					out[i + offsetDst] = static_cast<T>(samples[j]);
 				}
 			}
@@ -217,7 +219,7 @@ namespace tklb {
 		 * @param length The desired length in Samples. 0 will deallocate.
 		 * @param channels Desired channel count. 0 will deallocate.
 		 */
-		void resize(const uint length, uchar channels) {
+		void resize(const Size length, uchar channels) {
 			if (channels == mChannels && size() == length) {
 				return;
 			}
@@ -239,7 +241,7 @@ namespace tklb {
 		 * If the channel count was 0 it will assume 1 channel instead.
 		 * @param length The desired length in samples. 0 will deallocate.
 		 */
-		void resize(const uint length) {
+		void resize(const Size length) {
 			resize(length, std::max(uchar(1), mChannels));
 		}
 
@@ -261,9 +263,9 @@ namespace tklb {
 		template <typename T2>
 		void add(
 			const AudioBufferTpl<T2>& buffer,
-			uint length = 0,
-			uint offsetSrc = 0,
-			uint offsetDst = 0
+			Size length = 0,
+			Size offsetSrc = 0,
+			Size offsetDst = 0
 		) {
 			TKLB_ASSERT(size() >= offsetDst)
 			TKLB_ASSERT(buffer.size() >= offsetSrc)
@@ -273,16 +275,16 @@ namespace tklb {
 
 			#ifndef TKLB_NO_SIMD
 				if (std::is_same<T2, T>::value) {
-					const uint vectorize = length - (length % stride);
+					const Size vectorize = length - (length % stride);
 					for (uchar c = 0; c < channelCount; c++) {
 						T* out = get(c) + offsetDst;
 						const T* in = reinterpret_cast<const T*>(buffer[c]) + offsetSrc;
-						for(uint i = 0; i < vectorize; i += stride) {
+						for(Size i = 0; i < vectorize; i += stride) {
 							xsimd::simd_type<T> a = xsimd::load_aligned(in + i);
 							xsimd::simd_type<T> b = xsimd::load_aligned(out + i);
 							xsimd::store_aligned(out + i, (a + b));
 						}
-						for(uint i = vectorize; i < length; i++) {
+						for(Size i = vectorize; i < length; i++) {
 							out[i] += in[i];
 						}
 					}
@@ -294,7 +296,7 @@ namespace tklb {
 			for (uchar c = 0; c < channelCount; c++) {
 				T* out = get(c) + offsetDst;
 				const T2* in = buffer[c] + offsetSrc;
-				for(uint i = 0; i < length; i++) {
+				for(Size i = 0; i < length; i++) {
 					out[i] += in[i];
 				}
 			}
@@ -310,9 +312,9 @@ namespace tklb {
 		template <typename T2>
 		void multiply(
 			const AudioBufferTpl<T2>& buffer,
-			uint length = 0,
-			uint offsetSrc = 0,
-			uint offsetDst = 0
+			Size length = 0,
+			Size offsetSrc = 0,
+			Size offsetDst = 0
 		) {
 			TKLB_ASSERT(size() >= offsetDst)
 			TKLB_ASSERT(buffer.size() >= offsetSrc)
@@ -322,16 +324,16 @@ namespace tklb {
 
 			#ifndef TKLB_NO_SIMD
 				if (std::is_same<T2, T>::value) {
-					const uint vectorize = length - (length % stride);
+					const Size vectorize = length - (length % stride);
 					for (uchar c = 0; c < channelsCount; c++) {
 						T* out = get(c) + offsetDst;
 						const T* in = reinterpret_cast<const T*>(buffer[c]) + offsetSrc;
-						for(uint i = 0; i < vectorize; i += stride) {
+						for(Size i = 0; i < vectorize; i += stride) {
 							xsimd::simd_type<T> a = xsimd::load_aligned(in + i);
 							xsimd::simd_type<T> b = xsimd::load_aligned(out + i);
 							xsimd::store_aligned(out + i, (a * b));
 						}
-						for(uint i = vectorize; i < length; i++) {
+						for(Size i = vectorize; i < length; i++) {
 							out[i] *= in[i];
 						}
 					}
@@ -343,7 +345,7 @@ namespace tklb {
 			for (uchar c = 0; c < channelsCount; c++) {
 				T* out = get(c) + offsetDst;
 				const T2* in = buffer[c] + offsetSrc;
-				for(uint i = 0; i < length; i++) {
+				for(Size i = 0; i < length; i++) {
 					out[i] *= in[i];
 				}
 			}
@@ -354,24 +356,24 @@ namespace tklb {
 		 * @param value Constant to multiply the buffer with
 		 */
 		void multiply(T value) {
-			const uint length = size();
+			const Size length = size();
 
 			#ifndef TKLB_NO_SIMD
-				const uint vectorize = length - (length % stride);
+				const Size vectorize = length - (length % stride);
 				for (uchar c = 0; c < channels(); c++) {
 					T* out = get(c);
-					for(uint i = 0; i < vectorize; i += stride) {
+					for(Size i = 0; i < vectorize; i += stride) {
 						xsimd::simd_type<T> b = xsimd::load_aligned(out + i);
 						xsimd::store_aligned(out + i, (b * value));
 					}
-					for(uint i = vectorize; i < length; i++) {
+					for(Size i = vectorize; i < length; i++) {
 						out[i] *= value;
 					}
 				}
 			#else
 				for (uchar c = 0; c < channels(); c++) {
 					T* out = get(c);
-					for(uint i = 0; i < length; i++) {
+					for(Size i = 0; i < length; i++) {
 						out[i] *= value;
 					}
 				}
@@ -383,24 +385,24 @@ namespace tklb {
 		 * @param value
 		 */
 		void add(T value) {
-			const uint length = size();
+			const Size length = size();
 
 			#ifndef TKLB_NO_SIMD
-				const uint vectorize = length - (length % stride);
+				const Size vectorize = length - (length % stride);
 				for (uchar c = 0; c < channels(); c++) {
 					T* out = get(c);
-					for(uint i = 0; i < vectorize; i += stride) {
+					for(Size i = 0; i < vectorize; i += stride) {
 						xsimd::simd_type<T> b = xsimd::load_aligned(out + i);
 						xsimd::store_aligned(out + i, (b + value));
 					}
-					for(uint i = vectorize; i < length; i++) {
+					for(Size i = vectorize; i < length; i++) {
 						out[i] += value;
 					}
 				}
 			#else
 				for (uchar c = 0; c < channels(); c++) {
 					T* out = get(c);
-					for(uint i = 0; i < length; i++) {
+					for(Size i = 0; i < length; i++) {
 						out[i] += value;
 					}
 				}
@@ -414,7 +416,7 @@ namespace tklb {
 		 * @param size Size of the buffer
 		 * @param channel The channel index
 		 */
-		void inject(T* mem, const uint size, const uchar channel = 0) {
+		void inject(T* mem, const Size size, const uchar channel = 0) {
 			TKLB_ASSERT(channel < MAX_CHANNELS)
 			mBuffers[channel].inject(mem, size);
 			mSize = size;
@@ -431,7 +433,7 @@ namespace tklb {
 		 * @param size Size of the buffer
 		 * @param channel The channel index
 		 */
-		void inject(const T* mem, const uint size, const uchar channel = 0) {
+		void inject(const T* mem, const Size size, const uchar channel = 0) {
 			TKLB_ASSERT(channel < MAX_CHANNELS)
 			mBuffers[channel].inject(mem, size);
 			mSize = size;
@@ -449,22 +451,20 @@ namespace tklb {
 		/**
 		 * @brief Returns the allocated length of the buffer
 		 */
-		uint size() const { return mSize; }
+		Size size() const { return mSize; }
 
 		/**
 		 * @brief fReturns the length of actually valid audio in the buffer.
 		 * TODO tklb make sure this is used consistently
 		 */
-		uint validSize() const {
-			return mValidSize ? mValidSize : size();
-		}
+		Size validSize() const { return mValidSize; }
 
 		/**
 		 * @brief Set the amount of valid samples currently in the buffer
 		 * This is mostly a convenience flag since the actual size of the buffer may be larger
 		 */
-		void setValidSize(const uint v) {
-			TKLB_ASSERT(size() >= v);
+		void setValidSize(const Size v) {
+			TKLB_ASSERT(v <= size());
 			mValidSize = v;
 		}
 
@@ -502,11 +502,11 @@ namespace tklb {
 		 * @return The amount of samples written, might be less than requested
 		 */
 		template <typename T2>
-		uint put(
+		Size put(
 			T2* target,
-			uint length = 0,
+			Size length = 0,
 			const uchar channel = 0,
-			const uint offset = 0
+			const Size offset = 0
 		) const {
 			if (mChannels <= channel) { return 0; }
 			TKLB_ASSERT(size() >= offset)
@@ -516,7 +516,7 @@ namespace tklb {
 			if (std::is_same<T2, T>::value) {
 				memory::copy(target, source, sizeof(T) * length);
 			} else {
-				for (uint i = 0; i < length; i++) {
+				for (Size i = 0; i < length; i++) {
 					target[i] = T2(source[i]);
 				}
 			}
@@ -531,12 +531,12 @@ namespace tklb {
 		 * @return The amount of samples written, might be less than requested
 		 */
 		template <typename T2>
-		uint put(T2** target,
-			const uint length = 0,
+		Size put(T2** target,
+			const Size length = 0,
 			uchar channels = 0,
-			const uint offset = 0
+			const Size offset = 0
 		) const {
-			uint res = 0;
+			Size res = 0;
 			channels = (channels == 0) ? mChannels : channels;
 			for (uchar c = 0; c < channels; c++) {
 				res = put(target[c], length, c, offset);
@@ -552,17 +552,17 @@ namespace tklb {
 		 * @return The total length of the interleaved result
 		 */
 		template <typename T2>
-		uint putInterleaved(
+		Size putInterleaved(
 			T2* buffer,
-			uint length = 0,
-			const uint offset = 0
+			Size length = 0,
+			const Size offset = 0
 		) const {
 			TKLB_ASSERT(size() >= offset)
 			const uchar chan = channels();
 			length = (length == 0) ? size() : length;
 			length = std::min(size() - offset, length);
-			uint out = 0;
-			for (int i = 0; i < length; i++) {
+			Size out = 0;
+			for (Size i = 0; i < length; i++) {
 				for (uchar c = 0; c < chan; c++) {
 					buffer[out] = mBuffers[c][i];
 					out++;
