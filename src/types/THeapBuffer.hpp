@@ -279,6 +279,9 @@ namespace tklb {
 		 */
 		void clear() { resize(0, false); }
 
+		/**
+		 * @brief Whether the memory is managed by the instance or is borrowed.
+		 */
 		bool injected() const { return mGranularity == 0; }
 
 		/**

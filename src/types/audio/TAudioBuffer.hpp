@@ -58,8 +58,8 @@ namespace tklb {
 	#endif
 
 	private:
-		Buffer<T> mBuffers[MAX_CHANNELS];
 		T* mRawBuffers[MAX_CHANNELS];
+		Buffer<T> mBuffers[MAX_CHANNELS];
 		uchar mChannels = 0;
 		Size mSize = 0;
 		Size mValidSize = 0;
@@ -231,6 +231,12 @@ namespace tklb {
 			for (uchar c = channels; c < MAX_CHANNELS; c++) {
 				mBuffers[c].resize(0);
 			}
+
+			// Update the rawbuffer pointers
+			for (uchar c = 0; c < MAX_CHANNELS; c++) {
+				mRawBuffers[c] = mBuffers[c].data();
+			}
+
 			mChannels = channels;
 			mSize = length;
 			mValidSize = std::min(mValidSize, mSize);
@@ -419,6 +425,7 @@ namespace tklb {
 		void inject(T* mem, const Size size, const uchar channel = 0) {
 			TKLB_ASSERT(channel < MAX_CHANNELS)
 			mBuffers[channel].inject(mem, size);
+			mRawBuffers[channel] = mBuffers[channel].data();
 			mSize = size;
 			mValidSize = size;
 			if (mChannels < channel + 1) {
@@ -436,6 +443,7 @@ namespace tklb {
 		void inject(const T* mem, const Size size, const uchar channel = 0) {
 			TKLB_ASSERT(channel < MAX_CHANNELS)
 			mBuffers[channel].inject(mem, size);
+			mRawBuffers[channel] = const_cast<T*>(mem);
 			mSize = size;
 			mValidSize = size;
 			if (mChannels < channel + 1) {
@@ -482,14 +490,24 @@ namespace tklb {
 
 		T* operator[](const uchar channel) { return get(channel); }
 
+	private:
+		void assertOnConstMem() {
+			for (uchar c = 0; c < MAX_CHANNELS; c++) {
+				// non const accessor will cause an assertsion
+				T* mem = mBuffers[c].data();
+			}
+		}
+
+	public:
 		/**
 		 * @brief Returns a array owned by the object containing pointers to all the channels.
-		 * <b>Don't</b> call this constantly, try to cache the returned value for reuse
 		 */
 		T** getRaw() {
-			for (uchar c = 0; c < mChannels; c++) {
-				mRawBuffers[c] = get(c);
-			}
+			TKLB_ASSERT_STATE(assertOnConstMem())
+			return mRawBuffers;
+		}
+
+		const T** getRaw() const {
 			return mRawBuffers;
 		}
 

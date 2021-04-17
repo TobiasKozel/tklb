@@ -8,7 +8,7 @@
 	#define TKLB_ASSERT_STATE(condition);
 #else
 	#ifdef TKLB_ASSERT_SEGFAULT
-		// Triggers a segfault. Dumbest way to break in the debugger.
+		// Triggers a segfault. Dumbest way to break in the debugger since gdb on windows doesn't break otherwise.
 		#define TKLB_ASSERT(condition) if (condition) { } else { reinterpret_cast<int*>(0)[0] = 0; };
 	#else
 		#include <cassert>
