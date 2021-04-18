@@ -9,7 +9,7 @@
 	#include <stdlib.h>
 #endif
 
-#ifdef TKLB_MEM_OVERLOAD_ALL
+#ifndef TKLB_MEM_OVERLOAD_ALL
 	#include <new>
 #endif
 
@@ -198,14 +198,13 @@ namespace tklb {
 			 */
 			static void construct(void* ptr, size_t s, const char* f, int l) {
 				if (ptr == nullptr) { return; }
-				new (
-					reinterpret_cast<MagicBlock*>(static_cast<char*>(ptr) + s)
-				) MagicBlock(f, l, ptr, s);
+				MagicBlock* loc = reinterpret_cast<MagicBlock*>(static_cast<char*>(ptr) + s);
+				MagicBlock* test = new (loc) MagicBlock(f, l, ptr, s);
 			}
 
 			static bool compare(const char* a, const char* b, size_t s) {
-				for (size_t s = 0; s < s; s++) {
-					if (a[s] != b[s]) {
+				for (size_t i = 0; i < s; i++) {
+					if (a[i] != b[i]) {
 						return false;
 					}
 				}

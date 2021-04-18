@@ -6,6 +6,9 @@
 
 #include <cmath>
 
+#ifndef TKLB_MEM_OVERLOAD_ALL
+	#include <new>
+#endif
 
 namespace tklb {
 

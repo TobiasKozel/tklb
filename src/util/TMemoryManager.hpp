@@ -45,7 +45,7 @@ namespace tklb {
 
 			Size CustomSize = 0;
 			// gdb watch expression for convenience
-			// *(unsigned uintptr_t(*)[200])tklb::memory::manager::CustomMemory
+			// *(tklb::memory::manager::Size(*)[200])tklb::memory::manager::CustomMemory
 			Byte* CustomMemory = nullptr;
 
 
