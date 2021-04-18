@@ -9,9 +9,7 @@
 	#include <stdlib.h>
 #endif
 
-#ifndef TKLB_MEM_OVERLOAD_ALL
-	#include <new>
-#endif
+#include <new>
 
 #if !defined(TKLB_NO_SIMD) || defined(TKLB_ALIGNED_MEM)
 	#include "../../external/xsimd/include/xsimd/config/xsimd_config.hpp"

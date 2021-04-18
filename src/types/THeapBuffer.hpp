@@ -6,10 +6,6 @@
 
 #include <cmath>
 
-#ifndef TKLB_MEM_OVERLOAD_ALL
-	#include <new>
-#endif
-
 namespace tklb {
 
 	/**
@@ -31,7 +27,7 @@ namespace tklb {
 		Size mGranularity = DEFAULT_GRANULARITY; // can't be 0 at the start
 
 		// True when the foreign memory is const, only cheked in debug mode
-		TKLB_ASSERT_STATE(bool IS_CONST)
+		TKLB_ASSERT_STATE(bool IS_CONST = false)
 
 		/**
 		 * @brief Allocated the exact size requsted and copies existing objects.
