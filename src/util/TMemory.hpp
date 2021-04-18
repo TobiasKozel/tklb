@@ -87,7 +87,11 @@ namespace tklb {
 		#endif // TKLB_MEM_NO_STD
 		}
 
-
+		/**
+		 * @brief Allocates space for num of structs with size size and clears the memory
+		 * @param num Number of structs
+		 * @param size Size of a single struct
+		 */
 		static inline void* clearallocate(size_t num, size_t size) noexcept {
 			const size_t total = size * num;
 			void* ptr = allocate(total);
@@ -96,6 +100,9 @@ namespace tklb {
 			return ptr;
 		}
 
+		/**
+		 * @brief Aligned memory needs to be freed with this function.
+		 */
 		static inline void deallocateAligned(void* ptr) noexcept {
 			#if !defined(TKLB_NO_SIMD) || defined(TKLB_ALIGNED_MEM)
 				if (ptr == nullptr) { return; }
@@ -110,10 +117,10 @@ namespace tklb {
 		 * @brief Allocate aligned if simd is enabled.
 		 * Does a normal allocation otherwise.
 		 */
-		static void* allocateAligned(const size_t bytes, const size_t align = DEFAULT_ALIGN) noexcept {
+		static void* allocateAligned(const size_t size, const size_t align = DEFAULT_ALIGN) noexcept {
 			#if !defined(TKLB_NO_SIMD) || defined(TKLB_ALIGNED_MEM)
 				// malloc is already already aligned to sizeof(size_t)
-				void* result = allocate(bytes + align);
+				void* result = allocate(size + align);
 				if (result != nullptr && align != 0) {
 					// Mask with zeroes at the end to floor the pointer to an aligned block
 					const size_t mask = ~(size_t(XSIMD_DEFAULT_ALIGNMENT - 1));
@@ -131,7 +138,7 @@ namespace tklb {
 				}
 				return result;
 			#else
-				return allocate(bytes);
+				return allocate(size);
 			#endif // defined(TKLB_NO_SIMD) || defined(TKLB_ALIGNED_MEM)
 		}
 
@@ -142,9 +149,8 @@ namespace tklb {
 		template <class T, typename ... Args>
 		static T* create(Args&& ... args) {
 			void* ptr = allocate(sizeof(T));
-			if (ptr != nullptr) {
-				T* test = new (ptr) T(std::forward<Args>(args)...);
-			}
+			if (ptr == nullptr) { return nullptr; }
+			new (ptr) T(std::forward<Args>(args)...);
 			return reinterpret_cast<T*>(ptr);
 		}
 
@@ -153,52 +159,145 @@ namespace tklb {
 		 */
 		template <class T>
 		static void dispose(T* ptr) {
-			if (ptr != nullptr) {
-				ptr->~T();
-				deallocate(ptr);
-			}
+			if (ptr == nullptr) { return; }
+			ptr->~T();
+			deallocate(ptr);
 		}
 
+#pragma region Memory tracing stuff
 		/**
 		 * Tracer functions also taking file and line as arguments
 		 */
 	#ifdef TKLB_MEM_TRACE
+
+		constexpr char TKLB_MAGIC_STRING[] = "tklbend";
+		constexpr char TKLB_MAGIC_BACKUP_STRING[] = "tklback";
+		/**
+		 * @brief Struct inserted at the end of every allocation.
+		 */
+		struct MagicBlock {
+			char magic[sizeof(TKLB_MAGIC_STRING)];
+			char padding[1000]; // padding space used to protect the data after
+			char magicBackup[sizeof(TKLB_MAGIC_BACKUP_STRING)];
+			const char* file; // source file
+			int line; // line in source file
+			void* ptr; // the start of the allocated mem
+			MagicBlock(const char* f, int l, void* p) {
+				file = f;
+				line = l;
+				ptr = p;
+				memory::set(magic, 0, sizeof(magic));
+				memory::copy(magic, TKLB_MAGIC_STRING, sizeof(TKLB_MAGIC_STRING));
+				memory::copy(magicBackup, TKLB_MAGIC_BACKUP_STRING, sizeof(TKLB_MAGIC_BACKUP_STRING));
+			}
+
+			/**
+			 * @brief Placement new at the end of the allocation
+			 */
+			static void construct(void* ptr, size_t size, const char* f, int l) {
+				if (ptr == nullptr) { return; }
+				new (static_cast<char*>(ptr) + size) MagicBlock(f, l, ptr);
+			}
+
+			static bool compare(const char* a, const char* b, size_t size) {
+				for (size_t s = 0; s < size; s++) {
+					if (a[s] != b[s]) {
+						return false;
+					}
+				}
+				return true;
+			}
+
+			/**
+			 * @brief Since we don't save the size of the allocations,
+			 * we need to find the magic block by simply going through the memory.
+			 */
+			static void check(void* start) {
+				char* pointer = static_cast<char*>(start);
+				// 1 gb of search space will most likely result in a segfault
+				// which means the Block isn't there any more
+				for (size_t i = 0; i < 1024 * 1024 * 1024; i++) {
+					if (!compare(pointer + i, TKLB_MAGIC_STRING, sizeof(TKLB_MAGIC_STRING))) {
+						if (!compare(pointer + i, TKLB_MAGIC_BACKUP_STRING, sizeof(TKLB_MAGIC_BACKUP_STRING))) {
+							continue;
+						}
+						// found partially overrun block
+						MagicBlock* badBlock = reinterpret_cast<MagicBlock*>(pointer + i);
+						TKLB_ASSERT(false)
+					}
+					// found a block
+					MagicBlock* block = reinterpret_cast<MagicBlock*>(pointer + i);
+					// Make sure we found the block that matches the allocation
+					if (block->ptr == start) { return; }
+					// Block is missing completely
+					TKLB_ASSERT(false)
+				}
+				// Block is missing or out of the search range
+				TKLB_ASSERT(false)
+			}
+		};
+
 		static inline void* allocateTrace(size_t size, const char* file, int line) noexcept {
-			return allocate(size);
+			void* mem = allocate(size + sizeof(MagicBlock));
+			MagicBlock::construct(mem, size, file, line);
+			return mem;
 		};
 
 		static inline void* reallocateTrace(void* ptr, size_t size, const char* file, int line) noexcept {
-			return reallocate(ptr, size);
+			void* mem = reallocate(ptr, size + sizeof(MagicBlock));
+			MagicBlock::construct(mem, size, file, line);
+			return mem;
 		};
 
 		static inline void* clearallocateTrace(size_t num, size_t size, const char* file, int line) noexcept {
-			return clearallocate(num, size);
+			// how much space clearallocate will allocate
+			size_t total = num * size;
+			// the amount of elements needed
+			size_t numNeeded = ((total + sizeof(MagicBlock)) / size) + 1;
+			void* mem = clearallocate(numNeeded, size);
+			MagicBlock::construct(mem, total, file, line);
+			return mem;
 		};
 
 		static inline void deallocateTrace(void* ptr, const char* file, int line) noexcept {
+			if (ptr == nullptr) { return; }
+			MagicBlock::check(ptr);
 			deallocate(ptr);
 		};
 
 		static inline void deallocateAlignedTrace(void* ptr, const char* file, int line) noexcept {
+			if (ptr == nullptr) { return; }
+			MagicBlock::check(ptr);
 			deallocateAligned(ptr);
 		};
 
-		static inline void* allocateAlignedTrace(const char* file, int line, size_t bytes, size_t align = DEFAULT_ALIGN) noexcept {
-			return allocateAligned(bytes, align);
+		static inline void* allocateAlignedTrace(const char* file, int line, size_t size, size_t align = DEFAULT_ALIGN) noexcept {
+			void* mem = allocateAligned(size + sizeof(MagicBlock), align);
+			MagicBlock::construct(mem, size, file, line);
+			return mem;
 		};
 
 		template <class T, typename ... Args>
 		static inline T* createTrace(const char* file, int line, Args&& ... args) {
-			return create<T>(std::forward<Args>(args)...);
+			void* mem = allocate(sizeof(T) + sizeof(MagicBlock));
+			if (mem == nullptr) { return nullptr; }
+			MagicBlock::construct(mem, sizeof(T), file, line);
+			new (mem) T(std::forward<Args>(args)...);
+			return reinterpret_cast<T*>(mem);
 		}
 
 		template <class T>
 		static inline void disposeTrace(T* ptr, const char* file, int line) {
-			dispose(ptr);
+			if (ptr == nullptr) { return; }
+			MagicBlock::check(ptr);
+			ptr->~T();
+			deallocate(ptr);
 		}
 	#endif // TKLB_MEM_TRACE
-	}
-}
+#pragma endregion
+
+	} // namespace memory
+} // namespace tklb
 
 /**
  *
@@ -245,7 +344,7 @@ namespace tklb {
 	#define _MM_MALLOC_H_INCLUDED
 	#define __MM_MALLOC_H
 
-	// Gets rif of compiler redefinition warnings
+	// Gets rif of redefinition warnings
 	#undef _mm_malloc
 	#undef _mm_free
 	#define _mm_malloc(size, align)	TKLB_MALLOC_ALIGNED(size, align)

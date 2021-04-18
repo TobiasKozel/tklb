@@ -170,10 +170,16 @@ namespace tklb {
 		const T* data() const { return mBuf; }
 
 		const T& operator[](const Size index) const {
+			#ifdef TKLB_MEM_TRACE
+				TKLB_ASSERT(index < mSize)
+			#endif
 			return mBuf[index];
 		}
 
 		T& operator[](const Size index) {
+			#ifdef TKLB_MEM_TRACE
+				TKLB_ASSERT(index < mSize)
+			#endif
 			// Don't use non const access when using injected const memory
 			TKLB_ASSERT(!IS_CONST)
 			return mBuf[index];

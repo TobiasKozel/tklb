@@ -8,6 +8,7 @@
 	#include <sys/stat.h>
 #endif
 
+#include "./THeapBuffer.hpp"
 #include <vector> // TODO tklb heapbuf
 #include <string> // These need to go
 #include <sstream>
@@ -30,7 +31,7 @@ namespace tklb {
 		std::string relative;
 		std::string absolute;
 		bool isFolder = false;
-		std::vector<FileInfo> children;
+		HeapBuffer<FileInfo> children;
 
 		FileInfo(const char* path) {
 			if (isRelative(path)) {
@@ -186,8 +187,8 @@ namespace tklb {
 			std::fill_n(space, 256, 0);
 			std::fill_n(space, depth, ' ');
 			TKLB_PRINT("%s%s\n", space, info.name.c_str())
-			for (auto &i : info.children) {
-				recursivePrint(i, depth + 1);
+			for (int i = 0; i < info.children.size(); i++) {
+				recursivePrint(info.children[i], depth + 1);
 			}
 		}
 
@@ -212,7 +213,7 @@ namespace tklb {
 						if (recursive && info.isFolder) {
 							recursiveScan(info, true);
 						}
-						root.children.push_back(info);
+						root.children.push(info);
 					}
 				#ifdef _WIN32
 					free(files[i]);
