@@ -182,10 +182,12 @@ namespace tklb {
 			const char* file; // source file
 			int line; // line in source file
 			void* ptr; // the start of the allocated mem
-			MagicBlock(const char* f, int l, void* p) {
+			size_t size;
+			MagicBlock(const char* f, int l, void* p, size_t s) {
 				file = f;
 				line = l;
 				ptr = p;
+				size = s;
 				memory::set(magic, 0, sizeof(magic));
 				memory::copy(magic, TKLB_MAGIC_STRING, sizeof(TKLB_MAGIC_STRING));
 				memory::copy(magicBackup, TKLB_MAGIC_BACKUP_STRING, sizeof(TKLB_MAGIC_BACKUP_STRING));
@@ -194,13 +196,15 @@ namespace tklb {
 			/**
 			 * @brief Placement new at the end of the allocation
 			 */
-			static void construct(void* ptr, size_t size, const char* f, int l) {
+			static void construct(void* ptr, size_t s, const char* f, int l) {
 				if (ptr == nullptr) { return; }
-				new (static_cast<char*>(ptr) + size) MagicBlock(f, l, ptr);
+				new (
+					reinterpret_cast<MagicBlock*>(static_cast<char*>(ptr) + s)
+				) MagicBlock(f, l, ptr, s);
 			}
 
-			static bool compare(const char* a, const char* b, size_t size) {
-				for (size_t s = 0; s < size; s++) {
+			static bool compare(const char* a, const char* b, size_t s) {
+				for (size_t s = 0; s < s; s++) {
 					if (a[s] != b[s]) {
 						return false;
 					}
@@ -222,7 +226,9 @@ namespace tklb {
 							continue;
 						}
 						// found partially overrun block
-						MagicBlock* badBlock = reinterpret_cast<MagicBlock*>(pointer + i);
+						MagicBlock* badBlock = reinterpret_cast<MagicBlock*>(
+							pointer + i - sizeof(TKLB_MAGIC_STRING) - sizeof(padding)
+						);
 						TKLB_ASSERT(false)
 					}
 					// found a block
