@@ -1,6 +1,6 @@
 #define TKLB_MEM_TRACE
 #define TKLB_MEM_OVERLOAD_ALL
-#include "../src/util/TMemoryManager.hpp"
+#include "../src/memory/TMemoryManager.hpp"
 #include <cmath>
 #include "../src/util/TTimer.hpp"
 
@@ -26,5 +26,6 @@ int main() {
 	if (tklb::memory::Allocated != 0) {
 		return 100;
 	}
+	memory::manager::restore();
 	return ret;
 }

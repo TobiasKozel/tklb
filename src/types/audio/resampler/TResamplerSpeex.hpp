@@ -2,7 +2,7 @@
 #define TKLBZ_RESAMPLER_SPEEX
 
 #include "../../../util/TAssert.h"
-#include "../../../util/TMemory.hpp"
+#include "../../../memory/TMemory.hpp"
 #include "../TAudioBuffer.hpp"
 
 #define FLOATING_POINT

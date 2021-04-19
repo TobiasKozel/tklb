@@ -1,7 +1,7 @@
 #ifndef TKLBZ_AUDIOFILE
 #define TKLBZ_AUDIOFILE
 
-#include "../../util/TMemory.hpp"
+#include "../../memory/TMemory.hpp"
 #include "./TAudioBuffer.hpp"
 
 #ifdef TKLBZ_AUDIOFILE_IMPL

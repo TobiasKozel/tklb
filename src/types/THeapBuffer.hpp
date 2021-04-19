@@ -2,7 +2,7 @@
 #define TKLBZ_HEAPBUFFER
 
 #include "../util/TAssert.h"
-#include "../util/TMemory.hpp"
+#include "../memory/TMemory.hpp"
 
 #include <cmath>
 
@@ -258,7 +258,7 @@ namespace tklb {
 
 		/**
 		 * @brief Removes the object at a given index and fills the gap with another
-		 * Will never shrink the buffer/allocate
+		 * Will never shrink the buffer/allocate.
 		 */
 		bool remove(const Size index) {
 			if (mSize <= index) { return false; }
@@ -270,6 +270,9 @@ namespace tklb {
 			return true;
 		}
 
+		/**
+		 * @brief If a == comparisin is possible the object itself can be used.
+		 */
 		bool remove(const T& object) {
 			for (Size i = 0; i < mSize; i++) {
 				if (mBuf[i] == object) {

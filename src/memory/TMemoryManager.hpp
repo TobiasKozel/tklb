@@ -1,11 +1,10 @@
 #ifndef TKLBZ_MEMORY_MANAGER
 #define TKLBZ_MEMORY_MANAGER
 
-#include "./TAssert.h"
-#include "./TMath.hpp"
+#include "./../util/TAssert.h"
+#include "./../util/TMath.hpp"
 
-#define TKLB_MEM_CUSTOM_MALLOC
-#include "./TMemory.hpp"
+#include "./TAllocator.hpp"
 
 // For uintptr_t
 #include <cstdint>
@@ -65,7 +64,6 @@ namespace tklb {
 
 				// Make sure the size is aligned
 				size += sizeof(uintptr_t) - (size % sizeof(uintptr_t));
-				Block* previousBlock = nullptr;
 				for (Size i = 0; i < CustomSize;) {
 					Block& block = *reinterpret_cast<Block*>(CustomMemory + i);
 					if (block.size == 0) {
@@ -92,18 +90,12 @@ namespace tklb {
 						} else {
 							// Step over the free area which is too small
 							if (block.space == 0) {
-								#ifdef TKLB_MEM_TRACE
-									if (previousBlock != nullptr) {
-										MagicBlock::check(previousBlock);
-									}
-								#endif
 								// this means the previous block has overrun this one
 								// and we can't continue
 								TKLB_ASSERT(false)
 								return nullptr; // ! Block was overrun
 							}
 							i += block.space;
-							previousBlock = &block;
 						}
 					} else {
 						if (block.size == 0) {
@@ -112,7 +104,6 @@ namespace tklb {
 							return nullptr; // ! Block was overrun
 						}
 						i += block.size; // Step over the already allocated area
-						previousBlock = &block;
 					}
 				}
 				TKLB_ASSERT(false)
@@ -214,8 +205,14 @@ namespace tklb {
 				block.size = 0;
 				block.space = CustomSize;
 			}
-		}
-	}
-}
 
-#endif
+			void restore() {
+				tklb::memory::allocate = std_allocate;
+				tklb::memory::reallocate = std_reallocate;
+				tklb::memory::deallocate = std_deallocate;
+			}
+		} // namespace manager
+	} // namespace memory
+} // namespace tklb
+
+#endif // TKLBZ_MEMORY_MANAGER

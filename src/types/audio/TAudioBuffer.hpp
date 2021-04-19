@@ -2,7 +2,7 @@
 #define TKLBZ_AUDIOBUFFER
 
 #include <algorithm>
-#include "../../util/TMemory.hpp"
+#include "../../memory/TMemory.hpp"
 #include "../../util/TMath.hpp"
 
 #ifndef TKLB_NO_SIMD
