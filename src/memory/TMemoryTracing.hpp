@@ -16,6 +16,8 @@ namespace tklb { namespace memory {
 
 	template <class T>
 	static inline void disposeTrace(T* ptr, const char* file, int line);
+
+	static void checkHeap();
 } }
 
 #define TKLB_MALLOC(size)				tklb::memory::allocateTrace(size, __FILE__, __LINE__)
