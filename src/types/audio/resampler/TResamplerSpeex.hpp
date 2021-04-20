@@ -19,17 +19,17 @@
 #define OUTSIDE_SPEEX
 #define RANDOM_PREFIX tklb
 
-static inline void *speex_alloc (int size) {
+static inline void* speex_alloc (int size) {
 	void* ptr = TKLB_MALLOC(size);
 	::tklb::memory::set(ptr, 0, size);
 	return ptr;
 }
 
-static inline void speex_free (void *ptr) {
+static inline void speex_free (void* ptr) {
 	TKLB_FREE(ptr);
 }
 
-static inline void *speex_realloc (void *ptr, int size) {
+static inline void* speex_realloc (void* ptr, int size) {
 	return TKLB_REALLOC(ptr, size);
 }
 

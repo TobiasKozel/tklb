@@ -216,6 +216,7 @@ namespace tklb {
 
 		/**
 		 * @brief Resizes the buffer to the desired length and channel count.
+		 * If the validSize = 0 it will be set to the new size for convenience.
 		 * @param length The desired length in Samples. 0 will deallocate.
 		 * @param channels Desired channel count. 0 will deallocate.
 		 */
@@ -239,7 +240,11 @@ namespace tklb {
 
 			mChannels = channels;
 			mSize = length;
-			mValidSize = std::min(mValidSize, mSize);
+			if (mValidSize == 0) {
+				mValidSize = mSize;
+			} else {
+				mValidSize = std::min(mValidSize, mSize);
+			}
 		}
 
 		/**

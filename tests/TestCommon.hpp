@@ -1,5 +1,8 @@
 #define TKLB_MEM_TRACE
 #define TKLB_MEM_OVERLOAD_ALL
+#ifdef _WIN32
+	#define TKLB_ASSERT_SEGFAULT
+#endif
 #include "../src/memory/TMemoryManager.hpp"
 #include <cmath>
 #include "../src/util/TTimer.hpp"
