@@ -53,7 +53,8 @@ namespace tklb {
 				}
 				if (0 < mSize && oldBuf != nullptr && newBuf != nullptr) {
 					// copy existing content
-					memory::copy(newBuf, oldBuf, mSize * sizeof(T));
+					// TODO tklb only copy the new realsize which might be smaller
+					memory::copy(newBuf, oldBuf, std::min(mSize, chunk) * sizeof(T));
 				}
 				mBuf = newBuf;
 			} else {
