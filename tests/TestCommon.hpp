@@ -21,11 +21,15 @@ bool close(float a, float b, float epsylon = 0.01) {
 int test();
 
 int main() {
-	memory::manager::use();
+	const size_t size = 1024 * 1024 * 300; // 300MB
+	void* mem = memory::std_allocate(size);
+	memory::manager::use(mem, size);
 	int ret = test();
+	memory::manager::restore();
+	memory::std_deallocate(mem);
 	if (tklb::memory::Allocated != 0) {
+		TKLB_ASSERT(false)
 		return 100;
 	}
-	memory::manager::restore();
 	return ret;
 }

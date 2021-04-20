@@ -4,6 +4,7 @@
 #include "./../util/TAssert.h"
 #include "./../util/TMath.hpp"
 
+#include "./TMemory.hpp"
 #include "./TAllocator.hpp"
 
 // For uintptr_t
@@ -12,7 +13,7 @@
 namespace tklb {
 	namespace memory {
 		/**
-		 * @brief Extremely basic Memorymanager which works with a preallocated
+		 * @brief Extremely basic optional Memorymanager which works with a preallocated
 		 * chunk of memory. Fragmentation is probably quite an issue.
 		 * From a security standpoint this is horrible since the whole memorylayout
 		 * is part of the memory.
@@ -47,7 +48,9 @@ namespace tklb {
 			// *(tklb::memory::manager::Size(*)[200])tklb::memory::manager::CustomMemory
 			Byte* CustomMemory = nullptr;
 
-
+			/**
+			 * @brief Looks for next free area with enough space
+			 */
 			void* allocate(size_t size) {
 				if (size == 0) { return nullptr; }
 				if (size < sizeof(Size)) {
@@ -128,7 +131,7 @@ namespace tklb {
 					Size* data = reinterpret_cast<Size*>(&block);
 					const Size end = block.size /  sizeof(Size);
 					// Set the freed memory to a pattern
-					// skip the first 8 bytes since they are 0 indecating the block is free
+					// skip the first 8 bytes since they are 0 indicating the block is free
 					for (Size i = 2; i < end; i++) {
 						data[i] = 123;
 					}
@@ -180,13 +183,12 @@ namespace tklb {
 				return newPtr;
 			}
 
-			void use() {
-				// Allocate a fixed block if there are allocation function
-				// and no space already allocated
-				if (CustomMemory == nullptr && tklb::memory::allocate != nullptr) {
-					CustomSize = 1024 * 1024 * 300;
-					CustomMemory = new Byte[CustomSize];
-				}
+			/**
+			 * @brief Use the manager with a preallocated block.
+			 */
+			void use(void* memory, size_t size) {
+				CustomSize = size;
+				CustomMemory = static_cast<Byte*>(memory);
 
 				// Replace the allocation functions with the managers
 				tklb::memory::allocate = allocate;
@@ -194,6 +196,8 @@ namespace tklb {
 				tklb::memory::deallocate = deallocate;
 
 				#ifdef TKLB_MEM_TRACE
+					// When tracing memory the space will be filled with numbers
+					// enumerating each address
 					for (Size i = 0; i < CustomSize / sizeof(Size); i++) {
 						reinterpret_cast<Size*>(CustomMemory)[i] = i;
 					}
@@ -204,9 +208,21 @@ namespace tklb {
 				Block& block = *reinterpret_cast<Block*>(CustomMemory);
 				block.size = 0;
 				block.space = CustomSize;
+
+				#ifdef TKLB_MEM_TRACE
+					tklb::memory::tracer::init();
+				#endif
 			}
 
+			/**
+			 * @brief Restore the standart allocatio functions if there are any.
+			 * Prevents crashes when objects constructed by the crt allocate
+			 * and try to free it again on programm termination.
+			 */
 			void restore() {
+				#ifdef TKLB_MEM_TRACE
+					tklb::memory::tracer::stop();
+				#endif
 				tklb::memory::allocate = std_allocate;
 				tklb::memory::reallocate = std_reallocate;
 				tklb::memory::deallocate = std_deallocate;

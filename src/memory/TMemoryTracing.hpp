@@ -3,7 +3,7 @@
 
 #include "./TAllocator.hpp"
 
-namespace tklb { namespace memory {
+namespace tklb { namespace memory { namespace tracer {
 	static inline void* allocateTrace(size_t size, const char* file, int line) noexcept;
 	static inline void* reallocateTrace(void* ptr, size_t size, const char* file, int line) noexcept;
 	static inline void* clearallocateTrace(size_t num, size_t size, const char* file, int line) noexcept;
@@ -18,22 +18,23 @@ namespace tklb { namespace memory {
 	static inline void disposeTrace(T* ptr, const char* file, int line);
 
 	static void checkHeap();
-} }
+} } } // namespace memory::namespace::tracer
 
-#define TKLB_MALLOC(size)				tklb::memory::allocateTrace(size, __FILE__, __LINE__)
-#define TKLB_FREE(ptr)					tklb::memory::deallocateTrace(ptr, __FILE__, __LINE__)
-#define TKLB_REALLOC(ptr, size) 		tklb::memory::reallocateTrace(ptr, size, __FILE__, __LINE__)
-#define TKLB_CALLOC(num, size) 			tklb::memory::clearallocateTrace(num, size, __FILE__, __LINE__)
-#define TKLB_MALLOC_ALIGNED(size, ...)	tklb::memory::allocateAlignedTrace(__FILE__, __LINE__, size, ##__VA_ARGS__)
-#define TKLB_FREE_ALIGNED(ptr)			tklb::memory::deallocateAlignedTrace(ptr, __FILE__, __LINE__)
-#define TKLB_NEW(T, ...)				tklb::memory::createTrace<T>(__FILE__, __LINE__, ##__VA_ARGS__)
-#define TKLB_DELETE(ptr)				tklb::memory::disposeTrace(ptr, __FILE__, __LINE__)
-
+#define TKLB_MALLOC(size)				tklb::memory::tracer::allocateTrace(size, __FILE__, __LINE__)
+#define TKLB_FREE(ptr)					tklb::memory::tracer::deallocateTrace(ptr, __FILE__, __LINE__)
+#define TKLB_REALLOC(ptr, size) 		tklb::memory::tracer::reallocateTrace(ptr, size, __FILE__, __LINE__)
+#define TKLB_CALLOC(num, size) 			tklb::memory::tracer::clearallocateTrace(num, size, __FILE__, __LINE__)
+#define TKLB_MALLOC_ALIGNED(size, ...)	tklb::memory::tracer::allocateAlignedTrace(__FILE__, __LINE__, size, ##__VA_ARGS__)
+#define TKLB_FREE_ALIGNED(ptr)			tklb::memory::tracer::deallocateAlignedTrace(ptr, __FILE__, __LINE__)
+#define TKLB_NEW(T, ...)				tklb::memory::tracer::createTrace<T>(__FILE__, __LINE__, ##__VA_ARGS__)
+#define TKLB_DELETE(ptr)				tklb::memory::tracer::disposeTrace(ptr, __FILE__, __LINE__)
+#define TKLB_CHECK_HEAP()				tklb::memory::tracer::checkHeap();
 
 #include "../util/TAssert.h"
 #include "../types/THeapBuffer.hpp"
 
-namespace tklb { namespace memory {
+namespace tklb { namespace memory { namespace tracer {
+
 	constexpr char TKLB_MAGIC_STRING[] = "tklbend";
 	constexpr char TKLB_MAGIC_BACKUP_STRING[] = "tklback";
 
@@ -71,6 +72,7 @@ namespace tklb { namespace memory {
 			MagicBlock* loc = reinterpret_cast<MagicBlock*>(static_cast<char*>(ptr) + s);
 			MagicBlock* block = new (loc) MagicBlock(f, l, ptr, s);
 			EXCLUDE_TRACE = true;
+			TKLB_ASSERT(block != nullptr)
 			MagicBlocks.push(block);
 			EXCLUDE_TRACE = false;
 		}
@@ -206,11 +208,23 @@ namespace tklb { namespace memory {
 	 * @brief Checks the MagicBlocks for all allocations.
 	 */
 	static void checkHeap() {
+		if (MagicBlocks.data() != nullptr) { return; }
 		for (size_t i = 0; i < MagicBlocks.size(); i++) {
 			MagicBlock* block = MagicBlocks[i];
 			MagicBlock::check(block);
 		}
 	}
-} } // namespace tklb::memory
+
+	static void init() {
+		EXCLUDE_TRACE = true;
+		MagicBlocks.reserve(1024 * 1024);
+		EXCLUDE_TRACE = false;
+	}
+
+	static void stop() {
+		EXCLUDE_TRACE = true;
+		MagicBlocks.resize(0);
+	}
+} } } // namespace tklb::memory::tracer
 
 #endif // TKLBZ_MEMORY_TRACING

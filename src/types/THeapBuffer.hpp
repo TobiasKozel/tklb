@@ -73,6 +73,7 @@ namespace tklb {
 			mGranularity = DEFAULT_GRANULARITY; // we definetly own the memory now
 			TKLB_ASSERT_STATE(IS_CONST = false)
 			mRealSize = chunk;
+			TKLB_CHECK_HEAP()
 			return true;
 		}
 
@@ -81,8 +82,8 @@ namespace tklb {
 			return mGranularity * std::ceil(chunk / double(mGranularity));
 		}
 
-	public:
 
+	public:
 		/**
 		 * @brief Setup the buffer with a size. User has to check if allocation was successful.
 		 * @param size Size in elements of the buffer

@@ -21,7 +21,7 @@
 namespace tklb {
 	/**
 	 * Wraps allocation so using a custom memory manager
-	 * is an option. Not a C++ allocator
+	 * is an option. Not a std C++ allocator
 	 */
 	namespace memory {
 		// This can be used to keep track of allocations

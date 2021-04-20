@@ -20,6 +20,7 @@
 	#define TKLB_FREE_ALIGNED(ptr)			tklb::memory::deallocateAligned(ptr)
 	#define TKLB_NEW(T, ...)				tklb::memory::create<T>(__VA_ARGS__)
 	#define TKLB_DELETE(ptr)				tklb::memory::dispose(ptr)
+	#define TKLB_CHECK_HEAP()
 #else
 	#include "./TMemoryTracing.hpp" // the same as above will be defined there
 #endif
