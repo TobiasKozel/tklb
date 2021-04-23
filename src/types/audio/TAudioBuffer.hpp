@@ -202,6 +202,7 @@ namespace tklb {
 					out[i + offsetDst] = static_cast<T>(samples[j]);
 				}
 			}
+			mValidSize = length;
 		}
 
 

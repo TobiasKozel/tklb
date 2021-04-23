@@ -117,6 +117,7 @@ namespace tklb { namespace memory { namespace tracer {
 			if (start == nullptr) { return; }
 			if (MagicBlocks.data() == nullptr) { return; }
 			MagicBlock* block = find(start);
+			TKLB_ASSERT(block != nullptr)
 			check(block);
 			MagicBlocks.remove(block);
 		}

@@ -55,6 +55,7 @@ namespace tklb {
 					out.set(*this, elements, tailStart, offsetDst);
 				}
 			}
+			out.setValidSize(elements);
 			return elements;
 		}
 
@@ -74,15 +75,15 @@ namespace tklb {
 		}
 
 		/**
-		 * @brief Adds a number of elements
+		 * @brief Adds validSize() amount of frames to the buffer
 		 * @param in Source buffer
-		 * @param elements How many elements to retrieve from the source buffer
 		 * @param offsetSrc Where to start in the source buffer
 		 * @return How many elements where stored in the ring buffer
 		 */
 		template <typename T2>
-		Size push(const AudioBufferTpl<T2>& in, Size elements, Size offsetSrc = 0) {
+		Size push(const AudioBufferTpl<T2>& in, Size offsetSrc = 0) {
 			const Size spaceLeftHead = Base::size() - mHead; // Space left before exceeding upper buffer bounds
+			Size elements = in.validSize();
 			if (elements > spaceLeftHead) {
 				/**
 				 * Clamp the elements added to the buffer to it's bounds
@@ -109,7 +110,7 @@ namespace tklb {
 		}
 
 		/**
-		 * @breif Returns how many more elements the buffer can hold
+		 * @brief Returns how many more elements the buffer can hold
 		 */
 		Size remaining() const { return Base::size() - mHead; }
 

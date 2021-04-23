@@ -24,12 +24,15 @@ int test() {
 		AudioRingBuffer buffer(size, channels);
 		int inpos = 0;
 			int outpos = 0;
-		inpos += buffer.push(source, 100, inpos);
-		inpos += buffer.push(source, 200, inpos);
+		source.setValidSize(100);
+		inpos += buffer.push(source, inpos);
+		source.setValidSize(200);
+		inpos += buffer.push(source, inpos);
 
 		outpos += buffer.pop(dest, 50, 0, outpos);
 
-		inpos += buffer.push(source, 100, inpos);
+		source.setValidSize(100);
+		inpos += buffer.push(source, inpos);
 
 		outpos += buffer.pop(dest, 350, 0, outpos);
 
