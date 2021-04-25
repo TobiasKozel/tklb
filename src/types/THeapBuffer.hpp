@@ -26,6 +26,9 @@ namespace tklb {
 		// if it's 0 the memory is not actually owned by the buffer
 		Size mGranularity = DEFAULT_GRANULARITY; // can't be 0 at the start
 
+		// Memory pool used for allocations
+		memory::MemoryPool& mPool;
+
 		// True when the foreign memory is const, only cheked in debug mode
 		TKLB_ASSERT_STATE(bool IS_CONST = false)
 
@@ -40,11 +43,11 @@ namespace tklb {
 				// TODO tklb Consider using realloc
 				if (Aligned) {
 					newBuf = reinterpret_cast<T*>(
-						TKLB_MALLOC_ALIGNED(chunk * sizeof(T))
+						mPool.allocateAligned(chunk * sizeof(T))
 					);
 				} else {
 					newBuf = reinterpret_cast<T*>(
-						TKLB_MALLOC(chunk * sizeof(T))
+						mPool.allocate(chunk * sizeof(T))
 					);
 				}
 				if (newBuf == nullptr) {
@@ -64,9 +67,9 @@ namespace tklb {
 			if (oldBuf != nullptr && !injected() && mRealSize > 0) {
 				// Get rif of oldbuffer, object destructors were alredy called
 				if (Aligned) {
-					TKLB_FREE_ALIGNED(oldBuf);
+					mPool.deallocateAligned(oldBuf);
 				} else {
-					TKLB_FREE(oldBuf);
+					mPool.deallocate(oldBuf);
 				}
 			}
 
@@ -89,7 +92,19 @@ namespace tklb {
 		 * @param size Size in elements of the buffer
 		 * @param granularity How big the real allocated chunks are
 		 */
-		HeapBuffer(const Size size = 0, const Size granularity = DEFAULT_GRANULARITY) {
+		HeapBuffer(
+			const Size size = 0,
+			const Size granularity = DEFAULT_GRANULARITY
+		) : mPool(memory::DefaultPool) {
+			setGranularity(granularity);
+			if (size != 0) { resize(0); }
+		}
+
+		HeapBuffer(
+			memory::MemoryPool& pool,
+			const Size size = 0,
+			const Size granularity = DEFAULT_GRANULARITY
+		) : mPool(pool) {
 			setGranularity(granularity);
 			if (size != 0) { resize(0); }
 		}
@@ -99,9 +114,13 @@ namespace tklb {
 		 * See set()
 		 * Failed allocations have to be checked
 		 */
-		HeapBuffer(const HeapBuffer<T>& source) {
+		HeapBuffer(
+			const HeapBuffer<T>& source
+		) : mPool(source.getPool()) {
 			set(source);
 		}
+
+
 
 		HeapBuffer(const HeapBuffer*) = delete;
 		HeapBuffer(HeapBuffer&&) = delete;
@@ -303,6 +322,13 @@ namespace tklb {
 		 * @brief Returns the real allocated size in elements
 		 */
 		Size reserved() const { return mRealSize; }
+
+		/**
+		 * @brief Returns the size of the allocated space.
+		 */
+		Size allocated() const { return mRealSize * sizeof(T); }
+
+		memory::MemoryPool& getPool() const { return mPool; }
 
 	};
 

@@ -1,9 +1,9 @@
 #define TKLB_MEM_TRACE
-#define TKLB_MEM_OVERLOAD_ALL
+#define TKLB_MEM_MONKEY_PATCH
 #ifdef _WIN32
 	#define TKLB_ASSERT_SEGFAULT
 #endif
-#include "../src/memory/TMemoryManager.hpp"
+#include "../src/memory/TMemory.hpp"
 #include <cmath>
 #include "../src/util/TTimer.hpp"
 
@@ -24,15 +24,7 @@ bool close(float a, float b, float epsylon = 0.01) {
 int test();
 
 int main() {
-	const size_t size = 1024 * 1024 * 300; // 300MB
-	void* mem = memory::std_allocate(size);
-	memory::manager::use(mem, size);
 	int ret = test();
-	memory::manager::restore();
-	memory::std_deallocate(mem);
-	if (tklb::memory::Allocated != 0) {
-		TKLB_ASSERT(false)
-		return 100;
-	}
+
 	return ret;
 }

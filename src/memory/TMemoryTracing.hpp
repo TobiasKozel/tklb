@@ -1,7 +1,5 @@
-#ifndef TKLBZ_MEMORY_TRACING
+#ifdef TKLBZ_MEMORY_TRACING
 #define TKLBZ_MEMORY_TRACING
-
-#include "./TAllocator.hpp"
 
 namespace tklb { namespace memory { namespace tracer {
 	static inline void* allocateTrace(size_t size, const char* file, int line) noexcept;
@@ -209,11 +207,17 @@ namespace tklb { namespace memory { namespace tracer {
 	 * @brief Checks the MagicBlocks for all allocations.
 	 */
 	static void checkHeap() {
-		if (MagicBlocks.data() != nullptr) { return; }
+		if (MagicBlocks.data() == nullptr) { return; }
+		size_t total = 0;
 		for (size_t i = 0; i < MagicBlocks.size(); i++) {
 			MagicBlock* block = MagicBlocks[i];
 			MagicBlock::check(block);
+			total += block->size;
 		}
+		size_t blocks = MagicBlocks.allocated();
+		size_t left = Allocated;
+		left -= blocks;
+		TKLB_ASSERT(total == left)
 	}
 
 	static void init() {

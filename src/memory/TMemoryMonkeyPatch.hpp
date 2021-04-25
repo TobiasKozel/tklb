@@ -1,5 +1,5 @@
-#ifndef TKLBZ_MEMORY_OVERLOAD
-#define TKLBZ_MEMORY_OVERLOAD
+#ifndef TKLBZ_MEMORY_MONKEY_PATCH
+#define TKLBZ_MEMORY_MONKEY_PATCH
 
 /**
  * Force all other standart allocation operators to use the
@@ -38,4 +38,4 @@ void operator delete[](void* ptr, const std::nothrow_t& tag) noexcept { TKLB_FRE
 void operator delete  (void* ptr, std::size_t sz) noexcept { TKLB_FREE(ptr); }
 void operator delete[](void* ptr, std::size_t sz) noexcept { TKLB_FREE(ptr); }
 
-#endif // TKLBZ_MEMORY_OVERLOAD
+#endif // TKLBZ_MEMORY_MONKEY_PATCH
