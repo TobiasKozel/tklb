@@ -15,6 +15,7 @@
 
 #include "xsimd_base.hpp"
 #include "xsimd_avx_int_base.hpp"
+#include "xsimd_sse_int64.hpp"
 
 namespace xsimd
 {
@@ -191,6 +192,20 @@ namespace xsimd
 #endif
             }
 
+            static batch_type sadd(const batch_type& lhs, const batch_type& rhs)
+            {
+                const auto diffmax = batch_type(std::numeric_limits<value_type>::max()) - lhs;
+                const auto mindiff = min(diffmax, rhs);
+                return lhs + mindiff;
+            }
+
+
+            static batch_type ssub(const batch_type& lhs, const batch_type& rhs)
+            {
+                const auto diff = min(lhs, rhs);
+                return lhs - diff;
+            }
+
             static batch_type mul(const batch_type& lhs, const batch_type& rhs)
             {
                 XSIMD_MACRO_UNROLL_BINARY(*);
@@ -322,6 +337,17 @@ namespace xsimd
                 XSIMD_RETURN_MERGED_SSE(res_low, res_high);
 #endif
             }
+
+            static batch_type zip_lo(const batch_type& lhs, const batch_type& rhs)
+            {
+                return _mm256_unpacklo_epi64(lhs, rhs);
+            }
+
+            static batch_type zip_hi(const batch_type& lhs, const batch_type& rhs)
+            {
+                return _mm256_unpackhi_epi64(lhs, rhs);
+            }
+
         };
 
         template <>
@@ -360,6 +386,19 @@ namespace xsimd
 #else
                 XSIMD_APPLY_SSE_FUNCTION(_mm_sub_epi64, lhs, rhs);
 #endif
+            }
+
+            static batch_type sadd(const batch_type& lhs, const batch_type& rhs)
+            {
+                batch_type mask = rhs >> (8 * sizeof(value_type) - 1);
+                batch_type lhs_pos_branch = min(std::numeric_limits<value_type>::max() - rhs, lhs);
+                batch_type lhs_neg_branch = max(std::numeric_limits<value_type>::min() - rhs, lhs);
+                return rhs + select((typename batch_type::storage_type)mask, lhs_neg_branch, lhs_pos_branch);
+            }
+
+            static batch_type ssub(const batch_type& lhs, const batch_type& rhs)
+            {
+                return sadd(lhs, neg(rhs));
             }
 
             static batch_type mul(const batch_type& lhs, const batch_type& rhs)
@@ -479,6 +518,16 @@ namespace xsimd
                 __m128i res_high = _mm_blendv_epi8(b_high, a_high, cond_high);
                 XSIMD_RETURN_MERGED_SSE(res_low, res_high);
 #endif
+            }
+
+            static batch_type zip_lo(const batch_type& lhs, const batch_type& rhs)
+            {
+                return _mm256_unpacklo_epi64(lhs, rhs);
+            }
+
+            static batch_type zip_hi(const batch_type& lhs, const batch_type& rhs)
+            {
+                return _mm256_unpackhi_epi64(lhs, rhs);
             }
         };
     }

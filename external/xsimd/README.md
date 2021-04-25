@@ -1,6 +1,5 @@
 # ![xsimd](docs/source/xsimd.svg)
 
-[![Travis](https://travis-ci.org/xtensor-stack/xsimd.svg?branch=master)](https://travis-ci.org/xtensor-stack/xsimd)
 [![Appveyor](https://ci.appveyor.com/api/projects/status/wori7my48os31nu0?svg=true)](https://ci.appveyor.com/project/xtensor-stack/xsimd)
 [![Azure](https://dev.azure.com/xtensor-stack/xtensor-stack/_apis/build/status/xtensor-stack.xsimd?branchName=master)](https://dev.azure.com/xtensor-stack/xtensor-stack/_build/latest?definitionId=3&branchName=master)
 [![Documentation Status](http://readthedocs.org/projects/xsimd/badge/?version=latest)](https://xsimd.readthedocs.io/en/latest/?badge=latest)
@@ -39,31 +38,12 @@ ARM          | ARMv7, ARMv8
 
 ## Installation
 
-Although `xsimd` is a header-only library, we provide standardized means to install it, with package managers or with cmake.
+### Install from conda-forge
 
-Besides the xsimd headers, all these methods place the `CMake` project configuration file in the right location so that
-third-party projects can use cmake's `find_package` to locate xsimd headers.
-
-### Install with conda
-
-A package for xsimd is available on the conda package manager.
+A package for xsimd is available on the mamba (or conda) package manager.
 
 ```bash
-conda install -c conda-forge xsimd
-```
-
-### Install with Conan
-
-If you are using Conan to manage your dependencies, merely add `xsimd/x.y.z@omaralvarez/public-conan` to your requires, where x.y.z
-is the release version you want to use. Please file issues in [conan-xsimd](https://github.com/omaralvarez/conan-xsimd) if you
-experience problems with the packages. Sample `conanfile.txt`:
-
-```
-[requires]
-xsimd/7.2.3@omaralvarez/public-conan
-
-[generators]
-cmake
+mamba install -c conda-forge xsimd
 ```
 
 ### Install with Spack

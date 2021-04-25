@@ -326,6 +326,16 @@ namespace xsimd
                 return vsubq_s32(lhs, rhs);
             }
 
+            static batch_type sadd(const batch_type& lhs, const batch_type& rhs)
+            {
+                return vqaddq_s32(lhs, rhs);
+            }
+
+            static batch_type ssub(const batch_type& lhs, const batch_type& rhs)
+            {
+                return vqsubq_s32(lhs, rhs);
+            }
+
             static batch_type mul(const batch_type& lhs, const batch_type& rhs)
             {
                 return vmulq_s32(lhs, rhs);
@@ -423,6 +433,26 @@ namespace xsimd
             static batch_type select(const batch_bool_type& cond, const batch_type& a, const batch_type& b)
             {
                 return vbslq_s32(cond, a, b);
+            }
+
+            static batch_type zip_lo(const batch_type& lhs, const batch_type& rhs)
+            {
+#if XSIMD_ARM_INSTR_SET >= XSIMD_ARM8_64_NEON_VERSION
+                return vzip1q_s32(lhs, rhs);
+#else
+                int32x2x2_t tmp = vzip_s32(vget_low_s32(lhs), vget_low_s32(rhs));
+                return vcombine_s32(tmp.val[0], tmp.val[1]);
+#endif
+            }
+
+            static batch_type zip_hi(const batch_type& lhs, const batch_type& rhs)
+            {
+#if XSIMD_ARM_INSTR_SET >= XSIMD_ARM8_64_NEON_VERSION
+                return vzip2q_s32(lhs, rhs);
+#else
+                int32x2x2_t tmp = vzip_s32(vget_high_s32(lhs), vget_high_s32(rhs));
+                return vcombine_s32(tmp.val[0], tmp.val[1]);
+#endif
             }
         };
     }

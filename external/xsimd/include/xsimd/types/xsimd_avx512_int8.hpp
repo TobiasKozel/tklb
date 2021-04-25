@@ -243,6 +243,24 @@ namespace xsimd
             #endif
             }
 
+            static batch_type sadd(const batch_type &lhs, const batch_type &rhs)
+            {
+            #if defined(XSIMD_AVX512BW_AVAILABLE)
+                return _mm512_adds_epi8(lhs, rhs);
+            #else
+                XSIMD_APPLY_AVX2_FUNCTION_INT8(sadd, lhs, rhs);
+            #endif
+            }
+
+            static batch_type ssub(const batch_type &lhs, const batch_type &rhs)
+            {
+            #if defined(XSIMD_AVX512BW_AVAILABLE)
+                return _mm512_subs_epi8(lhs, rhs);
+            #else
+                XSIMD_APPLY_AVX2_FUNCTION_INT8(ssub, lhs, rhs);
+            #endif
+            }
+
             static batch_type mul(const batch_type& lhs, const batch_type& rhs)
             {
             #if defined(XSIMD_AVX512BW_AVAILABLE)
@@ -335,6 +353,17 @@ namespace xsimd
                 XSIMD_RETURN_MERGED_AVX(res_lo, res_hi);
             #endif
             }
+
+            static batch_type zip_lo(const batch_type& lhs, const batch_type& rhs)
+            {
+                return _mm512_unpacklo_epi8(lhs, rhs);
+            }
+
+            static batch_type zip_hi(const batch_type& lhs, const batch_type& rhs)
+            {
+                return _mm512_unpackhi_epi8(lhs, rhs);
+            }
+
         };
 
         template <>
@@ -468,6 +497,24 @@ namespace xsimd
                 return _mm512_cmple_epu8_mask(lhs, rhs);
             #else
                 XSIMD_APPLY_AVX2_FUNCTION_INT8(lte, lhs, rhs);
+            #endif
+            }
+            
+            static batch_type sadd(const batch_type &lhs, const batch_type &rhs)
+            {
+            #if defined(XSIMD_AVX512BW_AVAILABLE)
+                return _mm512_adds_epu8(lhs, rhs);
+            #else
+                XSIMD_APPLY_AVX2_FUNCTION_UINT8(sadd, lhs, rhs);
+            #endif
+            }
+
+            static batch_type ssub(const batch_type &lhs, const batch_type &rhs)
+            {
+            #if defined(XSIMD_AVX512BW_AVAILABLE)
+                return _mm512_subs_epu8(lhs, rhs);
+            #else
+                XSIMD_APPLY_AVX2_FUNCTION_UINT8(ssub, lhs, rhs);
             #endif
             }
         };

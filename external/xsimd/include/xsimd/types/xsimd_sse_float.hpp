@@ -518,6 +518,16 @@ namespace xsimd
                 return _mm_sub_ps(lhs, rhs);
             }
 
+            static batch_type sadd(const batch_type& lhs, const batch_type& rhs)
+            {
+                return add(lhs, rhs); //do something special for inf?
+            }
+
+            static batch_type ssub(const batch_type& lhs, const batch_type& rhs)
+            {
+                return sub(lhs, rhs); //do something special for inf?
+            }
+
             static batch_type mul(const batch_type& lhs, const batch_type& rhs)
             {
                 return _mm_mul_ps(lhs, rhs);
@@ -707,6 +717,16 @@ namespace xsimd
             static batch_bool_type isnan(const batch_type& x)
             {
                 return _mm_cmpunord_ps(x, x);
+            }
+
+            static batch_type zip_lo(const batch_type& lhs, const batch_type& rhs)
+            {
+                return _mm_unpacklo_ps(lhs, rhs);
+            }
+
+            static batch_type zip_hi(const batch_type& lhs, const batch_type& rhs)
+            {
+                return _mm_unpackhi_ps(lhs, rhs);
             }
         };
     }
