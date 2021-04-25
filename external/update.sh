@@ -52,5 +52,5 @@ unzip ./$HIIR > /dev/null 2>&1
 rm ./$HIIR
 cd ./hiir
 # Make the includes relative
-sed -i 's/include\ "hiir/include\ "./g' *
+sed -i 's/include\ "hiir/include\ "./g' *.*
 cd ../..

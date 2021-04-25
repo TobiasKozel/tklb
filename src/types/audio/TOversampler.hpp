@@ -179,7 +179,7 @@ public:
 		return
 			"HIIR Library by\n"
 			"WTFPL Licensed\n";
-			"Using iPlug2 filter coefficients."
+			"Using iPlug2 filter coefficients.";
 	}
 };
 
