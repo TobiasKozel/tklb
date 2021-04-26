@@ -9,6 +9,16 @@ namespace tklb { namespace memory {
 	 * @brief Stack based pool
 	 */
 	class MemoryPoolStack final : public MemoryPool {
+	public:
+		MemoryPoolStack(void* pool, Size size) : MemoryPool(pool, size) {
+			if (mPool.allocated == 0) {
+				// first block marks empty space
+				Block& block = *reinterpret_cast<Block*>(mPool.memory);
+				block.size = 0;
+				block.space = mPool.size;
+			}
+		}
+
 		void* allocate(Size size) override {
 			if (size == 0) { return nullptr; }
 			if (size < sizeof(Size)) {

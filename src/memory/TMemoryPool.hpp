@@ -50,8 +50,7 @@ namespace tklb { namespace memory {
 		 * Info is stored at the beginning of the pool.
 		 */
 		struct SharedPool {
-			// Total pool size excluding this struct
-			Size size = 0;
+			Size size = 0; // Total pool size excluding this struct
 			Size users = 0; // Keeps track of how many pools share the memory
 			Mutex mutex; // Locking isn't ideal but easy
 			// Used space
@@ -72,10 +71,11 @@ namespace tklb { namespace memory {
 		 */
 		MemoryPool(void* pool, Size size) : mPool(*static_cast<SharedPool*>(pool)) {
 			if (mPool.size == 0) { // New pool
-				TKLB_ASSERT(size <= sizeof(SharedPool))
+				TKLB_ASSERT(sizeof(SharedPool) <= size)
 				// Initialize pool
-				new (pool) SharedPool();
+				SharedPool* p = new (pool) SharedPool();
 				mPool.size = size - sizeof(SharedPool);
+				mPool.memory = reinterpret_cast<Byte*>(p + 1);
 			}
 			TKLB_ASSERT(size == (mPool.size + sizeof(SharedPool)))
 			mPool.users++;
@@ -140,24 +140,25 @@ namespace tklb { namespace memory {
 		 * @brief Allocate aligned if simd is enabled.
 		 * Does a normal allocation otherwise.
 		 */
-		void* allocateAligned(const size_t size, const size_t align = DEFAULT_ALIGN) {
+		void* allocateAligned(const Size size, const Size align = DEFAULT_ALIGN) {
 			// malloc is already already aligned to sizeof(size_t)
 			void* result = allocate(size + align);
 			if (result != nullptr && align != 0) {
 				// Mask with zeroes at the end to floor the pointer to an aligned block
-				const size_t mask = ~(size_t(align - 1));
-				const size_t pointer = reinterpret_cast<size_t>(result);
-				const size_t floored = pointer & mask;
-				const size_t aligned = floored + align;
+				const Size mask = ~(Size(align - 1));
+				const Size pointer = reinterpret_cast<Size>(result);
+				const Size floored = pointer & mask;
+				const Size aligned = floored + align;
 
 				// Not enough space before aligned memory to store original ptr
 				// This only happens when malloc doesn't align to sizeof(size_t)
-				TKLB_ASSERT(sizeof(size_t) <= (aligned - pointer))
+				TKLB_ASSERT(sizeof(Size) <= (aligned - pointer))
 
 				result = reinterpret_cast<void*>(aligned);
-				size_t* original = reinterpret_cast<size_t*>(result) - 1;
+				Size* original = reinterpret_cast<Size*>(result) - 1;
 				*(original) = pointer;
 			}
+			TKLB_ASSERT(Size(result) % align == 0)
 			return result;
 		}
 	};

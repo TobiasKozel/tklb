@@ -71,46 +71,31 @@ int conversion(AudioBuffer& buffer) {
 }
 
 int add() {
-	AudioBuffer buffer, buffer2;
-	buffer.resize(length, channels);
-	buffer2.resize(buffer);
+	AudioBuffer buffer1, buffer2, buffer3;
 
-	AudioBuffer::sample fsamples[channels * length];
-	AudioBuffer::sample* fbuf[channels] = { };
+	buffer1.resize(length, channels);
+	buffer1.set(1.0, length / 2);
+	buffer1.set(0.0, length / 2, length / 2);
 
-	/**
-	 * Set the last half to 1.0 of the first buffer
-	 */
-	fill_n(fsamples, channels * length, 1.0);
-	for (int c = 0; c < channels; c++) {
-		fbuf[c] = fsamples + (length * c);
-	}
-	buffer.set(fbuf, length, channels, 0, length / 2);
+	buffer2.resize(buffer1);
+	buffer2.set(0.0, length / 2);
+	buffer2.set(1.0, length / 2, length / 2);
 
-	/**
-	 * Fill the first half with 1.0 of the second buffer
-	 */
-	fill_n(fsamples, channels * length, 0.0);
-	for (int c = 0; c < channels; c++) {
-		for (int i = 0; i < (length / 2); i++) {
-			fbuf[c][i] = 1.0;
-		}
-	}
-	buffer2.set(fbuf, length, channels);
+	buffer3.resize(buffer1);
+	buffer3.set(1.0);
+	buffer3.multiply(-1);
 
-	/**
-	 * Add them together
-	 */
-	buffer.add(buffer2);
-
-	auto out = buffer.get(0);
+	buffer1.add(buffer2); // should be all 1.0 now
+	buffer1.add(buffer3); // should be all 0.0 now
 
 	/**
 	 * Check if the whole buffer is 1.0 now
 	 */
-	for (int i = 0; i < length; i++) {
-		if (!close(out[i], 1.0)) {
-			return 7;
+	for (int c = 0; c < channels; c++) {
+		for (int i = 0; i < length; i++) {
+			if (!close(buffer1[c][i], 0.0)) {
+				return 7;
+			}
 		}
 	}
 	return 0;

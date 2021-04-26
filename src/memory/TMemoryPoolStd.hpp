@@ -8,7 +8,8 @@
 
 namespace tklb { namespace memory {
 	/**
-	 * @brief Stack based pool
+	 * @brief Pool which proxies allocations to the stdlib.
+	 * Needs to be included before the monkey patch.
 	 */
 	class MemoryPoolStd final : public MemoryPool {
 		// space for a SharedPool struct
