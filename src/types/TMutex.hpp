@@ -25,6 +25,13 @@ namespace tklb {
 		void unlock() {
 			mMutex.unlock();
 		}
+
+		/**
+		 * @brief Tries to lock, returns true if lock was aquired
+		 */
+		bool try_lock() {
+			return mMutex.try_lock();
+		}
 	};
 } // namespace
 

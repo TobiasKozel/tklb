@@ -20,5 +20,31 @@ namespace tklb {
 			mMutex.unlock();
 		}
 	};
+
+	template <class T>
+	class LockGuardTry {
+		T& mMutex;
+		bool mGotLock = false;
+	public:
+		LockGuardTry(const LockGuardTry&) = delete;
+		LockGuardTry(const LockGuardTry*) = delete;
+		LockGuardTry(LockGuardTry&&) = delete;
+		LockGuardTry& operator= (const LockGuardTry&) = delete;
+		LockGuardTry& operator= (LockGuardTry&&) = delete;
+
+		LockGuardTry(T& mutex) : mMutex(mutex) {
+			mGotLock = mutex.try_lock();
+		}
+
+		bool isLocked() const {
+			return mGotLock;
+		}
+
+		~LockGuardTry() {
+			if (mGotLock) {
+				mMutex.unlock();
+			}
+		}
+	};
 } // namespace tklb
 #endif // TKLBZ_LOCKGUARD

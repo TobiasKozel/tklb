@@ -23,6 +23,17 @@ namespace tklb {
 		void unlock() {
 			mSpinLock = false;
 		}
+
+		/**
+		 * @brief Tries to lock, returns true if lock was aquired
+		 */
+		bool try_lock() {
+			if (mSpinLock) {
+				return false;
+			}
+			mSpinLock = true;
+			return true;
+		}
 	};
 } // namespace
 
