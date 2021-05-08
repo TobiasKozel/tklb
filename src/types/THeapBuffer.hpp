@@ -82,7 +82,7 @@ namespace tklb {
 
 		Size closestChunkSize(Size chunk) const {
 			TKLB_ASSERT(0 < mGranularity)
-			return mGranularity * std::ceil(chunk / double(mGranularity));
+			return mGranularity * Size(std::ceil(chunk / double(mGranularity)));
 		}
 
 

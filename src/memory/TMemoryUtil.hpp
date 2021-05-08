@@ -23,6 +23,17 @@ namespace tklb { namespace memory {
 	#endif // TKLB_MEM_NO_STD
 	}
 
+	static inline void stringCopy(char* dst, const char* src, size_t size) {
+	#ifdef TKLB_MEM_NO_STD
+		for (size_t i = 0; i < size; i++) {
+			dst[i] = src[i];
+			if (src[i] == '\0') { return; }
+		}
+	#else // TKLB_MEM_NO_STD
+		strcpy_s(dst, size, src);
+	#endif // TKLB_MEM_NO_STD
+	}
+
 	/**
 	 * @brief memset wrapper
 	 */

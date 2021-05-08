@@ -159,7 +159,7 @@ namespace tklb {
 		 * Also adds a bit of padding.
 		 */
 		static uint calculateBufferSize(uint rateIn, uint rateOut, uint initialSize) {
-			return ceil(initialSize * (rateOut / double(rateIn))) + 10;
+			return uint(ceil(initialSize * (rateOut / double(rateIn)))) + 10;
 		}
 
 		/**
