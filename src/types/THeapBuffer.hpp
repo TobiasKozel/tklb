@@ -5,29 +5,34 @@
 #include "../memory/TMemory.hpp"
 
 #include <cmath>
+#include <utility>
 
 namespace tklb {
+	constexpr int _HeapBufferDefaultGranularity(unsigned int size) {
+		return std::max(1024 / size, static_cast<unsigned int>(1));
+	}
 
 	/**
 	 * Basically a bad std::vector which can also work with foreign memory.
 	 * Classes stored inside need to have a default contructor
 	 */
-	template <typename T, bool Aligned = false>
+	template <
+		typename T, bool Aligned = false,
+		unsigned int Granularity = _HeapBufferDefaultGranularity(sizeof(T))
+	>
 	class HeapBuffer {
 	public:
 		using Size = unsigned int; // everything using the heapbuffer uses this type
-		static constexpr Size DEFAULT_GRANULARITY = 64;
 
 	private:
 		T* mBuf = nullptr; // Underlying buffer
-		Size mSize = 0; // size of elements requested
-		Size mRealSize = 0; // the actually allocated size
-		// the space actually allocated will be a multiple of this
-		// if it's 0 the memory is not actually owned by the buffer
-		Size mGranularity = DEFAULT_GRANULARITY; // can't be 0 at the start
-
 		// Memory pool used for allocations
 		memory::MemoryPool& mPool;
+
+		Size mSize = 0; // size of elements requested
+
+		// if it's 0 the memory is not actually owned by the buffer
+		Size mRealSize = 0; // the actually allocated size
 
 		// True when the foreign memory is const, only cheked in debug mode
 		TKLB_ASSERT_STATE(bool IS_CONST = false)
@@ -72,9 +77,6 @@ namespace tklb {
 					mPool.deallocate(oldBuf);
 				}
 			}
-			if (mGranularity == 0) {
-				mGranularity = DEFAULT_GRANULARITY; // we definetly own the memory now
-			}
 			TKLB_ASSERT_STATE(IS_CONST = false)
 			mRealSize = chunk;
 			TKLB_CHECK_HEAP()
@@ -82,8 +84,7 @@ namespace tklb {
 		}
 
 		Size closestChunkSize(Size chunk) const {
-			TKLB_ASSERT(0 < mGranularity)
-			return mGranularity * Size(std::ceil(chunk / double(mGranularity)));
+			return Granularity * Size(std::ceil(chunk / double(Granularity)));
 		}
 
 
@@ -91,22 +92,17 @@ namespace tklb {
 		/**
 		 * @brief Setup the buffer with a size. User has to check if allocation was successful.
 		 * @param size Size in elements of the buffer
-		 * @param granularity How big the real allocated chunks are
 		 */
 		HeapBuffer(
-			const Size size = 0,
-			const Size granularity = DEFAULT_GRANULARITY
+			const Size size = 0
 		) : mPool(memory::DefaultPool) {
-			setGranularity(granularity);
 			if (size != 0) { resize(0); }
 		}
 
 		HeapBuffer(
 			memory::MemoryPool& pool,
-			const Size size = 0,
-			const Size granularity = DEFAULT_GRANULARITY
+			const Size size = 0
 		) : mPool(pool) {
-			setGranularity(granularity);
 			if (size != 0) { resize(0); }
 		}
 
@@ -119,6 +115,10 @@ namespace tklb {
 			const HeapBuffer<T>& source
 		) : mPool(source.getPool()) {
 			set(source);
+		}
+
+		HeapBuffer(const T* data, Size size) : mPool(memory::DefaultPool) {
+			set(data, size);
 		}
 
 		HeapBuffer(const HeapBuffer*) = delete;
@@ -135,7 +135,6 @@ namespace tklb {
 		 * @return True on success
 		 */
 		bool set(const HeapBuffer<T>& source) {
-			setGranularity(source.mGranularity);
 			return set(source.data(), source.size());
 		}
 
@@ -167,10 +166,9 @@ namespace tklb {
 		void inject(T* mem, const Size size, const Size realSize = 0) {
 			if (!injected() && mBuf != nullptr) { resize(0); };
 			TKLB_ASSERT_STATE(IS_CONST = false)
-			mGranularity = 0;
+			mRealSize = 0;
 			mBuf = mem;
 			mSize = size;
-			mRealSize = realSize == 0 ? size : realSize;
 		}
 
 		/**
@@ -185,20 +183,12 @@ namespace tklb {
 			TKLB_ASSERT_STATE(IS_CONST = true)
 		}
 
-		void setGranularity(const Size granularity) {
-			if (mGranularity == 0) {
-				TKLB_ASSERT(false)
-				return;
-			}
-			mGranularity = granularity;
-		}
-
 		/**
 		 * @brief The memory is no longer manager by this instance.
 		 * Leak prone.
 		 */
 		void disown() {
-			mGranularity = 0;
+			mRealSize = 0;
 		}
 
 		T* data() {
@@ -292,7 +282,7 @@ namespace tklb {
 		 */
 		bool pop(T* object) {
 			if (0 == mSize) { return false; }
-			new (object) T(mBuf + mSize - 1);
+			new (object) T(*(mBuf + mSize - 1));
 			mSize--;
 			return true;
 		}
@@ -331,7 +321,7 @@ namespace tklb {
 		/**
 		 * @brief Whether the memory is managed by the instance or is borrowed.
 		 */
-		bool injected() const { return mGranularity == 0; }
+		bool injected() const { return mRealSize == 0 && 0 < mSize && mBuf != nullptr; }
 
 		/**
 		 * @brief Returns the amount of elements in the container

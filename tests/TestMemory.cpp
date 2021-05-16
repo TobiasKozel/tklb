@@ -29,7 +29,7 @@ int test() {
 	}
 
 	{
-		tklb::HeapBuffer<Test> asd(0, 1);
+		tklb::HeapBuffer<Test, true, 1> asd;
 		asd.resize(2);
 		asd.push(Test());
 		asd.push(Test());
@@ -39,6 +39,8 @@ int test() {
 		asd.push(Test());
 		asd.push(Test());
 		asd.push(Test());
+
+		tklb::HeapBuffer<Test> asd2(asd.data(), asd.size());
 	}
 
 	return 0;
