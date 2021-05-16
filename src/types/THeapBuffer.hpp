@@ -121,8 +121,6 @@ namespace tklb {
 			set(source);
 		}
 
-
-
 		HeapBuffer(const HeapBuffer*) = delete;
 		HeapBuffer(HeapBuffer&&) = delete;
 		HeapBuffer& operator= (const HeapBuffer&) = delete;
@@ -138,7 +136,7 @@ namespace tklb {
 		 */
 		bool set(const HeapBuffer<T>& source) {
 			setGranularity(source.mGranularity);
-			set(source.data(), source.size());
+			return set(source.data(), source.size());
 		}
 
 		/**
@@ -154,7 +152,9 @@ namespace tklb {
 			if (!resize(size)) {
 				return false; // ! Allocation failed
 			}
-			memory::copy(mBuf, data, mSize * sizeof(T));
+			for (Size i = 0; i < mSize; i++) {
+				new (mBuf + i) T(*(data + i));
+			}
 			return true;
 		}
 
@@ -191,6 +191,14 @@ namespace tklb {
 				return;
 			}
 			mGranularity = granularity;
+		}
+
+		/**
+		 * @brief The memory is no longer manager by this instance.
+		 * Leak prone.
+		 */
+		void disown() {
+			mGranularity = 0;
 		}
 
 		T* data() {
@@ -267,12 +275,12 @@ namespace tklb {
 			Size newSize = mSize + 1;
 			if (mRealSize < newSize) {
 				if (allocate(closestChunkSize(newSize))) {
-					memory::copy(mBuf + mSize, &object, sizeof(T));
+					new (mBuf + mSize) T(object);
 				} else {
 					return false; // ! Allocation failed
 				}
 			} else {
-				memory::copy(mBuf + mSize, &object, sizeof(T));
+				new (mBuf + mSize) T(object);
 			}
 			mSize = newSize;
 			return true;
@@ -284,7 +292,7 @@ namespace tklb {
 		 */
 		bool pop(T* object) {
 			if (0 == mSize) { return false; }
-			memory::copy(object, mBuf + mSize - 1, sizeof(T));
+			new (object) T(mBuf + mSize - 1);
 			mSize--;
 			return true;
 		}

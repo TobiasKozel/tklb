@@ -55,9 +55,12 @@ namespace tklb { namespace memory {
 			Mutex mutex; // Locking isn't ideal but easy
 			// Used space
 			Size allocated = 0;
-			// Start of the usable pool space
-			// gdb watch expression for convenience
-			// *(tklb::memory::manager::Size(*)[200])tklb::memory::manager::CustomMemory
+			/**
+			 * Start of the usable pool space
+			 * this does not store the pointer, but the location location itself is used
+			 * gdb watch expression for convenience
+			 * *(tklb::memory::manager::Size(*)[200])tklb::memory::manager::CustomMemory
+			 */
 			Byte* memory = nullptr;
 		};
 
