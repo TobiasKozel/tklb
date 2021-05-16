@@ -1,0 +1,9 @@
+Benchmark compile times
+1.420 seconds g++ -march=native
+0.471 seconds g++ -march=native -DTKLB_NO_SIMD
+2.428 seconds g++ -O2 -march=native
+1.408 seconds g++ -O2 -march=native -DTKLB_NO_SIMD
+1.298 seconds clang++ -march=native
+0.566 seconds clang++ -march=native -DTKLB_NO_SIMD
+3.481 seconds clang++ -march=native -Ofast
+2.564 seconds clang++ -march=native -Ofast -DTKLB_NO_SIMD

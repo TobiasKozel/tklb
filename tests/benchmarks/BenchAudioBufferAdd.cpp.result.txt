@@ -1,0 +1,18 @@
+model name	: Intel(R) Core(TM) i7-4790K CPU @ 4.00GHz
+model name	: Intel(R) Core(TM) i7-4790K CPU @ 4.00GHz
+model name	: Intel(R) Core(TM) i7-4790K CPU @ 4.00GHz
+model name	: Intel(R) Core(TM) i7-4790K CPU @ 4.00GHz
+model name	: Intel(R) Core(TM) i7-4790K CPU @ 4.00GHz
+model name	: Intel(R) Core(TM) i7-4790K CPU @ 4.00GHz
+model name	: Intel(R) Core(TM) i7-4790K CPU @ 4.00GHz
+model name	: Intel(R) Core(TM) i7-4790K CPU @ 4.00GHz
+g++
+./BenchAudioBufferAdd.cpp	SIMD	double		2	microseconds
+./BenchAudioBufferAdd.cpp	No SIMD	double		4	microseconds
+./BenchAudioBufferAdd.cpp	SIMD	float		1	microseconds
+./BenchAudioBufferAdd.cpp	No SIMD	float		4	microseconds
+clang++
+./BenchAudioBufferAdd.cpp	SIMD	double		2	microseconds
+./BenchAudioBufferAdd.cpp	No SIMD	double		2	microseconds
+./BenchAudioBufferAdd.cpp	SIMD	float		1	microseconds
+./BenchAudioBufferAdd.cpp	No SIMD	float		1	microseconds

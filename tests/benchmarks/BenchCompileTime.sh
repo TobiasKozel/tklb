@@ -9,14 +9,17 @@ case "${unameOut}" in
 	*)          executable=./a.out
 esac
 
+file="BenchCompileTime.sh.result.txt"
+
 function test {
 	TIMEFORMAT="%R seconds ${1}"
-	time {
+	(time {
 		$1 ./BenchCompileTime.cc >> /dev/null 2>&1
-	}
+	}) 2>&1 | tee -a $file
+	# echo "g++" 2>&1 | tee "${source_file}.result.txt"
 	rm $executable
 }
-echo "Benchmark compile times"
+echo "Benchmark compile times" 2>&1 | tee $file
 test "g++ -march=native"
 test "g++ -march=native -DTKLB_NO_SIMD"
 test "g++ -O2 -march=native"

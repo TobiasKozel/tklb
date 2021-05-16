@@ -82,6 +82,9 @@ namespace tklb {
 			resize(length, channels);
 		}
 
+		/**
+		 * @brief Audio buffers can only be copied explicitly
+		 */
 		AudioBufferTpl(const AudioBufferTpl&) = delete;
 		AudioBufferTpl(const AudioBufferTpl*) = delete;
 		AudioBufferTpl(AudioBufferTpl&&) = delete;

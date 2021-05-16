@@ -13,7 +13,8 @@ source_file=$1
 
 function test {
 	if $1 $source_file >> /dev/null 2>&1 ; then
-		$executable
+		$executable 2>&1 | tee -a "${source_file}.result.txt"
+		# $executable
 		result=$?
 		if [[ $result -ne 0 ]]; then
 			echo "${1} ${source_file} Failed with ${result}"
@@ -24,13 +25,16 @@ function test {
 		exit
 	fi
 }
-echo "g++"
+
+cat /proc/cpuinfo 2>&1 | grep "model name" 2>&1 > "${source_file}.result.txt"
+echo "g++" 2>&1 | tee -a "${source_file}.result.txt"
 test "g++ -std=c++17 -O2 -march=native"
 test "g++ -std=c++17 -O2 -march=native -DTKLB_NO_SIMD"
 test "g++ -std=c++17 -O2 -march=native -DTKLB_SAMPLE_FLOAT"
 test "g++ -std=c++17 -O2 -march=native -DTKLB_NO_SIMD -DTKLB_SAMPLE_FLOAT"
-echo "clang++"
+
 # TODO test -ffast-math
+echo "clang++" 2>&1 | tee -a "${source_file}.result.txt"
 test "clang++ -std=c++17 -march=native -Ofast"
 test "clang++ -std=c++17 -march=native -Ofast -DTKLB_NO_SIMD"
 test "clang++ -std=c++17 -march=native -Ofast -DTKLB_SAMPLE_FLOAT"
