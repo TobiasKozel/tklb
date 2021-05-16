@@ -72,8 +72,9 @@ namespace tklb {
 					mPool.deallocate(oldBuf);
 				}
 			}
-
-			mGranularity = DEFAULT_GRANULARITY; // we definetly own the memory now
+			if (mGranularity == 0) {
+				mGranularity = DEFAULT_GRANULARITY; // we definetly own the memory now
+			}
 			TKLB_ASSERT_STATE(IS_CONST = false)
 			mRealSize = chunk;
 			TKLB_CHECK_HEAP()
@@ -133,16 +134,27 @@ namespace tklb {
 		 * @brief Resizes and copies the contents of the source Buffer
 		 * This will do a memory::copy,so none of the object
 		 * contructors will called
+		 * @return True on success
 		 */
 		bool set(const HeapBuffer<T>& source) {
 			setGranularity(source.mGranularity);
+			set(source.data(), source.size());
+		}
+
+		/**
+		 * @brief Set data from array
+		 * @param data data array to copy
+		 * @param size size in elements of the data array
+		 * @return True on success
+		 */
+		bool set(const T* data, Size size) {
 			if (mBuf != nullptr) {
 				resize(0); // Clear first so no old data gets copied on resize
 			}
-			if (!resize(source.size())) {
+			if (!resize(size)) {
 				return false; // ! Allocation failed
 			}
-			memory::copy(mBuf, source.data(), mSize * sizeof(T));
+			memory::copy(mBuf, data, mSize * sizeof(T));
 			return true;
 		}
 
