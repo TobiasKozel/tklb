@@ -5,7 +5,7 @@
 			"label": "linuxg++",
 			"command": "/usr/bin/g++",
 			"args": [
-				"-std=c++17",
+				"-std=c++14",
 				"-g",
 				"${file}",
 				"-o",
@@ -27,7 +27,7 @@
 			"label": "windowsg++",
 			"command": "C:\\dev\\tools\\Strawberry\\c\\bin\\g++.exe",
 			"args": [
-				"-std=c++17",
+				"-std=c++14",
 				"-g",
 				"${file}",
 				"-o",

@@ -30,14 +30,14 @@ function test {
 	fi
 }
 
-test "g++ -std=c++17 -O2 -march=native"
-test "g++ -std=c++17 -O2 -march=native -DTKLB_NO_SIMD"
-test "g++ -std=c++17 -O2 -march=native -DTKLB_SAMPLE_FLOAT"
-test "g++ -std=c++17 -O2 -march=native -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD"
-test "clang++ -std=c++17 -march=native -Ofast"
-test "clang++ -std=c++17 -march=native -Ofast -DTKLB_NO_SIMD"
-test "clang++ -std=c++17 -march=native -Ofast -DTKLB_SAMPLE_FLOAT"
-test "clang++ -std=c++17 -march=native -Ofast -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD"
+test "g++ -std=c++14 -O2 -march=native"
+test "g++ -std=c++14 -O2 -march=native -DTKLB_NO_SIMD"
+test "g++ -std=c++14 -O2 -march=native -DTKLB_SAMPLE_FLOAT"
+test "g++ -std=c++14 -O2 -march=native -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD"
+test "clang++ -std=c++14 -march=native -Ofast"
+test "clang++ -std=c++14 -march=native -Ofast -DTKLB_NO_SIMD"
+test "clang++ -std=c++14 -march=native -Ofast -DTKLB_SAMPLE_FLOAT"
+test "clang++ -std=c++14 -march=native -Ofast -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD"
 
 # TODO figure out how to get into dev shell for windows
 #if [ "$executable" == "./a.exe" ]; then

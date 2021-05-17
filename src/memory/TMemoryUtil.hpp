@@ -30,7 +30,7 @@ namespace tklb { namespace memory {
 			if (src[i] == '\0') { return; }
 		}
 	#else // TKLB_MEM_NO_STD
-		strcpy_s(dst, size, src);
+		strcpy(dst, src);
 	#endif // TKLB_MEM_NO_STD
 	}
 
