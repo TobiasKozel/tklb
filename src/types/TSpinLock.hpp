@@ -2,6 +2,7 @@
 #define TKLBZ_SPINLOCK
 
 #include <atomic>
+#include "./TLockGuard.hpp"
 
 namespace tklb {
 	class SpinLock {
@@ -14,6 +15,9 @@ namespace tklb {
 		SpinLock& operator= (SpinLock&&) = delete;
 
 		SpinLock() = default;
+
+		using Lock = LockGuard<SpinLock>;
+		using TryLock = LockGuardTry<SpinLock>;
 
 		void lock() {
 			while (mSpinLock) { };

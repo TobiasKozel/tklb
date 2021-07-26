@@ -123,6 +123,16 @@ namespace tklb { namespace memory {
 			return reinterpret_cast<T*>(ptr);
 		}
 
+		template <class T, typename ... Args>
+		T* createArray(size_t count, Args&& ... args) {
+			unsigned char* ptr = reinterpret_cast<unsigned char*>(allocate(sizeof(T) * count));
+			if (ptr == nullptr) { return nullptr; }
+			for (size_t i = 0; i < count; i++) {
+				new (ptr + i * sizeof(T)) T(std::forward<Args>(args)...);
+			}
+			return reinterpret_cast<T*>(ptr);
+		}
+
 		/**
 		 * @brief Acts like delete. Destroy the object and dispose the memory.
 		 */
@@ -130,6 +140,18 @@ namespace tklb { namespace memory {
 		void dispose(T* ptr) {
 			if (ptr == nullptr) { return; }
 			ptr->~T();
+			deallocate(ptr);
+		}
+
+		/**
+		 * @brief Acts like delete. Destroy the object and dispose the memory.
+		 */
+		template <class T>
+		void disposeArray(size_t count, T* ptr) {
+			if (ptr == nullptr) { return; }
+			for (size_t i = 0; i < count; i++) {
+				(ptr + i * sizeof(T))->~T();
+			}
 			deallocate(ptr);
 		}
 

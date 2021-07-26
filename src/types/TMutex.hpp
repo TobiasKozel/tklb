@@ -2,6 +2,7 @@
 #define TKLBZ_MUTEX
 
 #include <mutex>
+#include "./TLockGuard.hpp"
 
 namespace tklb {
 	/**
@@ -17,6 +18,9 @@ namespace tklb {
 		Mutex& operator= (Mutex&&) = delete;
 
 		Mutex() = default;
+
+		using Lock = LockGuard<Mutex>;
+		using TryLock = LockGuardTry<Mutex>;
 
 		void lock() {
 			mMutex.lock();

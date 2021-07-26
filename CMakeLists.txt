@@ -3,6 +3,8 @@ project(tklb VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON) # needed for clang
+
 add_library(tklb
 	src/types/audio/resampler/TResamplerSpeex.cpp
 )
