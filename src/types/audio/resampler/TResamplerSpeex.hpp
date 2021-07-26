@@ -61,6 +61,7 @@ namespace tklb {
 		ResamplerSpeexTpl() = default;
 
 		~ResamplerSpeexTpl() {
+			if (mState == nullptr) { return; }
 			speex_resampler_destroy(mState);
 		}
 
