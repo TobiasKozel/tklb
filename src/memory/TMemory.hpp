@@ -9,7 +9,7 @@ namespace tklb { namespace memory {
 	 * Defaut pool used when nothing else is specified
 	 * Will be define in every compilation unit, but the referenced object is the same
 	 */
-	static MemoryPool& DefaultPool = MemoryPoolStd::instance();
+	MemoryPool& DefaultPool = MemoryPoolStd::instance();
 	// constexpr int PoolSize = 300 * 1024 * 1024;
 	// MemoryPoolStack DefaultPool = MemoryPoolStack(malloc(PoolSize), PoolSize);
 } } // namespace tklb::memory
