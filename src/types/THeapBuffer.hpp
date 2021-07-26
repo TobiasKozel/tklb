@@ -95,7 +95,7 @@ namespace tklb {
 		 */
 		HeapBuffer(
 			const Size size = 0
-		) : mPool(memory::DefaultPool) {
+		) : mPool(TKLB_DEFAULT_POOL) {
 			if (size != 0) { resize(0); }
 		}
 
@@ -117,7 +117,7 @@ namespace tklb {
 			set(source);
 		}
 
-		HeapBuffer(const T* data, Size size) : mPool(memory::DefaultPool) {
+		HeapBuffer(const T* data, Size size) : mPool(TKLB_DEFAULT_POOL) {
 			set(data, size);
 		}
 

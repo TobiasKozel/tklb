@@ -23,13 +23,15 @@ namespace tklb { namespace memory {
 	#endif // TKLB_MEM_NO_STD
 	}
 
-	static inline void stringCopy(char* dst, const char* src, size_t size) {
+	static inline void stringCopy(char* dst, const char* src, size_t size, bool terminate = true) {
 		for (size_t i = 0; i < size; i++) {
 			dst[i] = src[i];
 			if (src[i] == '\0') { return; }
 		}
-		// run over the last char to make sure it's terminated
-		dst[size - 1] = '\0';
+		if (terminate) {
+			// run over the last char to make sure it's terminated
+			dst[size - 1] = '\0';
+		}
 	}
 
 	/**
