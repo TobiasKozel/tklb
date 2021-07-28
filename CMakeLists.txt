@@ -3,11 +3,17 @@ project(tklb VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON) # needed for clang
-
-add_library(tklb
+set(tklb_SOURCES
 	src/types/audio/resampler/TResamplerSpeex.cpp
 )
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON) # needed for clang
+
+if (TKLB_BUILD_STATIC_LIBS)
+	add_library(tklb STATIC ${tklb_SOURCES})
+else()
+	add_library(tklb SHARED ${tklb_SOURCES})
+endif()
 
 TARGET_INCLUDE_DIRECTORIES(tklb
 	PUBLIC
