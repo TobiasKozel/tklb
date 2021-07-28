@@ -82,6 +82,12 @@ namespace tklb {
 			resize(length, channels);
 		}
 
+		~AudioBufferTpl() {
+			mChannels = 0;
+			mSize = 0;
+			mValidSize = 0;
+		}
+
 		/**
 		 * @brief Audio buffers can only be copied explicitly
 		 */
