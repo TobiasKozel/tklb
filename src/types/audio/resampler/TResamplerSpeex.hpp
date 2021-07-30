@@ -105,8 +105,8 @@ namespace tklb {
 				// Input output buffer must not overlap when working directly on them
 				TKLB_ASSERT(&in != &out)
 				for (uchar c = 0; c < in.channels(); c++) {
-					Size countIn = in.validSize();
-					Size countOut = out.size();
+					spx_uint32_t countIn = in.validSize();
+					spx_uint32_t countOut = out.size();
 					const float* inBuf = reinterpret_cast<const float*>(in[c]);
 					float* outBuf = reinterpret_cast<float*>(out[c]);
 					speex_resampler_process_float(mState, c, inBuf, &countIn, outBuf, &countOut);
