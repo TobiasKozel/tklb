@@ -8,8 +8,8 @@
 #include <utility>
 
 namespace tklb {
-	constexpr int _HeapBufferDefaultGranularity(unsigned int size) {
-		return std::max(1024 / size, static_cast<unsigned int>(1));
+	constexpr size_t _HeapBufferDefaultGranularity(size_t size) {
+		return std::max(1024 / size, static_cast<size_t>(1));
 	}
 
 	/**

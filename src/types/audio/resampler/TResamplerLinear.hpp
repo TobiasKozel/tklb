@@ -12,9 +12,11 @@ namespace tklb {
 		using Size = typename Buffer::Size;
 
 		uint mRateIn, mRateOut;
+		T mLastFrame[Buffer::MAX_CHANNELS];
 		Buffer mBuffer;
 	public:
 		ResamplerLinearTpl(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
+			for (auto& i : mLastFrane) { i = 0.0; }
 			init(rateIn, rateOut, maxBlock, quality);
 		}
 
@@ -37,7 +39,33 @@ namespace tklb {
 		 * Make sure the out buffer has enough space
 		 */
 		Size process(const Buffer& in, Buffer& out) {
-			mBuffer.set(in);
+			// mBuffer.set(in); // not needed without lowpass
+			const T factor = T(mRateIn) / T(mRateOut);
+			const Size countIn = in.validSize();
+			TKLB_ASSERT(countIn * factor < out.size()) // not enough size in out buffer
+			Size countOut = 0;
+
+			for (int c = 0; c < in.channels(); c++) {
+				Size o = 0;
+				T last = mLastFrame[c];
+				for (; o < out.size(); o++) {
+					const T index = o * factor; 				// index in input buffer, somewhere between two samples
+					const T lastIndex = std::floor(index);		// next sample index in the input buffer
+					const Size nextIndex = lastIndex + 1;		// next sample index in the input buffer
+
+					if (countIn <= nextIndex) { break; }
+
+					const T mix = index - lastIndex;			// mix factor between first and second sample
+					const T next = in[c][i];
+					out[c][o] = next * mix + last * (T(1.0) - mix);
+					last = next;
+				}
+				mLastFrame[c] = last;
+				countOut = o;
+			}
+			out.setValidSize(countOut);
+			return countOut;
+
 			if (mRateIn < mRateOut) {
 				// TODO tklb lerp
 				// TODO tklb lowpass
@@ -45,14 +73,13 @@ namespace tklb {
 				// TODO tklb lowpass
 				// TODO tklb lerp
 			}
-			TKLB_ASSERT(false) // Not implemented
 		}
 
 		/**
 		 * @brief Get the latency in samples
 		 */
 		int getLatency() const {
-			return 1;
+			return 1; // lerp wil be one sample behind
 		};
 
 		/**

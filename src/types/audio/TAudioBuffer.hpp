@@ -27,6 +27,8 @@ namespace tklb {
 	/**
 	 * @brief Class for handling the most basic audio needs
 	 * Does convenient type conversions
+	 * TODO check if using a single buffer instead of one for each channel
+	 * improves performance
 	 */
 	template <typename T>
 	class AudioBufferTpl {
@@ -58,11 +60,11 @@ namespace tklb {
 	#endif
 
 	private:
-		T* mRawBuffers[MAX_CHANNELS];
 		Buffer<T> mBuffers[MAX_CHANNELS];
-		uchar mChannels = 0;
 		Size mSize = 0;
 		Size mValidSize = 0;
+		uchar mChannels = 0;
+		T* mRawBuffers[MAX_CHANNELS];
 
 	public:
 		/**
