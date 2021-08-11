@@ -1,23 +1,20 @@
-#ifndef TKLBZ_RESAMPLER_LINEAR
-#define TKLBZ_RESAMPLER_LINEAR
+#ifndef TKLBZ_RESAMPLER_HOLD
+#define TKLBZ_RESAMPLER_HOLD
 
 #include "../TAudioBuffer.hpp"
 
 namespace tklb {
 	template <typename T>
-	class ResamplerLinearTpl {
+	class ResamplerHoldTpl {
 		using uchar = unsigned char;
 		using uint = unsigned int;
 		using Buffer = AudioBufferTpl<T>;
 		using Size = typename Buffer::Size;
-
 		uint mRateIn, mRateOut;
-		T mOffset = 0;
-		T mLastFrame[Buffer::MAX_CHANNELS];
-		Buffer mBuffer;
+		double mFactor = 1.0;
+
 	public:
-		ResamplerLinearTpl(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
-			for (auto& i : mLastFrane) { i = 0.0; }
+		ResamplerHoldTpl(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
 			init(rateIn, rateOut, maxBlock, quality);
 		}
 
@@ -32,7 +29,10 @@ namespace tklb {
 		 * @return True on success
 		 */
 		bool init(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
-
+			mRateIn = rateIn;
+			mRateOut = rateOut;
+			mFactor = T(mRateIn) / T(mRateOut);
+			return true;
 		}
 
 		/**
@@ -40,58 +40,39 @@ namespace tklb {
 		 * Make sure the out buffer has enough space
 		 */
 		Size process(const Buffer& in, Buffer& out) {
-			// mBuffer.set(in); // not needed without lowpass
-			const T factor = T(mRateIn) / T(mRateOut);
 			const Size countIn = in.validSize();
-			TKLB_ASSERT(countIn * factor < out.size()) // not enough size in out buffer
 			Size countOut = 0;
-			const T offset = mOffset;
 
 			for (int c = 0; c < in.channels(); c++) {
-				Size output = 0;									// index in output buffer
-				T last = mLastFrame[c];								// last sample
-				T mix = 0.0;
+				Size output = 0;										// index in output buffer
 				for (; output < out.size(); output++) {
-					const T position = output * factor + offset;	// index in input buffer, somewhere between two samples
-					const T lastPosition = std::floor(position);	// next sample index in the input buffer
-					const Size lastIndex = lastPosition;
-					const Size nextIndex = lastPosition + 1;		// next sample index in the input buffer this is the one we need to fetch
-
-					if (countIn <= nextIndex) { break; }
-
-					mix = index - lastIndex;				// mix factor between first and second sample
-					const T next = in[c][lastPosition];
-					out[c][o] = next * mix + last * (T(1.0) - mix);
-					last = next;
+					const Size index = std::round(output * mFactor);	// closest sample
+					if (countIn <= index) { break; }
+					out[c][output] = in[c][index];
 				}
-				mLastFrame[c] = last;
-				offset = mix;
-				countOut = o;
+				countOut = output;
 			}
 			out.setValidSize(countOut);
 			return countOut;
-
-			if (mRateIn < mRateOut) {
-				// TODO tklb lerp
-				// TODO tklb lowpass
-			} else {
-				// TODO tklb lowpass
-				// TODO tklb lerp
-			}
 		}
 
 		/**
 		 * @brief Get the latency in samples
 		 */
-		int getLatency() const {
-			return 1; // lerp wil be one sample behind
-		};
+		int getLatency() const { return 0; };
 
 		/**
 		 * @brief Estimate how many samples need to be put in to get n samples out.
 		 */
-		Size estimateNeed(const Size in) {
-			return in * (mRateIn / double(mRateOut));
+		Size estimateNeed(const Size out) const {
+			return std::floor(out * mFactor);
+		}
+
+		/**
+		 * @brief Estimate how many sample will be emitted in the next step
+		 */
+		Size estimateOut(const Size in) const {
+			return std::floor(in * (double(mRateOut) / double(mRateIn)));
 		}
 
 		bool isInitialized() const {
@@ -102,8 +83,8 @@ namespace tklb {
 		 * @brief Calculate a buffersize fit for the resampled result.
 		 * Also adds a bit of padding.
 		 */
-		static Size calculateBufferSize(uint rateIn, uint rateOut, Size initialSize) {
-			return ceil(initialSize * (rateOut / double(rateIn))) + 10;
+		Size calculateBufferSize(Size initialSize) {
+			return estimateOut(initialSize) + 10;
 		}
 
 		/**
@@ -127,7 +108,7 @@ namespace tklb {
 
 			buffer.resize(calculateBufferSize(rateIn, rateOut, samples));
 
-			ResamplerLinearTpl<T> resampler;
+			ResamplerHoldTpl<T> resampler;
 			resampler.init(rateIn, rateOut, copy.size(), quality);
 			resampler.process(copy, buffer);
 		}
@@ -135,11 +116,11 @@ namespace tklb {
 
 	// Default type
 	#ifdef TKLB_SAMPLE_FLOAT
-		using ResamplerLinear = ResamplerLinearTpl<float>;
+		using ResamplerHold = ResamplerHoldTpl<float>;
 	#else
-		using ResamplerLinear = ResamplerLinearTpl<double>;
+		using ResamplerHold = ResamplerHoldTpl<double>;
 	#endif
 
 } // namespace
 
-#endif // TKLBZ_RESAMPLER_LINEAR
+#endif // TKLBZ_RESAMPLER_HOLD
