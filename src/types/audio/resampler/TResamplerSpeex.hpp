@@ -191,9 +191,6 @@ namespace tklb {
 
 	};
 
-	using ResamplerSpeexFloat = ResamplerSpeexTpl<float>;
-	using ResamplerSpeexDouble = ResamplerSpeexTpl<double>;
-
 	// Default type
 	#ifdef TKLB_SAMPLE_FLOAT
 		using ResamplerSpeex = ResamplerSpeexTpl<float>;

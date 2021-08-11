@@ -544,9 +544,10 @@ namespace tklb {
 			const Size offset = 0
 		) const {
 			if (mChannels <= channel) { return 0; }
-			TKLB_ASSERT(size() >= offset)
-			length = length == 0 ? size() : length;
-			length = std::min(length, size() - offset);
+			const Size valid = validSize();
+			TKLB_ASSERT(offset <= valid)
+			length = length == 0 ? valid : length;
+			length = std::min(length, valid - offset);
 			const T2* source = get(channel) + offset;
 			if (std::is_same<T2, T>::value) {
 				memory::copy(target, source, sizeof(T) * length);
@@ -592,14 +593,16 @@ namespace tklb {
 			Size length = 0,
 			const Size offset = 0
 		) const {
-			TKLB_ASSERT(size() >= offset)
+			const Size valid = validSize();
+			TKLB_ASSERT(offset <= valid)
 			const uchar chan = channels();
-			length = (length == 0) ? size() : length;
-			length = std::min(size() - offset, length);
+			length = (length == 0) ? valid : length;
+			length = std::min(valid - offset, length);
 			Size out = 0;
+			// TODO see how the cpu cache is handling this
 			for (Size i = 0; i < length; i++) {
 				for (uchar c = 0; c < chan; c++) {
-					buffer[out] = mBuffers[c][i];
+					buffer[out] = mBuffers[c][i + offset];
 					out++;
 				}
 			}

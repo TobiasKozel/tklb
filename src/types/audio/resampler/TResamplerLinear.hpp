@@ -61,7 +61,8 @@ namespace tklb {
 
 					mix = index - lastIndex;				// mix factor between first and second sample
 					const T next = in[c][lastPosition];
-					out[c][o] = next * mix + last * (T(1.0) - mix);
+					out[c][o] = last + mix * (next - last);
+					// out[c][o] = next * mix + last * (T(1.0) - mix);
 					last = next;
 				}
 				mLastFrame[c] = last;

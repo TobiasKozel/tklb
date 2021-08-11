@@ -10,13 +10,16 @@
  * Will be define in every compilation unit, but the referenced object is the same
  */
 #define TKLB_DEFAULT_POOL tklb::memory::MemoryPoolStd::instance()
+#define TKLB_STD_POOL tklb::memory::MemoryPoolStd::instance()
 
 #ifndef _DEGUG
 namespace tklb { namespace memory {
 	/**
 	 * Only for debugging!
+	 * tklb::memory::DefaultPoolDebug.mPool
+	 * TODO this is a little whacky and instances are different across compile units
 	 */
-	static MemoryPool& DefaultPoolDebug = MemoryPoolStd::instance();
+	static MemoryPool& DefaultPoolDebug = TKLB_DEFAULT_POOL;
 	// constexpr int PoolSize = 300 * 1024 * 1024;
 	// MemoryPoolStack DefaultPool = MemoryPoolStack(malloc(PoolSize), PoolSize);
 } } // namespace tklb::memory

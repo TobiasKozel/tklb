@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 set(tklb_SOURCES
 	src/types/audio/resampler/TResamplerSpeex.cpp
+	src/types/audio/TWaveFile.cpp
 )
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON) # needed for clang

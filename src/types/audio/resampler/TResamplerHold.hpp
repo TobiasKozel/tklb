@@ -65,14 +65,14 @@ namespace tklb {
 		 * @brief Estimate how many samples need to be put in to get n samples out.
 		 */
 		Size estimateNeed(const Size out) const {
-			return std::floor(out * mFactor);
+			return std::round(out * mFactor);
 		}
 
 		/**
 		 * @brief Estimate how many sample will be emitted in the next step
 		 */
 		Size estimateOut(const Size in) const {
-			return std::floor(in * (double(mRateOut) / double(mRateIn)));
+			return std::round(in * (double(mRateOut) / double(mRateIn)));
 		}
 
 		bool isInitialized() const {

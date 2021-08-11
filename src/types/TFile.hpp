@@ -218,7 +218,7 @@ namespace tklb {
 				#ifdef _WIN32
 					free(files[i]);
 				#else // _WIN32
-					tklb::memory::std_deallocate(files[i]);
+					TKLB_STD_POOL.deallocate(files[i]);
 				#endif // _WIN32
 				}
 			} else {
@@ -227,7 +227,7 @@ namespace tklb {
 		#ifdef _WIN32
 			free(files);
 		#else // _WIN32
-			tklb::memory::std_deallocate(files);
+			TKLB_STD_POOL.deallocate(files);
 		#endif // _WIN32
 
 		}

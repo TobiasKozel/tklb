@@ -4,11 +4,11 @@
 #include "../../memory/TMemory.hpp"
 #include "./TAudioBuffer.hpp"
 
-#ifdef TKLBZ_AUDIOFILE_IMPL
-	#define DR_WAV_IMPLEMENTATION
-#endif
-
 #include "../../../external/dr_wav.h"
+
+#ifdef TKLBZ_AUDIOFILE_IMPL
+	#include "./TWaveFile.cpp"
+#endif
 
 namespace tklb {
 	namespace wave {
@@ -24,15 +24,15 @@ namespace tklb {
 
 			drwav_allocation_callbacks drwaveCallbacks {
 				nullptr,		// No userdata
-				drwaveMalloc,
+				&drwaveMalloc,
 				nullptr,		// TODO tklb test and add the realloc
-				drwaveFree
+				&drwaveFree
 			};
 		}
 
 		/**
 		 * @brief Decode wav from memory or file path
-		 * @param path The path or the wav file buffer if length is 0
+		 * @param path The path or the wav file buffer if length is non 0
 		 * @param out The buffer to store the result in
 		 * @param length The length of the wav file buffer if not reading from file
 		 */
@@ -49,9 +49,10 @@ namespace tklb {
 				}
 			}
 
-			float* sampleData = TKLB_MALLOC(
-				size_t(wav.totalPCMFrameCount) * size_t(wav.channels) * sizeof(float)
-			);
+			float* sampleData =
+				reinterpret_cast<float*>(
+					TKLB_MALLOC_ALIGNED(size_t(wav.totalPCMFrameCount) * size_t(wav.channels) * sizeof(float))
+				);
 
 			if (sampleData == nullptr) { return false; }
 
@@ -60,25 +61,112 @@ namespace tklb {
 			);
 
 			if (length == 0) {
-				TKLB_FREE(sampleData);
+				TKLB_FREE_ALIGNED(sampleData);
 				return false;
 			}
 			out.sampleRate = wav.sampleRate;
 			out.resize(length, wav.channels);
 			out.setFromInterleaved(sampleData, length, wav.channels);
 			out.setValidSize(length);
-			TKLB_FREE(sampleData);
+			TKLB_FREE_ALIGNED(sampleData);
 			drwav_uninit(&wav);
+			return true;
 		}
 
+		/**
+		 * @brief Small option struct to save wave files
+		 */
+		struct WaveOptions {
+			int bitsPerSample = 16;
+			enum Container {
+				riff = drwav_container_riff,
+				w64 = drwav_container_w64,
+				rf64 = drwav_container_rf64
+			};
+			Container container = Container::riff;
+
+			enum Format {
+				PCM = DR_WAVE_FORMAT_PCM,
+				ADPCM = DR_WAVE_FORMAT_ADPCM,
+				IEEE_FLOAT = DR_WAVE_FORMAT_IEEE_FLOAT,
+				ALAW = DR_WAVE_FORMAT_ALAW,
+				MULAW = DR_WAVE_FORMAT_MULAW,
+				DVI_ADPCM = DR_WAVE_FORMAT_DVI_ADPCM,
+				EXTENSIBLE = DR_WAVE_FORMAT_EXTENSIBLE
+			};
+			Format format = Format::PCM;
+		};
+
+		/**
+		 * @brief Write audiobuffer to file or memory
+		 */
 		template <typename T>
-		bool write(const AudioBufferTpl<T>& in, char* path, typename AudioBufferTpl<T> length = 0) {
-			// TODO tklb
-			TKLB_ASSERT(false);
+		bool write(
+			const AudioBufferTpl<T>& in,
+			const char* path,
+			const WaveOptions&& options = {},
+			HeapBuffer<char>* out = nullptr
+		) {
+			drwav wav;
+
+			drwav_data_format droptions;
+			droptions.sampleRate = in.sampleRate;
+			droptions.channels = in.channels();
+			droptions.bitsPerSample = options.bitsPerSample;
+			droptions.format = options.format;
+			droptions.container = drwav_container(options.container);
+
+			size_t outSize = 0;
+			void* memory = nullptr;
+			if (out == nullptr) { // write to file
+				if (!drwav_init_file_write(&wav, path, &droptions, &_::drwaveCallbacks)) {
+					return false;
+				}
+			} else {
+				if (!drwav_init_memory_write(&wav, &memory, &outSize, &droptions, &_::drwaveCallbacks)) {
+					return false;
+				}
+			}
+
+			size_t written = 0;
+			using Size = HeapBuffer<float>::Size;
+			const Size chunkSize = 128;
+			const size_t frames = in.validSize();
+
+			switch (options.format) {
+			case WaveOptions::Format::IEEE_FLOAT:
+				{
+					HeapBuffer<float, true> interleaved = { chunkSize * Size(in.channels()) };
+					while (written < frames) {
+						auto remaining = in.putInterleaved(interleaved.data(), chunkSize, written);
+						remaining /= in.channels();
+						written += drwav_write_pcm_frames(&wav, remaining, interleaved.data());
+					}
+				}
+				break;
+			case WaveOptions::Format::PCM:
+				{
+					HeapBuffer<short, true> interleaved = { chunkSize * Size(in.channels()) };
+					while (written < frames) {
+						auto remaining = in.putInterleaved(interleaved.data(), chunkSize, written);
+						remaining /= in.channels();
+						written += drwav_write_pcm_frames(&wav, remaining, interleaved.data());
+					}
+				}
+				break;
+			default:
+				TKLB_ASSERT(false) return false;
+			}
+
+			drwav_uninit(&wav);
+
+			if (out != nullptr) {
+				out->set(reinterpret_cast<char*>(memory), outSize);
+			}
+
+			return true;
 		}
-
 	}
-
 } // namespace
 
 #endif // TKLB_AUDIOFILE

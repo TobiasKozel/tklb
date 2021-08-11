@@ -96,14 +96,17 @@ namespace tklb {
 		HeapBuffer(
 			const Size size = 0
 		) : mPool(TKLB_DEFAULT_POOL) {
-			if (size != 0) { resize(0); }
+			if (size != 0) { resize(size); }
 		}
 
+		/**
+		 * @brief Provide a pool
+		 */
 		HeapBuffer(
 			memory::MemoryPool& pool,
 			const Size size = 0
 		) : mPool(pool) {
-			if (size != 0) { resize(0); }
+			if (size != 0) { resize(size); }
 		}
 
 		/**
