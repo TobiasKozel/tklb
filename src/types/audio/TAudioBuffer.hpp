@@ -585,7 +585,7 @@ namespace tklb {
 		 * @param buffer The array to fill with interleaved audio
 		 * @param length Frames to interleave (not the length of the inerleaved result)
 		 * @param offset Offset for the sourcebuffer (this)
-		 * @return The total length of the interleaved result
+		 * @return Number of frames emitted
 		 */
 		template <typename T2>
 		Size putInterleaved(
@@ -606,7 +606,7 @@ namespace tklb {
 					out++;
 				}
 			}
-			return out;
+			return out / Size(channels());
 		}
 	};
 

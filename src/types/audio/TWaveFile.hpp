@@ -12,7 +12,11 @@
 
 namespace tklb {
 	namespace wave {
-
+		/**
+		 * redirects malloc for drwav, not really needed since
+		 * loading and saving wavs doesn't seem to allocate
+		 * anything on the heap
+		 */
 		namespace _ {
 			void* drwaveMalloc(size_t size, void* userData) {
 				return TKLB_MALLOC(size);
@@ -77,7 +81,7 @@ namespace tklb {
 		 * @brief Small option struct to save wave files
 		 */
 		struct WaveOptions {
-			int bitsPerSample = 16;
+			int bitsPerSample = 32;
 			enum Container {
 				riff = drwav_container_riff,
 				w64 = drwav_container_w64,
@@ -87,14 +91,14 @@ namespace tklb {
 
 			enum Format {
 				PCM = DR_WAVE_FORMAT_PCM,
-				ADPCM = DR_WAVE_FORMAT_ADPCM,
+				// ADPCM = DR_WAVE_FORMAT_ADPCM,
 				IEEE_FLOAT = DR_WAVE_FORMAT_IEEE_FLOAT,
-				ALAW = DR_WAVE_FORMAT_ALAW,
-				MULAW = DR_WAVE_FORMAT_MULAW,
-				DVI_ADPCM = DR_WAVE_FORMAT_DVI_ADPCM,
-				EXTENSIBLE = DR_WAVE_FORMAT_EXTENSIBLE
+				// ALAW = DR_WAVE_FORMAT_ALAW,
+				// MULAW = DR_WAVE_FORMAT_MULAW,
+				// DVI_ADPCM = DR_WAVE_FORMAT_DVI_ADPCM,
+				// EXTENSIBLE = DR_WAVE_FORMAT_EXTENSIBLE
 			};
-			Format format = Format::PCM;
+			Format format = Format::IEEE_FLOAT;
 		};
 
 		/**
@@ -136,21 +140,22 @@ namespace tklb {
 			switch (options.format) {
 			case WaveOptions::Format::IEEE_FLOAT:
 				{
-					HeapBuffer<float, true> interleaved = { chunkSize * Size(in.channels()) };
+					// TODO benchmark against aligned heapbuffer
+					float interleaved[chunkSize * in.channels()];
 					while (written < frames) {
-						auto remaining = in.putInterleaved(interleaved.data(), chunkSize, written);
+						auto remaining = in.putInterleaved(interleaved, chunkSize, written);
 						remaining /= in.channels();
-						written += drwav_write_pcm_frames(&wav, remaining, interleaved.data());
+						written += drwav_write_pcm_frames(&wav, remaining, interleaved);
 					}
 				}
 				break;
 			case WaveOptions::Format::PCM:
 				{
-					HeapBuffer<short, true> interleaved = { chunkSize * Size(in.channels()) };
+					// TODO benchmark against aligned heapbuffer
+					short interleaved[chunkSize * in.channels()];
 					while (written < frames) {
-						auto remaining = in.putInterleaved(interleaved.data(), chunkSize, written);
-						remaining /= in.channels();
-						written += drwav_write_pcm_frames(&wav, remaining, interleaved.data());
+						auto read = in.putInterleaved(interleaved, chunkSize, written);
+						written += drwav_write_pcm_frames(&wav, read, interleaved);
 					}
 				}
 				break;

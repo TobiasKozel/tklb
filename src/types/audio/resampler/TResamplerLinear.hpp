@@ -12,12 +12,13 @@ namespace tklb {
 		using Size = typename Buffer::Size;
 
 		uint mRateIn, mRateOut;
+		double mFactor = 1.0;
 		T mOffset = 0;
 		T mLastFrame[Buffer::MAX_CHANNELS];
 		Buffer mBuffer;
 	public:
 		ResamplerLinearTpl(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
-			for (auto& i : mLastFrane) { i = 0.0; }
+			for (auto& i : mLastFrame) { i = 0.0; }
 			init(rateIn, rateOut, maxBlock, quality);
 		}
 
@@ -32,7 +33,10 @@ namespace tklb {
 		 * @return True on success
 		 */
 		bool init(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
-
+			mRateIn = rateIn;
+			mRateOut = rateOut;
+			mFactor = double(mRateIn) / double(mRateOut);
+			return true;
 		}
 
 		/**
@@ -41,34 +45,34 @@ namespace tklb {
 		 */
 		Size process(const Buffer& in, Buffer& out) {
 			// mBuffer.set(in); // not needed without lowpass
-			const T factor = T(mRateIn) / T(mRateOut);
 			const Size countIn = in.validSize();
-			TKLB_ASSERT(countIn * factor < out.size()) // not enough size in out buffer
 			Size countOut = 0;
 			const T offset = mOffset;
+			T lastMix = 0;
 
 			for (int c = 0; c < in.channels(); c++) {
 				Size output = 0;									// index in output buffer
 				T last = mLastFrame[c];								// last sample
 				T mix = 0.0;
 				for (; output < out.size(); output++) {
-					const T position = output * factor + offset;	// index in input buffer, somewhere between two samples
+					const T position = output * mFactor;	// index in input buffer, somewhere between two samples
 					const T lastPosition = std::floor(position);	// next sample index in the input buffer
 					const Size lastIndex = lastPosition;
 					const Size nextIndex = lastPosition + 1;		// next sample index in the input buffer this is the one we need to fetch
 
 					if (countIn <= nextIndex) { break; }
 
-					mix = index - lastIndex;				// mix factor between first and second sample
-					const T next = in[c][lastPosition];
-					out[c][o] = last + mix * (next - last);
+					mix = position - lastPosition;					// mix factor between first and second sample
+					const T next = in[c][lastIndex];
+					out[c][output] = last + mix * (next - last);
 					// out[c][o] = next * mix + last * (T(1.0) - mix);
 					last = next;
 				}
 				mLastFrame[c] = last;
-				offset = mix;
-				countOut = o;
+				lastMix = mix;
+				countOut = output;
 			}
+			// mOffset = lastMix;
 			out.setValidSize(countOut);
 			return countOut;
 
@@ -91,9 +95,14 @@ namespace tklb {
 		/**
 		 * @brief Estimate how many samples need to be put in to get n samples out.
 		 */
-		Size estimateNeed(const Size in) {
-			return in * (mRateIn / double(mRateOut));
+		Size estimateNeed(const Size out) {
+			return std::round(out * mFactor);
 		}
+
+		Size estimateOut(const Size in) {
+			return std::round(in * (double(mRateOut) / double(mRateIn)));
+		}
+
 
 		bool isInitialized() const {
 			return true;
@@ -103,8 +112,8 @@ namespace tklb {
 		 * @brief Calculate a buffersize fit for the resampled result.
 		 * Also adds a bit of padding.
 		 */
-		static Size calculateBufferSize(uint rateIn, uint rateOut, Size initialSize) {
-			return ceil(initialSize * (rateOut / double(rateIn))) + 10;
+		Size calculateBufferSize(Size in) {
+			return estimateOut(in) + 10;
 		}
 
 		/**
@@ -126,10 +135,10 @@ namespace tklb {
 			copy.sampleRate = rateIn;
 			copy.setValidSize(samples);
 
-			buffer.resize(calculateBufferSize(rateIn, rateOut, samples));
-
 			ResamplerLinearTpl<T> resampler;
 			resampler.init(rateIn, rateOut, copy.size(), quality);
+			buffer.resize(resampler.calculateBufferSize(samples));
+
 			resampler.process(copy, buffer);
 		}
 	};

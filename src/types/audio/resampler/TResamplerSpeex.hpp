@@ -35,7 +35,7 @@ static inline void* speex_realloc (void* ptr, int size) {
 
 #include "../../../../external/speex_resampler/speex_resampler.h"
 
-#ifdef TKLBZ_RESAMPLER_IMPL
+#ifdef TKLB_RESAMPLER_SPEEX_IMPL
 	#include "./TResamplerSpeex.cpp"
 #endif
 
@@ -82,13 +82,13 @@ namespace tklb {
 			}
 			mState = speex_resampler_init(MAX_CHANNELS, rateIn, rateOut, quality, &err);
 
+			mRateIn = rateIn;
+			mRateOut = rateOut;
 			// Conversion buffers if not doing float resampling
 			if (!std::is_same<T, float>::value) {
 				mConvertIn.resize(maxBlock, MAX_CHANNELS);
-				mConvertOut.resize(calculateBufferSize(rateIn, rateOut, maxBlock), MAX_CHANNELS);
+				mConvertOut.resize(calculateBufferSize(maxBlock), MAX_CHANNELS);
 			}
-			mRateIn = rateIn;
-			mRateOut = rateOut;
 			return err == 0;
 		}
 
@@ -149,8 +149,15 @@ namespace tklb {
 		/**
 		 * @brief Estimate how many samples need to be put in to get n samples out.
 		 */
-		Size estimateNeed(const Size in) {
-			return in * (mRateIn / double(mRateOut));
+		Size estimateNeed(const Size out) const {
+			return std::round(out * (double(mRateIn) / double(mRateOut)));
+		}
+
+		/**
+		 * @brief Estimate how many sample will be emitted in the next step
+		 */
+		Size estimateOut(const Size in) const {
+			return std::round(in * (double(mRateOut) / double(mRateIn)));
 		}
 
 		bool isInitialized() const { return mState != nullptr; }
@@ -159,8 +166,8 @@ namespace tklb {
 		 * @brief Calculate a buffersize fit for the resampled result.
 		 * Also adds a bit of padding.
 		 */
-		static uint calculateBufferSize(uint rateIn, uint rateOut, uint initialSize) {
-			return uint(ceil(initialSize * (rateOut / double(rateIn)))) + 10;
+		Size calculateBufferSize(Size initialSize) {
+			return estimateOut(initialSize) + 10;
 		}
 
 		/**
@@ -182,10 +189,10 @@ namespace tklb {
 			copy.sampleRate = rateIn;
 			copy.setValidSize(samples);
 
-			buffer.resize(calculateBufferSize(rateIn, rateOut, samples));
-
 			ResamplerSpeexTpl<T> resampler;
 			resampler.init(rateIn, rateOut, copy.size(), quality);
+			buffer.resize(resampler.calculateBufferSize(samples));
+
 			resampler.process(copy, buffer);
 		}
 

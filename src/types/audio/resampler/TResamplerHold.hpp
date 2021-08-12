@@ -31,7 +31,7 @@ namespace tklb {
 		bool init(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
 			mRateIn = rateIn;
 			mRateOut = rateOut;
-			mFactor = T(mRateIn) / T(mRateOut);
+			mFactor = double(mRateIn) / double(mRateOut);
 			return true;
 		}
 
@@ -106,10 +106,10 @@ namespace tklb {
 			copy.sampleRate = rateIn;
 			copy.setValidSize(samples);
 
-			buffer.resize(calculateBufferSize(rateIn, rateOut, samples));
-
 			ResamplerHoldTpl<T> resampler;
 			resampler.init(rateIn, rateOut, copy.size(), quality);
+			buffer.resize(resampler.calculateBufferSize(samples));
+
 			resampler.process(copy, buffer);
 		}
 	};
