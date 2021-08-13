@@ -9,7 +9,8 @@ namespace tklb {
 	template <class T, typename MemberType = Handle>
 	class HandleBuffer : public HeapBuffer<T, true> {
 
-		using Size = HeapBuffer<T, true>::Size;
+		using Base = HeapBuffer<T, true>;
+		using Size = typename Base::Size;
 
 		static constexpr int MaskSplit = 16; // at which bit to split the mask
 		static constexpr Handle MaskId = (1 << (MaskSplit)) - 1;
@@ -31,8 +32,8 @@ namespace tklb {
 		T* at(const Handle& handle) {
 			const Handle index = (handle & MaskIndex) >> MaskSplit;
 			if (index == mLastFree) { return nullptr; }	// element deleted
-			if (size() <= index) { return nullptr; }	// out of range
-			T* element = data() + index;
+			if (Base::size() <= index) { return nullptr; }	// out of range
+			T* element = Base::data() + index;
 			const Handle refernceId = handle & MaskId;
 			const Handle id = (*((Handle*)(((char*) element) + mOffset))) & MaskId;
 			if (id != refernceId) { return nullptr; }	// Id mismatch, so object was replaced
@@ -43,38 +44,47 @@ namespace tklb {
 		 * @brief add element, may trigger resize
 		 */
 		Handle push(const T& object) {
-
-			if (size() <= mLastFree || mLastFree < 0) {
+			Handle ret = 0;
+			if (Base::size() <= mLastFree || mLastFree < 0) {
 				// no free slot
-				if (!HeapBuffer::push(object)) {
+				ret = Base::size();
+				if (!Base::push(object)) {
 					return false; // something went wrong
 				}
 			} else {
 				// use free slot
-				memory::copy(data() + mLastFree, &object, sizeof(T));
+				ret = mLastFree;
+				new (Base::data() + mLastFree) T(object);
 			}
+			ret = ret << MaskSplit;
+			Handle id = (*((Handle*)(((char*) &object) + mOffset))) & MaskId;
+			ret = ret | id;
 			Size zero = 0; // should underflow
 			mLastFree = zero - 1; // make sure free slot is not in size any more
-			return true;
+			return ret;
 		}
 
-		bool pop(T* object = nullptr) {
-			// not used
-			TKLB_ASSERT(false)
-			return false;
+		bool pop(const Handle& handle, T* destination = nullptr) {
+			T* element = at(handle);
+			if (element == nullptr) { return false; }
+			if (destination != nullptr) {
+				memory::copy(destination, element, sizeof(T));
+			}
+			return remove(*element);
 		}
 
 		bool remove(const Size index) {
-			if (!HeapBuffer::remove(index)) {
-				return false;
-			}
+			if (Base::size() <= index) { return false; }
+			if (index == mLastFree) { return false; }
+			Base::data()[index].~T();
 			mLastFree = index;
 			return true;
 		}
 
 		bool remove(const T& object) {
-			for (Size i = 0; i < size(); i++) {
-				if (mBuf[i] == object) {
+			T* arr = Base::data();
+			for (Size i = 0; i < Base::size(); i++) {
+				if ((arr + i) == &object) {
 					return remove(i);
 				}
 			}

@@ -274,6 +274,7 @@ namespace tklb {
 				if (allocate(closestChunkSize(newSize))) {
 					new (mBuf + mSize) T(object);
 				} else {
+					TKLB_ASSERT(false)
 					return false; // ! Allocation failed
 				}
 			} else {

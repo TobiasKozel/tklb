@@ -11,6 +11,9 @@ using Resampler = ResamplerLinear;
 
 int test() {
 	{
+		#ifdef TKLB_TEST
+			return 0; // don't run the test in ci
+		#endif
 		const int blockSize = 256;
 		const int rate2 = 50001;
 		AudioBuffer sample;
