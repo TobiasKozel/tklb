@@ -2,18 +2,33 @@
 #include "./TestCommon.hpp"
 
 #include "../src/types/audio/resampler/TResamplerHold.hpp"
+#include "../src/types/audio/resampler/TResamplerLinear.hpp"
 
 #define TKLBZ_AUDIOFILE_IMPL
 #include "../src/types/audio/TWaveFile.hpp"
 
-using Resampler = ResamplerHold;
+using Resampler = ResamplerLinear;
 
 int test() {
 	{
+		const int blockSize = 256;
+		const int rate2 = 50001;
 		AudioBuffer sample;
+		AudioBuffer resampled;
 		wave::load("/home/usr/git/master/VAEG/VAE/external/tklb/tests/test_folder/LRMonoPhase4.wav", sample);
-		constexpr int mul = 1 << 15;
-		sample.multiply(AudioBuffer::sample(mul));
+		Resampler resamplerUp(sample.sampleRate, rate2, blockSize);
+		Resampler resamplerDown(rate2, sample.sampleRate, blockSize);
+		resampled.resize(resamplerUp.calculateBufferSize(sample.size()), sample.channels());
+		resampled.sampleRate = rate2;
+
+		const int expectedUp = resamplerUp.estimateOut(sample.validSize());
+		const int predictedDown = resamplerUp.estimateNeed(expectedUp);
+		const int expectedDown = resamplerDown.estimateOut(expectedUp);
+		const int predictedUp = resamplerDown.estimateNeed(expectedDown);
+		resamplerUp.process(sample, resampled);
+		// TKLB_ASSERT(expectedUp == resampled.validSize())
+		resamplerDown.process(resampled, sample);
+		// TKLB_ASSERT(expectedDown == sample.validSize())
 		// const int sampleRate = 48000;
 		// const int channels = 1;
 		// const int length = sampleRate * 2;
@@ -27,54 +42,5 @@ int test() {
 		// }
 		wave::write(sample, "/home/usr/git/master/VAEG/VAE/external/tklb/tests/test_folder/test.wav");
 	}
-	return 0;
-
-	const int rateLow = 44100;
-	const int rateHigh = 48000;
-
-	const int length = 4096;
-	const int blockSize = 256;
-	const int channels = 2;
-
-	Resampler resamplerUp(rateLow, rateHigh, blockSize);
-	Resampler resamplerDown(rateHigh, rateLow, blockSize);
-
-	int latency = resamplerDown.getLatency();
-	latency += resamplerUp.getLatency();
-
-	AudioBuffer bufLow, bufHigh, bufLowReference;
-	bufLow.sampleRate = rateLow;
-	bufHigh.sampleRate = rateHigh;
-
-	bufLow.resize(length + 10, channels); // add some padding
-	bufHigh.resize(resamplerUp.calculateBufferSize(length) , channels);
-
-	// generate sine test signal
-	for (int c = 0; c < channels; c++) {
-		for (int i = 0; i < length; i++) {
-			bufLow[c][i] = sin(i * c * 0.001); // Fairly low frequency
-		}
-	}
-	bufLow.setValidSize(length); // all samples in the buffer are to be processed
-	bufLowReference.clone(bufLow); // Copy to compare
-
-	const int expectedUp = resamplerUp.estimateOut(bufLow.validSize());
-	const int predictedDown = resamplerUp.estimateNeed(expectedUp);
-	const int expectedDown = resamplerDown.estimateOut(expectedUp);
-	const int predictedUp = resamplerDown.estimateNeed(expectedDown);
-	resamplerUp.process(bufLow, bufHigh);
-	TKLB_ASSERT(expectedUp == bufHigh.validSize())
-	resamplerDown.process(bufHigh, bufLow);
-	TKLB_ASSERT(expectedDown == bufLow.validSize())
-
-	// compare sine test signal
-	for (int c = 0; c < channels; c++) {
-		for (int i = 10; i < length - latency - 10; i++) { // crop the ends and latency
-			if (!close(bufLow[c][i + latency], bufLowReference[c][i], 0.1)) {
-				return 1;
-			}
-		}
-	}
-	printf("success");
 	return 0;
 }

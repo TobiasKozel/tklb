@@ -22,7 +22,11 @@ namespace tklb {
 	>
 	class HeapBuffer {
 	public:
-		using Size = unsigned int; // everything using the heapbuffer uses this type
+		/**
+		 * everything using the heapbuffer uses this type
+		 * Always needs to be unsigned!
+		 */
+		using Size = unsigned int;
 
 	private:
 		T* mBuf = nullptr; // Underlying buffer

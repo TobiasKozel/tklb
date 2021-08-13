@@ -1,37 +1,41 @@
-#ifndef TKLB_UUID
-#define TKLB_UUID
+#ifndef TKLBZ_UUID
+#define TKLBZ_UUID
 
-// TODO tklb no string
-#include <string>
-#include "time.h"
+// TODO tklb maybe rand without stdlib
+#include <ctime>
+#include <cstdlib>
 
-namespace tklb {
-	std::string generateUUID() {
-		srand(time(nullptr));
-		const int charLength = 10 + 26;
-		const char chars[] = "abcdefghijklmnopqrstuvwxyz0123456789";
-		const int UUIDLength = 36;
-		char out[UUIDLength];
+namespace tklb { namespace uuid {
+	constexpr int UUIDLength = 36;
+	constexpr int DashPos[] = { 9, 14, 19, 24 };
+	constexpr char CharacterSet[] = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+	void generate(char (&uuid)[UUIDLength]) {
+		std::srand(std::time(nullptr));
 		for (int i = 0; i < UUIDLength; i++) {
-			out[i] = chars[rand() % charLength];
+			uuid[i] = CharacterSet[std::rand() % (sizeof(CharacterSet) - 1)];
 		}
-		out[9] = out[14] = out[19] = out[24] = '-';
-		std::string ret;
-		ret.append(out, UUIDLength);
-		return ret;
+		for (int i : DashPos) { uuid[i] = '-'; }
 	}
 
-	bool isUUID(const std::string id) {
-		if (id.size() != 36) { return false; }
-		if ((id[9] & id[14] & id[19] & id[24]) != '-') { return false; }
-		if ((id[9] | id[14] | id[19] | id[24]) != '-') { return false; }
-		for (size_t i = 0; i < id.size(); i++) {
-			const char c = id[i];
-			if ((('a' <= c) && (c <= 'z')) || (('0' <= c) && (c <= '9')) || (c == '-')) {}
-				else { return false; }
-			}
+	bool isValid(const char* uuid, bool checkLength = true) {
+		if (checkLength && uuid[UUIDLength] != '\0') { return false; } // too long
+		for (int i : DashPos) { if (uuid[i] != '-') { return false; } }
+
+		for (int i = 0; i < UUIDLength; i++) {
+			const char c = uuid[i];
+			if ((('a' <= c) && (c <= 'z')) || (('0' <= c) && (c <= '9')) || (c == '-')) {
+				// valid character
+			} else { return false; } // invalid character
+		}
 		return true;
 	}
-} // namespace
 
-#endif // TKLB_UUID
+	bool isValid(const char (&uuid)[UUIDLength]) {
+		// skips length check if the length is matched
+		return isValid(reinterpret_cast<const char*>(uuid), false);
+	}
+
+} } // tklb::uuid
+
+#endif // TKLBZ_UUID
