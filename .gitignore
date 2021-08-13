@@ -5,3 +5,6 @@ external/hiir/hiir/test
 
 external/xsimd/test
 *.yml
+
+*.wav
+*.wav.reapeaks
