@@ -157,6 +157,7 @@ namespace tklb {
 		 * @brief Estimate how many sample will be emitted in the next step
 		 */
 		Size estimateOut(const Size in) const {
+			TKLB_ASSERT(0 < mRateOut && 0 < mRateIn)
 			return std::round(in * (double(mRateOut) / double(mRateIn)));
 		}
 
@@ -167,7 +168,7 @@ namespace tklb {
 		 * Also adds a bit of padding.
 		 */
 		Size calculateBufferSize(Size initialSize) {
-			return estimateOut(initialSize) + 10;
+			return estimateNeed(initialSize) + 10; // TODO tklb seperate function for need and provide
 		}
 
 		/**

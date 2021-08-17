@@ -52,7 +52,10 @@ namespace tklb {
 					return false;
 				}
 			}
-
+			/**
+			 * TODO tklb chunked wav loading
+			 * Also use type from wav file to avoid conversion in drwav
+			 */
 			float* sampleData =
 				reinterpret_cast<float*>(
 					TKLB_MALLOC_ALIGNED(size_t(wav.totalPCMFrameCount) * size_t(wav.channels) * sizeof(float))
@@ -144,7 +147,6 @@ namespace tklb {
 					float interleaved[chunkSize * in.channels()];
 					while (written < frames) {
 						auto remaining = in.putInterleaved(interleaved, chunkSize, written);
-						remaining /= in.channels();
 						written += drwav_write_pcm_frames(&wav, remaining, interleaved);
 					}
 				}

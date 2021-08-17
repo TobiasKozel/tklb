@@ -2,8 +2,10 @@
 #define TKLBZ_HANDLE_BUFFER
 
 #include "./THeapBuffer.hpp"
-
 namespace tklb {
+	/**
+	 * Handle to a object contained in a buffer
+	 */
 	using Handle = unsigned int;
 
 	template <class T, typename MemberType = Handle>
@@ -29,6 +31,8 @@ namespace tklb {
 			mOffset = ((char*) &(((T*)nullptr)->*member)) - ((char*)nullptr);
 		}
 
+		Size getLastFree() const { return mLastFree; }
+
 		T* at(const Handle& handle) {
 			const Handle index = (handle & MaskIndex) >> MaskSplit;
 			if (index == mLastFree) { return nullptr; }	// element deleted
@@ -38,6 +42,21 @@ namespace tklb {
 			const Handle id = (*((Handle*)(((char*) element) + mOffset))) & MaskId;
 			if (id != refernceId) { return nullptr; }	// Id mismatch, so object was replaced
 			return element;
+		}
+
+		Handle create() {
+			Size index = 0;
+			const Size s = Base::size();
+			if (s <= mLastFree || mLastFree < 0) {
+				index = s;
+				Base::resize(s + 1);
+			}
+			Size zero = 0; // should underflow
+			mLastFree = zero - 1; // make sure free slot is not in size any more
+			Handle ret = index << MaskSplit;
+			Handle id = (*((Handle*)(((char*) (Base::data() + index)) + mOffset))) & MaskId;
+			ret = ret | id;
+			return ret;
 		}
 
 		/**
