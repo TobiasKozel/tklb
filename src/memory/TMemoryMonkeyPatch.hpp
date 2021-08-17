@@ -9,6 +9,7 @@
  * for educational purposes nevertheless.
  */
 
+#include <cstddef>
 #include <new>
 
 #define malloc(size)			TKLB_MALLOC(size)
