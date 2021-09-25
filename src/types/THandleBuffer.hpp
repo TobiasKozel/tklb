@@ -28,7 +28,7 @@ namespace tklb {
 	public:
 		HandleBuffer(MemberType T::*member) {
 			// nice
-			mOffset = ((char*) &(((T*)nullptr)->*member)) - ((char*)nullptr);
+			mOffset = Size(((char*) &(((T*)nullptr)->*member)) - ((char*)nullptr));
 		}
 
 		Size getLastFree() const { return mLastFree; }

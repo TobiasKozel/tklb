@@ -150,7 +150,7 @@ namespace tklb {
 		 * @brief Estimate how many samples need to be put in to get n samples out.
 		 */
 		Size estimateNeed(const Size out) const {
-			return std::round(out * (double(mRateIn) / double(mRateOut)));
+			return int(std::round(out * (double(mRateIn) / double(mRateOut))));
 		}
 
 		/**
