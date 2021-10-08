@@ -47,6 +47,7 @@ namespace tklb {
 
 		using uchar = unsigned char;
 		using uint = unsigned int;
+		using ushort = unsigned short;
 		using Size = typename Buffer<T>::Size;
 
 	#ifdef TKLB_MAXCHANNELS
@@ -60,17 +61,17 @@ namespace tklb {
 	#endif
 
 	private:
-		Buffer<T> mBuffers[MAX_CHANNELS];
-		Size mSize = 0;
+		Buffer<T> mBuffers[MAX_CHANNELS]; // TODO performance use a single linear buffer maybe
+		Size mSize = 0; // TODO preformance throw this out and use heapbuffer size
 		Size mValidSize = 0;
 		uchar mChannels = 0;
-		T* mRawBuffers[MAX_CHANNELS];
 
 	public:
 		/**
 		 * @brief Only relevant for resampling and oversampling.
+		 * TODO higher sample rates wont work, maybe use enum
 		 */
-		uint sampleRate = 0;
+		ushort sampleRate = 0;
 
 		/**
 		 * @brief Empty buffer with no memory allocated yet
@@ -85,19 +86,22 @@ namespace tklb {
 		}
 
 		~AudioBufferTpl() {
-			mChannels = 0;
-			mSize = 0;
-			mValidSize = 0;
+			TKLB_ASSERT_STATE(mChannels = 0;)
+			TKLB_ASSERT_STATE(mSize = 0;)
+			TKLB_ASSERT_STATE(mValidSize = 0;)
 		}
 
 		/**
-		 * @brief Audio buffers can only be copied explicitly
+		 * @brief move contructor is implicitly deleted
+		 * Don't know why
 		 */
+		AudioBufferTpl(AudioBufferTpl&& source) = default;
+
+		AudioBufferTpl& operator= (AudioBufferTpl&& source) = default;
+
+		AudioBufferTpl& operator= (const AudioBufferTpl&) = delete;
 		AudioBufferTpl(const AudioBufferTpl&) = delete;
 		AudioBufferTpl(const AudioBufferTpl*) = delete;
-		AudioBufferTpl(AudioBufferTpl&&) = delete;
-		AudioBufferTpl& operator= (const AudioBufferTpl&) = delete;
-		AudioBufferTpl& operator= (AudioBufferTpl&&) = delete;
 
 
 		/**
@@ -243,11 +247,6 @@ namespace tklb {
 			}
 			for (uchar c = channels; c < MAX_CHANNELS; c++) {
 				mBuffers[c].resize(0);
-			}
-
-			// Update the rawbuffer pointers
-			for (uchar c = 0; c < MAX_CHANNELS; c++) {
-				mRawBuffers[c] = mBuffers[c].data();
 			}
 
 			mChannels = channels;
@@ -442,7 +441,6 @@ namespace tklb {
 		void inject(T* mem, const Size size, const uchar channel = 0) {
 			TKLB_ASSERT(channel < MAX_CHANNELS)
 			mBuffers[channel].inject(mem, size);
-			mRawBuffers[channel] = mBuffers[channel].data();
 			mSize = size;
 			mValidSize = size;
 			if (mChannels < channel + 1) {
@@ -460,7 +458,6 @@ namespace tklb {
 		void inject(const T* mem, const Size size, const uchar channel = 0) {
 			TKLB_ASSERT(channel < MAX_CHANNELS)
 			mBuffers[channel].inject(mem, size);
-			mRawBuffers[channel] = const_cast<T*>(mem);
 			mSize = size;
 			mValidSize = size;
 			if (mChannels < channel + 1) {
@@ -521,11 +518,13 @@ namespace tklb {
 		 */
 		T** getRaw() {
 			TKLB_ASSERT_STATE(assertOnConstMem())
-			return mRawBuffers;
+			TKLB_ASSERT(false) // TODO
+			return nullptr;
 		}
 
 		const T** getRaw() const {
-			return mRawBuffers;
+			TKLB_ASSERT(false) // TODO
+			return nullptr;
 		}
 
 		/**

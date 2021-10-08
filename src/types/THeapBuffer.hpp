@@ -29,68 +29,24 @@ namespace tklb {
 		using Size = unsigned int;
 
 	private:
-		T* mBuf = nullptr; // Underlying buffer
-		// Memory pool used for allocations
+		T* mBuf = nullptr;			// Underlying buffer
+		/**
+		 * TODO move this in a template param
+		 * Memory pool used for allocations
+		 */
 		memory::MemoryPool& mPool;
+		Size mSize = 0; // elements in buffer
 
-		Size mSize = 0; // size of elements requested
-
-		// if it's 0 the memory is not actually owned by the buffer
-		Size mRealSize = 0; // the actually allocated size
+		/**
+		 * the actually allocated size
+		 * if it's 0 the memory is not actually owned by the buffer
+		 * and won't be delete with the object.
+		 * No safety mechanism if memory becomes invalid
+		 */
+		Size mRealSize = 0;
 
 		// True when the foreign memory is const, only cheked in debug mode
 		TKLB_ASSERT_STATE(bool IS_CONST = false)
-
-		/**
-		 * @brief Allocated the exact size requsted and copies existing objects.
-		 * Will not call their destructors or constructors!
-		 */
-		bool allocate(Size chunk) noexcept {
-			T* oldBuf = mBuf;
-			if (0 < chunk) {
-				T* newBuf = nullptr;
-				// TODO tklb Consider using realloc
-				if (Aligned) {
-					newBuf = reinterpret_cast<T*>(
-						mPool.allocateAligned(chunk * sizeof(T))
-					);
-				} else {
-					newBuf = reinterpret_cast<T*>(
-						mPool.allocate(chunk * sizeof(T))
-					);
-				}
-				if (newBuf == nullptr) {
-					TKLB_ASSERT(false)
-					return false; // ! Allocation failed
-				}
-				if (0 < mSize && oldBuf != nullptr && newBuf != nullptr) {
-					// copy existing content
-					// TODO tklb only copy the new realsize which might be smaller
-					memory::copy(newBuf, oldBuf, std::min(mSize, chunk) * sizeof(T));
-				}
-				mBuf = newBuf;
-			} else {
-				mBuf = nullptr;
-			}
-
-			if (oldBuf != nullptr && !injected() && mRealSize > 0) {
-				// Get rif of oldbuffer, object destructors were alredy called
-				if (Aligned) {
-					mPool.deallocateAligned(oldBuf);
-				} else {
-					mPool.deallocate(oldBuf);
-				}
-			}
-			TKLB_ASSERT_STATE(IS_CONST = false)
-			mRealSize = chunk;
-			TKLB_CHECK_HEAP()
-			return true;
-		}
-
-		Size closestChunkSize(Size chunk) const {
-			return Granularity * Size(std::ceil(chunk / double(Granularity)));
-		}
-
 
 	public:
 		/**
@@ -114,8 +70,7 @@ namespace tklb {
 		}
 
 		/**
-		 * @brief Copy the contents of another buffer in
-		 * See set()
+		 * @brief Copy Constructor, calls set()
 		 * Failed allocations have to be checked
 		 */
 		HeapBuffer(
@@ -128,10 +83,31 @@ namespace tklb {
 			set(data, size);
 		}
 
-		HeapBuffer(const HeapBuffer*) = delete;
-		HeapBuffer(HeapBuffer&&) = delete;
+		/**
+		 * @brief Move contructor, will mark the original buffer as injected
+		 */
+		HeapBuffer(HeapBuffer&& source) :
+			mPool(source.mPool),
+			mBuf(source.mBuf),
+			mSize(source.mSize),
+			mRealSize(source.mRealSize)
+		{
+			TKLB_ASSERT_STATE(IS_CONST = source.IS_CONST)
+			source.mRealSize = 0;
+		}
+
+		HeapBuffer& operator= (HeapBuffer&& source) {
+			TKLB_ASSERT(&mPool == &source.mPool)
+			mBuf = source.mBuf;
+			mSize = source.mSize;
+			mRealSize = source.mRealSize;
+			TKLB_ASSERT_STATE(IS_CONST = source.IS_CONST)
+			source.mRealSize = 0;
+			return *this;
+		}
+
 		HeapBuffer& operator= (const HeapBuffer&) = delete;
-		HeapBuffer& operator= (HeapBuffer&&) = delete;
+		HeapBuffer(const HeapBuffer*) = delete;
 
 		~HeapBuffer() { resize(0); }
 
@@ -222,6 +198,16 @@ namespace tklb {
 			return mBuf[index];
 		}
 
+		T& last() {
+			TKLB_ASSERT(0 < mSize)
+			return mBuf[mSize - 1];
+		}
+
+		T& first() {
+			TKLB_ASSERT(0 < mSize)
+			return mBuf[0];
+		}
+
 		/**
 		 * @brief Will make sure the desired space is allocated
 		 * @return Whether the allocation was succesful
@@ -267,6 +253,7 @@ namespace tklb {
 
 		/**
 		 * @brief Push the object to the back of the buffer
+		 * TODO tklb move version
 		 */
 		bool push(const T& object) {
 			Size newSize = mSize + 1;
@@ -348,6 +335,56 @@ namespace tklb {
 
 		memory::MemoryPool& getPool() const { return mPool; }
 
+	private:
+		/**
+		 * @brief Allocated the exact size requsted and copies existing objects.
+		 * Will not call their destructors or constructors!
+		 */
+		bool allocate(Size chunk) noexcept {
+			T* oldBuf = mBuf;
+			if (0 < chunk) {
+				T* newBuf = nullptr;
+				// TODO tklb Consider using realloc
+				if (Aligned) {
+					newBuf = reinterpret_cast<T*>(
+						mPool.allocateAligned(chunk * sizeof(T))
+					);
+				} else {
+					newBuf = reinterpret_cast<T*>(
+						mPool.allocate(chunk * sizeof(T))
+					);
+				}
+				if (newBuf == nullptr) {
+					TKLB_ASSERT(false)
+					return false; // ! Allocation failed
+				}
+				if (0 < mSize && oldBuf != nullptr && newBuf != nullptr) {
+					// copy existing content
+					// TODO tklb only copy the new realsize which might be smaller
+					memory::copy(newBuf, oldBuf, std::min(mSize, chunk) * sizeof(T));
+				}
+				mBuf = newBuf;
+			} else {
+				mBuf = nullptr;
+			}
+
+			if (oldBuf != nullptr && !injected() && mRealSize > 0) {
+				// Get rif of oldbuffer, object destructors were alredy called
+				if (Aligned) {
+					mPool.deallocateAligned(oldBuf);
+				} else {
+					mPool.deallocate(oldBuf);
+				}
+			}
+			TKLB_ASSERT_STATE(IS_CONST = false)
+			mRealSize = chunk;
+			TKLB_CHECK_HEAP()
+			return true;
+		}
+
+		Size closestChunkSize(Size chunk) const {
+			return Granularity * Size(std::ceil(chunk / double(Granularity)));
+		}
 	};
 
 } // namespace
