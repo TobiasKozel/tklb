@@ -309,6 +309,24 @@ namespace tklb {
 		}
 
 		/**
+		 * @brief If T is a pointer type, delete will be called for
+		 * all pointers in buffer and resize(0) is called
+		 */
+		bool destroyPointers() {
+			if (!std::is_pointer<T>::value) {
+				TKLB_ASSERT(false)
+				return false;
+			}
+			for (Size i = 0; i < mSize; i++) {
+				// not using the allocator to delete since this is
+				// only intended for pointer buffers
+				delete mBuf[i];
+			}
+			resize(0);
+			return true;
+		}
+
+		/**
 		 * @brief Clears the buffer but doesn't free the memory
 		 */
 		void clear() { resize(0, false); }

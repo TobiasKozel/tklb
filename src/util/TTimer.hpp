@@ -4,7 +4,8 @@
 #include <string>
 #include <chrono>
 #include <ctime>
-#include "./TPrint.h"
+#include <stdio.h>
+#define TKLB_PRINT(...) printf(__VA_ARGS__);
 
 namespace tklb {
 
@@ -30,26 +31,40 @@ namespace tklb {
 		Time mStart;
 
 	public:
+
+		static Time current() {
+			return std::chrono::high_resolution_clock::now();
+		}
+
+		static size_t getMsSince(const Time& t) {
+			return std::chrono::duration_cast<std::chrono::milliseconds>(current() - t).count();
+		}
+
+		static size_t getUsSince(const Time& t) {
+			return std::chrono::duration_cast<std::chrono::microseconds>(current() - t).count();
+		}
+
+		static size_t getNsSince(const Time& t) {
+			return std::chrono::duration_cast<std::chrono::nanoseconds>(current() - t).count();
+		}
+
 		SectionTimer(const char* message = "", Unit unit = Microseconds, unsigned int divider = 1) {
 			mMessage = message;
 			mUnit = unit;
-			mStart = std::chrono::high_resolution_clock::now();
+			mStart = current();
 			mDivider = divider;
 		}
 
 		~SectionTimer() {
-			Time now = std::chrono::high_resolution_clock::now();
+			Time now = current();
 			if(mUnit == Nanoseconds) {
-				auto dur = std::chrono::duration_cast<std::chrono::nanoseconds>(now - mStart);
-				TKLB_PRINT("%s\t%i\tnanoseconds\n", mMessage, int(dur.count() / mDivider))
+				TKLB_PRINT("%s\t%i\tnanoseconds\n", mMessage, int(getNsSince(now) / mDivider))
 			}
 			if (mUnit == Microseconds) {
-				auto dur = std::chrono::duration_cast<std::chrono::microseconds>(now - mStart);
-				TKLB_PRINT("%s\t%i\tmicroseconds\n", mMessage, int(dur.count() / mDivider))
+				TKLB_PRINT("%s\t%i\tmicroseconds\n", mMessage, int(getUsSince(now) / mDivider))
 			}
 			if (mUnit == Miliseconds) {
-				auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(now - mStart);
-				TKLB_PRINT("%s\t%i\tmilliseconds\n", mMessage, int(dur.count() / mDivider))
+				TKLB_PRINT("%s\t%i\tmilliseconds\n", mMessage, int(getMsSince(now) / mDivider))
 			}
 		}
 	};
