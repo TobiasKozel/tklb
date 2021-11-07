@@ -1,11 +1,11 @@
-#ifndef TKLBZ_TIMER
-#define TKLBZ_TIMER
+#ifndef _TKLB_TIMER
+#define _TKLB_TIMER
 
 #include <string>
 #include <chrono>
 #include <ctime>
 #include <stdio.h>
-#define TKLB_PRINT(...) printf(__VA_ARGS__);
+#include "./TPrint.h"
 
 namespace tklb {
 
