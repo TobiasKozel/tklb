@@ -20,7 +20,7 @@ namespace tklb {
 	private:
 		const char* mMessage;
 
-		unsigned int mDivider;
+		size_t mDivider;
 
 		#ifdef _MSC_VER
 			using Time = std::chrono::time_point<std::chrono::steady_clock>;
@@ -48,7 +48,7 @@ namespace tklb {
 			return std::chrono::duration_cast<std::chrono::nanoseconds>(current() - t).count();
 		}
 
-		SectionTimer(const char* message = "", Unit unit = Microseconds, unsigned int divider = 1) {
+		SectionTimer(const char* message = "", Unit unit = Microseconds, size_t divider = 1) {
 			mMessage = message;
 			mUnit = unit;
 			mStart = current();
@@ -56,15 +56,14 @@ namespace tklb {
 		}
 
 		~SectionTimer() {
-			Time now = current();
 			if(mUnit == Nanoseconds) {
-				TKLB_PRINT("%s\t%i\tnanoseconds\n", mMessage, int(getNsSince(now) / mDivider))
+				TKLB_PRINT("%s\t%zu\tnanoseconds\n", mMessage, getNsSince(mStart) / mDivider)
 			}
 			if (mUnit == Microseconds) {
-				TKLB_PRINT("%s\t%i\tmicroseconds\n", mMessage, int(getUsSince(now) / mDivider))
+				TKLB_PRINT("%s\t%zu\tmicroseconds\n", mMessage, getUsSince(mStart) / mDivider)
 			}
 			if (mUnit == Miliseconds) {
-				TKLB_PRINT("%s\t%i\tmilliseconds\n", mMessage, int(getMsSince(now) / mDivider))
+				TKLB_PRINT("%s\t%zu\tmilliseconds\n", mMessage, getMsSince(mStart) / mDivider)
 			}
 		}
 	};
