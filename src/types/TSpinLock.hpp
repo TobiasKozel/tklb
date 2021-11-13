@@ -1,10 +1,14 @@
-#ifndef TKLBZ_SPINLOCK
-#define TKLBZ_SPINLOCK
+#ifndef _TKLB_SPINLOCK
+#define _TKLB_SPINLOCK
 
 // #include <atomic>
 #include "./TLockGuard.hpp"
 
 namespace tklb {
+	/**
+	 * @brief Spinlock
+	 * ! probably not thread safe
+	 */
 	class SpinLock {
 		// std::atomic<bool> mSpinLock;
 		bool mSpinLock;
@@ -44,4 +48,4 @@ namespace tklb {
 	};
 } // namespace
 
-#endif // TKLBZ_SPINLOCK
+#endif // _TKLB_SPINLOCK

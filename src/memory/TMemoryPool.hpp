@@ -1,8 +1,9 @@
 #ifndef TKLBZ_MEMORY_POOL
 #define TKLBZ_MEMORY_POOL
 
-#include <cstdint> // For uintptr_t
-#include <new> // for placement new with parameters
+#include <utility>	// For std::forward()
+#include <cstdint>	// For uintptr_t
+#include <new>		// For placement new with parameters
 
 #include "./TMemoryUtil.hpp"
 #include "../util/TAssert.h"

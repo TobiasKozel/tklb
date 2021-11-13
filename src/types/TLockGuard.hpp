@@ -1,5 +1,5 @@
-#ifndef TKLBZ_LOCKGUARD
-#define TKLBZ_LOCKGUARD
+#ifndef _TKLB_LOCKGUARD
+#define _TKLB_LOCKGUARD
 
 namespace tklb {
 	template <class T>
@@ -47,4 +47,4 @@ namespace tklb {
 		}
 	};
 } // namespace tklb
-#endif // TKLBZ_LOCKGUARD
+#endif // _TKLB_LOCKGUARD

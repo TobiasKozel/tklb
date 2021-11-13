@@ -4,8 +4,8 @@
 #include "../util/TAssert.h"
 #include "../memory/TMemory.hpp"
 
-#include <cmath>
-#include <utility>
+#include <algorithm>	// For std::max
+#include <cmath>		// For std::ceil
 
 namespace tklb {
 	constexpr size_t _HeapBufferDefaultGranularity(size_t size) {

@@ -1,12 +1,12 @@
-#ifndef TKLBZ_MUTEX
-#define TKLBZ_MUTEX
+#ifndef _TKLB_MUTEX
+#define _TKLB_MUTEX
 
 #include <mutex>
 #include "./TLockGuard.hpp"
 
 namespace tklb {
 	/**
-	 * @brief Mutex wrapper
+	 * @brief std::mutex wrapper
 	 */
 	class Mutex {
 		std::mutex mMutex;
@@ -39,4 +39,4 @@ namespace tklb {
 	};
 } // namespace
 
-#endif // TKLB_MUTEX
+#endif // _TKLB_MUTEX
