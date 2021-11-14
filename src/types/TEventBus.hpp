@@ -20,35 +20,28 @@ namespace tklb {
 		#ifdef USE_HEAPBUFFER
 			using Subscriptions = HeapBuffer<BaseSubscription*>;
 		#else
-			using Subscriptions = StackBuffer<BaseSubscription*, 8>;
+			using Subscriptions = StackBuffer<BaseSubscription*, 2>;
 		#endif
 
 		Subscriptions mEvents[EVENT_COUNT];
 		MutexType mMutex;
+		using Lock = typename MutexType::Lock;
 
 		void addSubscriber(BaseSubscription* sub, const EventId eventId) {
 			TKLB_ASSERT(eventId < EVENT_COUNT)
-			LockGuard lock(mMutex);
+			Lock lock(mMutex);
 			mEvents[eventId].push(sub);
 		}
 
 		void removeSubscriber(BaseSubscription* sub, const EventId eventId) {
 			TKLB_ASSERT(eventId < EVENT_COUNT)
-			MutexType::Lock lock(mMutex);
+			Lock lock(mMutex);
 			mEvents[eventId].remove(sub);
 		}
 
 		class BaseSubscription {
 		public:
 			virtual ~BaseSubscription() { };
-		protected:
-			EventBus* const mBus = nullptr;
-			void* const mContext;
-			const EventId mEventId; // only needed for unsubbing, could be omitted
-
-			BaseSubscription(
-				EventBus* bus, void* context, EventId eventId
-			) : mBus(bus), mContext(context), mEventId(eventId) { }
 		};
 
 	public:
@@ -60,22 +53,24 @@ namespace tklb {
 			friend EventBus;
 			using Callback = Delegate<void(Parameters...)>;
 			Callback mCallback;
+			EventBus* const mBus = nullptr;
+			const EventId mEventId; // only needed for unsubbing, could be omitted
 		public:
-			Subscription(EventBus*, const EventId, const Func& callback);
+			Subscription(EventBus*, const EventId, const Callback&&);
 			~Subscription();
 		};
 
 		template<typename... Parameters>
 		void fireEvent(const EventId eventId, Parameters... param) {
 			TKLB_ASSERT(eventId < EVENT_COUNT)
-			if (mEvents[pEventId].size() == 0) { return; } // don't even wait for lock
-			MutexType::Lock lock(mMutex);
-			for (typename Subscriptions::Size i = 0; i < mEvents[pEventId].size(); i++) {
+			if (mEvents[eventId].size() == 0) { return; } // don't even wait for lock
+			Lock lock(mMutex);
+			for (typename Subscriptions::Size i = 0; i < mEvents[eventId].size(); i++) {
 				#ifdef TKLB_MEM_TRACE
-					auto sub = dynamic_cast<Subscription<T>*>(mEvents[pEventId][i]);
+					auto sub = dynamic_cast<Subscription<Parameters...>*>(mEvents[eventId][i]);
 					TKLB_ASSERT(sub != nullptr)
 				#else
-					auto sub = reinterpret_cast<Subscription<T>*>(mEvents[pEventId][i]);
+					auto sub = reinterpret_cast<Subscription<Parameters...>*>(mEvents[eventId][i]);
 				#endif // TKLB_MEM_TRACE
 				sub->mCallback(param...);
 			}
@@ -91,8 +86,8 @@ namespace tklb {
 	template <int EVENT_COUNT, typename EventId, class MutexType>
 	template<typename... Parameters>
 	EventBus<EVENT_COUNT, EventId, MutexType>::Subscription<Parameters...>::Subscription(
-		EventBus* bus, const EventId eventId, Callback callback, void* context
-	) : BaseSubscription(bus, context, eventId), mCallback(callback) {
+		EventBus* bus, const EventId eventId, const Callback&& callback
+	) : mBus(bus), mEventId(eventId), mCallback(callback) {
 		TKLB_ASSERT(bus != nullptr)
 		bus->addSubscriber(this, eventId);
 	}
