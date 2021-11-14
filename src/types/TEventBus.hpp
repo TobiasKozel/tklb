@@ -6,7 +6,9 @@
 #else
 	#include "./TStackBuffer.hpp"
 #endif // USE_HEAPBUFFER
+
 #include "./TMutexDummy.hpp"
+#include "./TDelegate.hpp"
 
 namespace tklb {
 	/**
@@ -42,7 +44,7 @@ namespace tklb {
 		protected:
 			EventBus* const mBus = nullptr;
 			void* const mContext;
-			const EventId mEventId;
+			const EventId mEventId; // only needed for unsubbing, could be omitted
 
 			BaseSubscription(
 				EventBus* bus, void* context, EventId eventId
@@ -53,18 +55,18 @@ namespace tklb {
 		EventBus() { }
 		~EventBus() { }
 
-		template <class T>
+		template<typename... Parameters>
 		class Subscription : public BaseSubscription {
 			friend EventBus;
-			using Callback = void (*)(const T&, void*);
+			using Callback = Delegate<void(Parameters...)>;
 			Callback mCallback;
 		public:
-			Subscription(EventBus*, const EventId, Callback, void* = nullptr);
+			Subscription(EventBus*, const EventId, const Func& callback);
 			~Subscription();
 		};
 
-		template <class T>
-		VAE_ALWAYS_INLINE void fireEvent(const EventId eventId, T param) {
+		template<typename... Parameters>
+		void fireEvent(const EventId eventId, Parameters... param) {
 			TKLB_ASSERT(eventId < EVENT_COUNT)
 			if (mEvents[pEventId].size() == 0) { return; } // don't even wait for lock
 			MutexType::Lock lock(mMutex);
@@ -75,28 +77,25 @@ namespace tklb {
 				#else
 					auto sub = reinterpret_cast<Subscription<T>*>(mEvents[pEventId][i]);
 				#endif // TKLB_MEM_TRACE
-				sub->mCallback(param, sub->mContext);
+				sub->mCallback(param...);
 			}
 		}
 	}; // class EventBus
 
 	template <int EVENT_COUNT, typename EventId, class MutexType>
-	template <class T>
-	EventBus<EVENT_COUNT, EventId, MutexType>::Subscription<T>::~Subscription() {
-		if (Subscription::mBus == nullptr) { return; }
+	template<typename... Parameters>
+	EventBus<EVENT_COUNT, EventId, MutexType>::Subscription<Parameters...>::~Subscription() {
 		Subscription::mBus->removeSubscriber(this, Subscription::mEventId);
 	}
 
 	template <int EVENT_COUNT, typename EventId, class MutexType>
-	template <class T>
-	EventBus<EVENT_COUNT, EventId, MutexType>::Subscription<T>::Subscription(
+	template<typename... Parameters>
+	EventBus<EVENT_COUNT, EventId, MutexType>::Subscription<Parameters...>::Subscription(
 		EventBus* bus, const EventId eventId, Callback callback, void* context
 	) : BaseSubscription(bus, context, eventId), mCallback(callback) {
-		// assert
-		if (bus == nullptr) { return; }
+		TKLB_ASSERT(bus != nullptr)
 		bus->addSubscriber(this, eventId);
 	}
 } // namespace tklb
-
 
 #endif // _TKLB_EVENT_BUS
