@@ -93,6 +93,10 @@ namespace tklb { namespace memory {
 			}
 		}
 
+		Size getAllocated() const { return mPool.allocated; }
+
+		Size getTotalSize() const { return mPool.size; }
+
 		virtual void* allocate(Size size) = 0;
 
 		virtual void deallocate(void* ptr) = 0;

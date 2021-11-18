@@ -17,7 +17,7 @@
 #define realloc(ptr, size)		TKLB_REALLOC(ptr, size)
 #define calloc(num, size)		TKLB_CALLOC(num, size)
 
-// Capturing spcific variations of malloc is actual madness
+// Capturing specific variations of malloc is actual madness
 #define _MM_MALLOC_H_INCLUDED
 #define __MM_MALLOC_H
 
