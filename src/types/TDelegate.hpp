@@ -6,6 +6,7 @@ namespace tklb {
 	 * Stripped down version of this delegate implementation
 	 * https://github.com/marcmo/delegates/tree/f0938dac2ad779226ef637da350e964ac8008ba5
 	 * Stripped return value, const and free function version
+	 * TODO tklb add return type back in
 	 */
 
 	template<typename... Parameters>

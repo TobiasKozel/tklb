@@ -1,15 +1,18 @@
 /**
- * Wrap assertions, just in case
+ * Wrap assertions
  */
 
 #ifndef TKLB_ASSERT
+
 #ifdef TKLB_NO_ASSERT
 	#define TKLB_ASSERT(condition);
 	#define TKLB_ASSERT_STATE(condition);
 #else
-	#ifdef TKLB_ASSERT_SEGFAULT
-		// Triggers a segfault. Dumbest way to break in the debugger since gdb on windows doesn't break otherwise.
-		#define TKLB_ASSERT(condition) if (condition) { } else { reinterpret_cast<int*>(0)[0] = 0; };
+	#ifdef _MSC_VER
+		#include <cassert>
+		#define TKLB_ASSERT(condition) assert(condition);
+		// #include <intrin.h>
+		// #define TKLB_ASSERT(condition) if (!(condition)) { __debugbreak(); }
 	#else
 		#include <cassert>
 		#define TKLB_ASSERT(condition) assert(condition);
@@ -23,4 +26,5 @@
 	#define TKLB_ASSERT_STATE(condition) condition;
 
 #endif // TKLB_NO_ASSERT
+
 #endif // TKLB_ASSERT

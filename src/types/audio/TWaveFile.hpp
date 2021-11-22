@@ -18,20 +18,8 @@ namespace tklb {
 		 * anything on the heap
 		 */
 		namespace _ {
-			void* drwaveMalloc(size_t size, void* userData) {
-				return TKLB_MALLOC(size);
-			}
-
-			void drwaveFree(void* ptr, void* userData) {
-				TKLB_FREE(ptr);
-			}
-
-			drwav_allocation_callbacks drwaveCallbacks {
-				nullptr,		// No userdata
-				&drwaveMalloc,
-				nullptr,		// TODO tklb test and add the realloc
-				&drwaveFree
-			};
+			void* drwaveMalloc(size_t size, void* userData);
+			void drwaveFree(void* ptr, void* userData);
 		}
 
 		/**
@@ -42,13 +30,19 @@ namespace tklb {
 		 */
 		template <typename T>
 		bool load(const char* path, AudioBufferTpl<T>& out, typename AudioBufferTpl<T>::Size length = 0) {
+			drwav_allocation_callbacks drwaveCallbacks {
+				nullptr,		// No userdata
+				&_::drwaveMalloc,
+				nullptr,		// TODO tklb test and add the realloc
+				&_::drwaveFree
+			};
 			drwav wav;
 			if (length == 0) {
-				if (!drwav_init_file(&wav, path, &_::drwaveCallbacks)) {
+				if (!drwav_init_file(&wav, path, &drwaveCallbacks)) {
 					return false;
 				}
 			} else {
-				if (!drwav_init_memory(&wav, path, length, &_::drwaveCallbacks)) {
+				if (!drwav_init_memory(&wav, path, length, &drwaveCallbacks)) {
 					return false;
 				}
 			}
@@ -114,6 +108,12 @@ namespace tklb {
 			const WaveOptions&& options = {},
 			HeapBuffer<char>* out = nullptr
 		) {
+			drwav_allocation_callbacks drwaveCallbacks {
+				nullptr,		// No userdata
+				&_::drwaveMalloc,
+				nullptr,		// TODO tklb test and add the realloc
+				&_::drwaveFree
+			};
 			drwav wav;
 
 			drwav_data_format droptions;
@@ -126,11 +126,11 @@ namespace tklb {
 			size_t outSize = 0;
 			void* memory = nullptr;
 			if (out == nullptr) { // write to file
-				if (!drwav_init_file_write(&wav, path, &droptions, &_::drwaveCallbacks)) {
+				if (!drwav_init_file_write(&wav, path, &droptions, &drwaveCallbacks)) {
 					return false;
 				}
 			} else {
-				if (!drwav_init_memory_write(&wav, &memory, &outSize, &droptions, &_::drwaveCallbacks)) {
+				if (!drwav_init_memory_write(&wav, &memory, &outSize, &droptions, &drwaveCallbacks)) {
 					return false;
 				}
 			}
