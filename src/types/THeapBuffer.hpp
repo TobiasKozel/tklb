@@ -309,6 +309,18 @@ namespace tklb {
 		}
 
 		/**
+		 * Otherwise use memory location
+		 */
+		bool remove(const T* object) {
+			for (Size i = 0; i < mSize; i++) {
+				if ((mBuf + i) == object) {
+					return remove(i);
+				}
+			}
+			return false;
+		}
+
+		/**
 		 * @brief If T is a pointer type, delete will be called for
 		 * all pointers in buffer and resize(0) is called
 		 */
