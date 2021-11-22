@@ -11,7 +11,7 @@ namespace tklb {
 	 */
 	class SpinLock {
 		// std::atomic<bool> mSpinLock;
-		bool mSpinLock;
+		bool mSpinLock = false;
 		// This should be an atomic or some kind of
 		// proper sync mechanism but performance tanks with atomics
 	public:
