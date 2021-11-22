@@ -117,6 +117,7 @@ namespace tklb {
 			drwav wav;
 
 			drwav_data_format droptions;
+			TKLB_ASSERT(in.sampleRate != 0) // Set a samplerate
 			droptions.sampleRate = in.sampleRate;
 			droptions.channels = in.channels();
 			droptions.bitsPerSample = options.bitsPerSample;
@@ -144,21 +145,23 @@ namespace tklb {
 			case WaveOptions::Format::IEEE_FLOAT:
 				{
 					// TODO benchmark against aligned heapbuffer
-					float interleaved[chunkSize * in.channels()];
+					auto interleaved = new float[chunkSize * in.channels()];
 					while (written < frames) {
 						auto remaining = in.putInterleaved(interleaved, chunkSize, written);
 						written += drwav_write_pcm_frames(&wav, remaining, interleaved);
 					}
+					delete[] interleaved;
 				}
 				break;
 			case WaveOptions::Format::PCM:
 				{
 					// TODO benchmark against aligned heapbuffer
-					short interleaved[chunkSize * in.channels()];
+					auto interleaved = new short[chunkSize * in.channels()];
 					while (written < frames) {
 						auto read = in.putInterleaved(interleaved, chunkSize, written);
 						written += drwav_write_pcm_frames(&wav, read, interleaved);
 					}
+					delete[] interleaved;
 				}
 				break;
 			default:
