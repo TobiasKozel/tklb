@@ -63,7 +63,7 @@ namespace tklb {
 	private:
 		Buffer<T> mBuffers[MAX_CHANNELS]; // TODO performance use a single linear buffer maybe
 		Size mSize = 0; // TODO preformance throw this out and use heapbuffer size
-		Size mValidSize = 0;
+		Size mValidSize = 0; // TODO use for set add and multiply
 		uchar mChannels = 0;
 
 	public:

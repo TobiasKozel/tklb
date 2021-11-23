@@ -46,30 +46,30 @@ namespace tklb {
 					return false;
 				}
 			}
-			/**
-			 * TODO tklb chunked wav loading
-			 * Also use type from wav file to avoid conversion in drwav
-			 */
-			float* sampleData =
-				reinterpret_cast<float*>(
-					TKLB_MALLOC_ALIGNED(size_t(wav.totalPCMFrameCount) * size_t(wav.channels) * sizeof(float))
+			using Size = typename AudioBufferTpl<T>::Size;
+			constexpr Size chunkSize = 128;
+			Size read = 0;
+			HeapBuffer<float> chunkBuffer;
+			chunkBuffer.resize(chunkSize);
+
+			out.sampleRate = wav.sampleRate;
+			out.resize(wav.totalPCMFrameCount, wav.channels);
+
+			while (read < wav.totalPCMFrameCount) {
+				Size remaining = std::min(Size(wav.totalPCMFrameCount - read), chunkSize);
+				auto got = drwav_read_pcm_frames_f32(
+					&wav, remaining, chunkBuffer.data()
 				);
+				TKLB_ASSERT(got == remaining)
+				out.setFromInterleaved(chunkBuffer.data(), read, wav.channels, 0, read);
+				read += got;
+			}
 
-			if (sampleData == nullptr) { return false; }
-
-			length = drwav_read_pcm_frames_f32(
-				&wav, wav.totalPCMFrameCount, sampleData
-			);
-
-			if (length == 0) {
-				TKLB_FREE_ALIGNED(sampleData);
+			if (read == 0) {
 				return false;
 			}
-			out.sampleRate = wav.sampleRate;
-			out.resize(length, wav.channels);
-			out.setFromInterleaved(sampleData, length, wav.channels);
-			out.setValidSize(length);
-			TKLB_FREE_ALIGNED(sampleData);
+
+			out.setValidSize(read);
 			drwav_uninit(&wav);
 			return true;
 		}
@@ -138,7 +138,7 @@ namespace tklb {
 
 			size_t written = 0;
 			using Size = HeapBuffer<float>::Size;
-			const Size chunkSize = 128;
+			constexpr Size chunkSize = 128;
 			const size_t frames = in.validSize();
 
 			switch (options.format) {
