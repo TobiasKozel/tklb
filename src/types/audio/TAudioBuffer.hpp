@@ -601,7 +601,7 @@ namespace tklb {
 			// TODO see how the cpu cache is handling this
 			for (Size i = 0; i < length; i++) {
 				for (uchar c = 0; c < chan; c++) {
-					buffer[out] = mBuffers[c][i + offset];
+					buffer[out] = T2(mBuffers[c][i + offset]);
 					out++;
 				}
 			}

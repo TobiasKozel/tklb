@@ -36,6 +36,11 @@ namespace tklb {
 				nullptr,		// TODO tklb test and add the realloc
 				&_::drwaveFree
 			};
+
+			using Size = typename AudioBufferTpl<T>::Size;
+			using uchar = typename AudioBufferTpl<T>::uchar;
+			using ushort = typename AudioBufferTpl<T>::ushort;
+
 			drwav wav;
 			if (length == 0) {
 				if (!drwav_init_file(&wav, path, &drwaveCallbacks)) {
@@ -46,22 +51,19 @@ namespace tklb {
 					return false;
 				}
 			}
-			using Size = typename AudioBufferTpl<T>::Size;
 			constexpr Size chunkSize = 128;
 			Size read = 0;
 			HeapBuffer<float> chunkBuffer;
 			chunkBuffer.resize(chunkSize);
 
 			out.sampleRate = wav.sampleRate;
-			out.resize(wav.totalPCMFrameCount, wav.channels);
+			out.resize(Size(wav.totalPCMFrameCount), Size(wav.channels));
 
 			while (read < wav.totalPCMFrameCount) {
 				Size remaining = std::min(Size(wav.totalPCMFrameCount - read), chunkSize);
-				auto got = drwav_read_pcm_frames_f32(
-					&wav, remaining, chunkBuffer.data()
-				);
+				auto got = Size(drwav_read_pcm_frames_f32(&wav, remaining, chunkBuffer.data()));
 				TKLB_ASSERT(got == remaining)
-				out.setFromInterleaved(chunkBuffer.data(), read, wav.channels, 0, read);
+				out.setFromInterleaved(chunkBuffer.data(), read, uchar(wav.channels), 0, read);
 				read += got;
 			}
 
@@ -116,6 +118,8 @@ namespace tklb {
 			};
 			drwav wav;
 
+			using Size = typename AudioBufferTpl<T>::Size;
+
 			drwav_data_format droptions;
 			TKLB_ASSERT(in.sampleRate != 0) // Set a samplerate
 			droptions.sampleRate = in.sampleRate;
@@ -136,10 +140,9 @@ namespace tklb {
 				}
 			}
 
-			size_t written = 0;
-			using Size = HeapBuffer<float>::Size;
+			Size written = 0;
 			constexpr Size chunkSize = 128;
-			const size_t frames = in.validSize();
+			const Size frames = in.validSize();
 
 			switch (options.format) {
 			case WaveOptions::Format::IEEE_FLOAT:
@@ -148,7 +151,7 @@ namespace tklb {
 					auto interleaved = new float[chunkSize * in.channels()];
 					while (written < frames) {
 						auto remaining = in.putInterleaved(interleaved, chunkSize, written);
-						written += drwav_write_pcm_frames(&wav, remaining, interleaved);
+						written += Size(drwav_write_pcm_frames(&wav, remaining, interleaved));
 					}
 					delete[] interleaved;
 				}
@@ -159,7 +162,7 @@ namespace tklb {
 					auto interleaved = new short[chunkSize * in.channels()];
 					while (written < frames) {
 						auto read = in.putInterleaved(interleaved, chunkSize, written);
-						written += drwav_write_pcm_frames(&wav, read, interleaved);
+						written += Size(drwav_write_pcm_frames(&wav, read, interleaved));
 					}
 					delete[] interleaved;
 				}
@@ -171,7 +174,7 @@ namespace tklb {
 			drwav_uninit(&wav);
 
 			if (out != nullptr) {
-				out->set(reinterpret_cast<char*>(memory), outSize);
+				out->set(reinterpret_cast<char*>(memory), Size(outSize));
 			}
 
 			return true;
