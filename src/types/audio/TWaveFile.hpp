@@ -60,10 +60,8 @@ namespace tklb {
 			out.resize(Size(wav.totalPCMFrameCount), Size(wav.channels));
 
 			while (read < wav.totalPCMFrameCount) {
-				Size remaining = std::min(Size(wav.totalPCMFrameCount - read), chunkSize);
-				auto got = Size(drwav_read_pcm_frames_f32(&wav, remaining, chunkBuffer.data()));
-				TKLB_ASSERT(got == remaining)
-				out.setFromInterleaved(chunkBuffer.data(), read, uchar(wav.channels), 0, read);
+				auto got = Size(drwav_read_pcm_frames_f32(&wav, chunkSize, chunkBuffer.data()));
+				out.setFromInterleaved(chunkBuffer.data(), got, uchar(wav.channels), 0, read);
 				read += got;
 			}
 
