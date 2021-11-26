@@ -15,6 +15,8 @@ namespace tklb {
 	/**
 	 * Basically a bad std::vector which can also work with foreign memory.
 	 * Classes stored inside need to have a default contructor
+	 *
+	 * TODO add iterator
 	 */
 	template <
 		typename T, bool Aligned = false,

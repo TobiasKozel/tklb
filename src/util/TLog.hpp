@@ -1,6 +1,10 @@
 #ifndef TKLBZ_LOG
 #define TKLBZ_LOG
 
+/**
+ *  ! Unuseable mess
+ */
+
 #include <fstream>
 
 // TODO tklb use wrapped mutex
