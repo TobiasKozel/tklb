@@ -1,7 +1,9 @@
-#ifndef TKLBZ_AUDIOBUFFER
-#define TKLBZ_AUDIOBUFFER
+#ifndef _TKLB_AUDIOBUFFER
+#define _TKLB_AUDIOBUFFER
 
 #include <algorithm>
+#include <type_traits>	// std::is_arithmetic
+
 #include "../../memory/TMemory.hpp"
 #include "../../util/TMath.hpp"
 
@@ -32,7 +34,7 @@ namespace tklb {
 	 */
 	template <typename T>
 	class AudioBufferTpl {
-
+		static_assert(std::is_arithmetic<T>::value, "Need arithmetic type.");
 	public:
 		/**
 		 * @brief Sample type exposed for convenience
@@ -118,6 +120,7 @@ namespace tklb {
 			const uchar channel = 0,
 			const Size offsetDst = 0
 		) {
+			static_assert(std::is_arithmetic<T2>::value, "Need arithmetic type.");
 			if (mChannels <= channel) { return; }
 			TKLB_ASSERT(size() >= offsetDst)
 			length = std::min(length, size() - offsetDst);
@@ -147,6 +150,7 @@ namespace tklb {
 			const Size offsetSrc = 0,
 			const Size offsetDst = 0
 		) {
+			static_assert(std::is_arithmetic<T2>::value, "Need arithmetic type.");
 			for (uchar c = 0; c < channels; c++) {
 				set(samples[c] + offsetSrc, length, c, offsetDst);
 			}
@@ -208,6 +212,7 @@ namespace tklb {
 			Size offsetSrc = 0,
 			const Size offsetDst = 0
 		) {
+			static_assert(std::is_arithmetic<T2>::value, "Need arithmetic type.");
 			TKLB_ASSERT(size() >= offsetDst)
 			length = std::min(size() - offsetDst, length);
 			offsetSrc *= channels;
@@ -542,6 +547,7 @@ namespace tklb {
 			const uchar channel = 0,
 			const Size offset = 0
 		) const {
+			static_assert(std::is_arithmetic<T2>::value, "Need arithmetic type.");
 			if (mChannels <= channel) { return 0; }
 			const Size valid = validSize();
 			TKLB_ASSERT(offset <= valid)
@@ -571,6 +577,7 @@ namespace tklb {
 			uchar channels = 0,
 			const Size offset = 0
 		) const {
+			static_assert(std::is_arithmetic<T2>::value, "Need arithmetic type.");
 			Size res = 0;
 			channels = (channels == 0) ? mChannels : channels;
 			for (uchar c = 0; c < channels; c++) {
@@ -582,7 +589,7 @@ namespace tklb {
 		/**
 		 * @brief Puts the interleaved contents in the target buffer
 		 * @param buffer The array to fill with interleaved audio
-		 * @param length Frames to interleave (not the length of the inerleaved result)
+		 * @param length Number of frames to interleave (not the length of the interleaved buffer)
 		 * @param offset Offset for the sourcebuffer (this)
 		 * @return Number of frames emitted
 		 */
@@ -592,6 +599,7 @@ namespace tklb {
 			Size length = 0,
 			const Size offset = 0
 		) const {
+			static_assert(std::is_arithmetic<T2>::value, "Need arithmetic type.");
 			const Size valid = validSize();
 			TKLB_ASSERT(offset <= valid)
 			const uchar chan = channels();
@@ -620,6 +628,6 @@ namespace tklb {
 		using AudioBuffer = AudioBufferTpl<double>;
 	#endif
 
-} // namespace
+} // namespace tklb
 
-#endif // TKLB_AUDIOBUFFER
+#endif // _TKLB_AUDIOBUFFER

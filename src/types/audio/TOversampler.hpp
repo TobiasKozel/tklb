@@ -75,6 +75,7 @@ public:
 	using Size = AudioBuffer::Size;
 
 	// TODO tklb Use the buffer instead
+	// TODO use delegeate
 	using ProcessFunction = std::function<void(T**, T**, Size)>;
 
 private:

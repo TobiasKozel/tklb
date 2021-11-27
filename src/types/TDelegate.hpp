@@ -20,6 +20,7 @@ namespace tklb {
 		void operator()(Parameters... parameters) const {
 			(*mCallback)(mContext, parameters...);
 		}
+		bool valid() const { return mCallback != nullptr; }
 	};
 
 	template<typename... Parameters>
@@ -29,6 +30,8 @@ namespace tklb {
 	struct Delegate<void(Parameters...)> : public BaseDelegate<Parameters...> {
 		using Base = BaseDelegate<Parameters...> ;
 		Delegate(void* context, typename Base::Callback func) : Base(context, func) { }
+		Delegate() : Base(nullptr, nullptr) { }
+
 	};
 
 	/**
