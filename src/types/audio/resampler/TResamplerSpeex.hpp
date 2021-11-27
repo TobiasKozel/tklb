@@ -96,7 +96,7 @@ namespace tklb {
 		 * @brief Resample function
 		 * Make sure the out buffer has enough space
 		 */
-		Size process(const AudioBufferTpl<T>& in, AudioBufferTpl<T>& out) {
+		Size process(const Buffer& in, Buffer& out) {
 			TKLB_ASSERT(in.sampleRate == mRateIn);
 			TKLB_ASSERT(out.sampleRate == mRateOut);
 			TKLB_ASSERT(in.validSize() > 0)

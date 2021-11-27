@@ -22,6 +22,8 @@ namespace tklb {
 			init(rateIn, rateOut, maxBlock, quality);
 		}
 
+		ResamplerLinearTpl() = default;
+
 		/**
 		 * @brief setup the resampler
 		 * @param rateIn Input sample rate
@@ -95,11 +97,11 @@ namespace tklb {
 		/**
 		 * @brief Estimate how many samples need to be put in to get n samples out.
 		 */
-		Size estimateNeed(const Size out) {
+		Size estimateNeed(const Size out) const {
 			return std::round(out * mFactor);
 		}
 
-		Size estimateOut(const Size in) {
+		Size estimateOut(const Size in) const {
 			return std::round(in * (double(mRateOut) / double(mRateIn)));
 		}
 
