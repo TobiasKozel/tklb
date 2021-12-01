@@ -46,6 +46,11 @@ namespace tklb {
 		 * Make sure the out buffer has enough space
 		 */
 		Size process(const Buffer& in, Buffer& out) {
+			TKLB_ASSERT(in.sampleRate == mRateIn);
+			TKLB_ASSERT(out.sampleRate == mRateOut);
+			TKLB_ASSERT(in.validSize() > 0)
+			TKLB_ASSERT(estimateOut(in.validSize()) <= out.size())
+
 			// mBuffer.set(in); // not needed without lowpass
 			const Size countIn = in.validSize();
 			Size countOut = 0;

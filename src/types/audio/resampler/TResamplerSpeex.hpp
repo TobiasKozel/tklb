@@ -100,6 +100,7 @@ namespace tklb {
 			TKLB_ASSERT(in.sampleRate == mRateIn);
 			TKLB_ASSERT(out.sampleRate == mRateOut);
 			TKLB_ASSERT(in.validSize() > 0)
+			TKLB_ASSERT(estimateOut(in.validSize()) <= out.size())
 			Size samplesOut = 0;
 			if (std::is_same<T, float>::value) {
 				// Input output buffer must not overlap when working directly on them
@@ -150,7 +151,7 @@ namespace tklb {
 		 * @brief Estimate how many samples need to be put in to get n samples out.
 		 */
 		Size estimateNeed(const Size out) const {
-			return int(std::round(out * (double(mRateIn) / double(mRateOut))));
+			return Size(std::floor(out * (double(mRateIn) / double(mRateOut))));
 		}
 
 		/**
@@ -168,7 +169,7 @@ namespace tklb {
 		 * Also adds a bit of padding.
 		 */
 		Size calculateBufferSize(Size initialSize) {
-			return estimateNeed(initialSize) + 10; // TODO tklb seperate function for need and provide
+			return estimateOut(initialSize) + 10;
 		}
 
 		/**
