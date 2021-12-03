@@ -1,5 +1,5 @@
-#ifndef TKLBZ_HEAPBUFFER
-#define TKLBZ_HEAPBUFFER
+#ifndef _TKLB_HEAPBUFFER
+#define _TKLB_HEAPBUFFER
 
 #include "../util/TAssert.h"
 #include "../memory/TMemory.hpp"
@@ -421,4 +421,4 @@ namespace tklb {
 
 } // namespace
 
-#endif // TKLB_HEAPBUFFER
+#endif // _TKLB_HEAPBUFFER

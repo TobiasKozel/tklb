@@ -1,12 +1,12 @@
-#ifndef TKLBZ_WAVE_FILE
-#define TKLBZ_WAVE_FILE
+#ifndef _TKLB_WAVE_FILE
+#define _TKLB_WAVE_FILE
 
 #include "../../memory/TMemory.hpp"
 #include "./TAudioBuffer.hpp"
 
 #include "../../../external/dr_wav.h"
 
-#ifdef TKLBZ_WAVE_FILE_IMPL
+#ifdef TKLB_WAVE_FILE_IMPL
 	#include "./TWaveFile.cpp"
 #endif
 
@@ -180,4 +180,4 @@ namespace tklb {
 	}
 } // namespace
 
-#endif // TKLBZ_WAVE_FILE
+#endif // _TKLB_WAVE_FILE

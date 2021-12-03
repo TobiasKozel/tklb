@@ -1,5 +1,5 @@
-#ifndef TKLBZ_FFT
-#define TKLBZ_FFT
+#ifndef _TKLB_FFT
+#define _TKLB_FFT
 
 
 #ifdef TKLB_USE_OOURA
@@ -14,4 +14,4 @@ namespace tklb {
 }
 #endif
 
-#endif // TKLB_FFT
+#endif // _TKLB_FFT

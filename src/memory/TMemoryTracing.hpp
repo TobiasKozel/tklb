@@ -1,5 +1,5 @@
-#ifdef TKLBZ_MEMORY_TRACING
-#define TKLBZ_MEMORY_TRACING
+#ifndef _TKLB_MEMORY_TRACING
+#define _TKLB_MEMORY_TRACING
 
 namespace tklb { namespace memory { namespace tracer {
 	static inline void* allocateTrace(size_t size, const char* file, int line) noexcept;
@@ -232,4 +232,4 @@ namespace tklb { namespace memory { namespace tracer {
 	}
 } } } // namespace tklb::memory::tracer
 
-#endif // TKLBZ_MEMORY_TRACING
+#endif // _TKLB_MEMORY_TRACING

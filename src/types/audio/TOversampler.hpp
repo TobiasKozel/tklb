@@ -1,5 +1,5 @@
-#ifndef TKLBZ_OVERSAMPLER
-#define TKLBZ_OVERSAMPLER
+#ifndef _TKLB_OVERSAMPLER
+#define _TKLB_OVERSAMPLER
 
 #include <functional>
 #include "../../util/TAssert.h"
@@ -186,4 +186,4 @@ public:
 
 } // namespace
 
-#endif // TKLB_OVERSAMPLER
+#endif // _TKLB_OVERSAMPLER

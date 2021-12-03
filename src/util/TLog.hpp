@@ -1,5 +1,5 @@
-#ifndef TKLBZ_LOG
-#define TKLBZ_LOG
+#ifndef _TKLB_LOG
+#define _TKLB_LOG
 
 /**
  *  ! Unuseable mess
@@ -81,8 +81,6 @@ namespace tklb {
 
 	public:
 
-		static constexpr const char* devider = "-------------------------------------------------------";
-
 		static void setLevel(Level loglevel) {
 			instance().mLevel = loglevel;
 		}
@@ -113,4 +111,4 @@ namespace tklb {
 }
 
 
-#endif
+#endif // _TKLB_LOG

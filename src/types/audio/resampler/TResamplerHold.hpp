@@ -1,5 +1,5 @@
-#ifndef TKLBZ_RESAMPLER_HOLD
-#define TKLBZ_RESAMPLER_HOLD
+#ifndef _TKLB_RESAMPLER_HOLD
+#define _TKLB_RESAMPLER_HOLD
 
 #include "../TAudioBuffer.hpp"
 
@@ -123,4 +123,4 @@ namespace tklb {
 
 } // namespace
 
-#endif // TKLBZ_RESAMPLER_HOLD
+#endif // _TKLB_RESAMPLER_HOLD

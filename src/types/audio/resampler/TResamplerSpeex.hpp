@@ -1,5 +1,5 @@
-#ifndef TKLBZ_RESAMPLER_SPEEX
-#define TKLBZ_RESAMPLER_SPEEX
+#ifndef _TKLB_RESAMPLER_SPEEX
+#define _TKLB_RESAMPLER_SPEEX
 
 #include "../../../util/TAssert.h"
 #include "../../../memory/TMemory.hpp"
@@ -209,4 +209,4 @@ namespace tklb {
 
 } // namespace
 
-#endif // RESAMPLER
+#endif // _TKLB_RESAMPLER_SPEEX

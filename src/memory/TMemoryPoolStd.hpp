@@ -1,5 +1,5 @@
-#ifndef TKLBZ_MEMORY_POOL_STD
-#define TKLBZ_MEMORY_POOL_STD
+#ifndef _TKLB_MEMORY_POOL_STD
+#define _TKLB_MEMORY_POOL_STD
 
 #include <stdlib.h>
 
@@ -77,4 +77,4 @@ namespace tklb { namespace memory {
 
 } } // namespace tklb::memory
 
-#endif // TKLBZ_MEMORY_POOL_STD
+#endif // _TKLB_MEMORY_POOL_STD

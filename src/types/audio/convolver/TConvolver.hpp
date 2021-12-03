@@ -1,5 +1,5 @@
-#ifndef TKLBZ_CONVOLVER
-#define TKLBZ_CONVOLVER
+#ifndef _TKLB_CONVOLVER
+#define _TKLB_CONVOLVER
 
 /**
  * Using template interfaces isn't an option
@@ -33,4 +33,4 @@ namespace tklb {
 	#endif
 } // namespace
 
-#endif // TKLB_CONVOLVER
+#endif // _TKLB_CONVOLVER

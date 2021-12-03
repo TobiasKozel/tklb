@@ -1,5 +1,5 @@
-#ifndef TKLBZ_MEMORY
-#define TKLBZ_MEMORY
+#ifndef _TKLB_MEMORY
+#define _TKLB_MEMORY
 
 #include "./TMemoryPool.hpp"
 #include "./TMemoryPoolStd.hpp"

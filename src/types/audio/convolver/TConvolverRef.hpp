@@ -1,5 +1,5 @@
-#ifndef TKLBZ_CONVOLVER_REF
-#define TKLBZ_CONVOLVER_REF
+#ifndef _TKLB_CONVOLVER_REF
+#define _TKLB_CONVOLVER_REF
 
 #include "../../../util/TAssert.h"
 #include "../TAudioBuffer.hpp"
@@ -126,4 +126,4 @@ namespace tklb {
 	#endif
 } // namespace
 
-#endif // TKLBZ_CONVOLVER_REF
+#endif // _TKLB_CONVOLVER_REF

@@ -1,5 +1,5 @@
-#ifndef TKLBZ_CONVOLVER_MONO
-#define TKLBZ_CONVOLVER_MONO
+#ifndef _TKLB_CONVOLVER_MONO
+#define _TKLB_CONVOLVER_MONO
 
 #include "../../../util/TAssert.h"
 #include "../../../util/TMath.hpp"
@@ -258,4 +258,4 @@ namespace tklb {
 
 } // namespace
 
-#endif // TKLB_CONVOLVER_MONO
+#endif // _TKLB_CONVOLVER_MONO

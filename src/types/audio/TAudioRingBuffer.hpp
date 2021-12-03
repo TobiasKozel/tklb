@@ -1,5 +1,5 @@
-#ifndef TKLBZ_AUDIORINGBUFFER
-#define TKLBZ_AUDIORINGBUFFER
+#ifndef _TKLB_AUDIORINGBUFFER
+#define _TKLB_AUDIORINGBUFFER
 
 #include "./TAudioBuffer.hpp"
 
@@ -130,4 +130,4 @@ namespace tklb {
 		using AudioRingBuffer = AudioRingBufferTpl<double>;
 	#endif
 }
-#endif
+#endif // _TKLB_AUDIORINGBUFFER

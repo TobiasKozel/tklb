@@ -1,5 +1,5 @@
-#ifndef TKLBZ_HANDLE_BUFFER
-#define TKLBZ_HANDLE_BUFFER
+#ifndef _TKLB_HANDLE_BUFFER
+#define _TKLB_HANDLE_BUFFER
 
 #include "./THeapBuffer.hpp"
 namespace tklb {
@@ -113,4 +113,4 @@ namespace tklb {
 	};
 }
 
-#endif // TKLBZ_HANDLE_BUFFER
+#endif // _TKLB_HANDLE_BUFFER

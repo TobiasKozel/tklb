@@ -1,5 +1,5 @@
-#ifndef TKLBZ_FFT_PFFFT
-#define TKLBZ_FFT_PFFFT
+#ifndef _TKLB_FFT_PFFFT
+#define _TKLB_FFT_PFFFT
 
 
 #ifdef TKLB_NO_SIMD
@@ -7,7 +7,7 @@
 #endif
 
 #include "../../../../external/pffft/pffft.h"
-#ifdef TKLBZ_FFT_PFFFT_IMPL
+#ifdef _TKLB_FFT_PFFFT_IMPL
 	#include "../../../../external/pffft/pffft.c"
 	#include "../../../../external/pffft/pffft_common.c"
 #endif
@@ -114,5 +114,5 @@ namespace tklb {
 
 } // namespace
 
-#endif // TKLB_FFT_PFFFT
+#endif // _TKLB_FFT_PFFFT
 

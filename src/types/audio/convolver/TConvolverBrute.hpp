@@ -1,5 +1,5 @@
-#ifndef TKLBZ_CONVOLVER_BRUTE
-#define TKLBZ_CONVOLVER_BRUTE
+#ifndef _TKLB_CONVOLVER_BRUTE
+#define _TKLB_CONVOLVER_BRUTE
 
 #include <cmath>
 #include "../../../util/TAssert.h"
@@ -96,4 +96,4 @@ namespace tklb {
 
 } // namespace
 
-#endif // TKLB_CONVOLVER_BRUTE
+#endif // _TKLB_CONVOLVER_BRUTE

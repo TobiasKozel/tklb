@@ -1,5 +1,5 @@
-#ifndef TKLBZ_MEMORY_POOL_STACK
-#define TKLBZ_MEMORY_POOL_STACK
+#ifndef _TKLB_MEMORY_POOL_STACK
+#define _TKLB_MEMORY_POOL_STACK
 
 #include "./TMemoryPool.hpp"
 #include "../util/TAssert.h"
@@ -157,4 +157,4 @@ namespace tklb { namespace memory {
 
 } } // namespace tklb::memory
 
-#endif // TKLBZ_MEMORY_POOL_STACK
+#endif // _TKLB_MEMORY_POOL_STACK

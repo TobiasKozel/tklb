@@ -1,5 +1,5 @@
-#ifndef TKLBZ_MATH
-#define TKLBZ_MATH
+#ifndef _TKLB_MATH
+#define _TKLB_MATH
 
 namespace tklb {
 
@@ -28,4 +28,4 @@ namespace tklb {
 	}
 } // namespace
 
-#endif // TKLB_MATH
+#endif // _TKLB_MATH

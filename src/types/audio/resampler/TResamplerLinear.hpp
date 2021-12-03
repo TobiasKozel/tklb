@@ -1,5 +1,5 @@
-#ifndef TKLBZ_RESAMPLER_LINEAR
-#define TKLBZ_RESAMPLER_LINEAR
+#ifndef _TKLB_RESAMPLER_LINEAR
+#define _TKLB_RESAMPLER_LINEAR
 
 #include "../TAudioBuffer.hpp"
 
@@ -159,4 +159,4 @@ namespace tklb {
 
 } // namespace
 
-#endif // TKLBZ_RESAMPLER_LINEAR
+#endif // _TKLB_RESAMPLER_LINEAR

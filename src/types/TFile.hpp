@@ -1,5 +1,5 @@
-#ifndef TKLBZ_FILE
-#define TKLBZ_FILE
+#ifndef _TKLB_FILE
+#define _TKLB_FILE
 
 #ifdef _WIN32
 	#include "../../external/dirent.h"
@@ -244,4 +244,4 @@ namespace tklb {
 
 } // namespace
 
-#endif // TKLBZ_FILE
+#endif // _TKLB_FILE

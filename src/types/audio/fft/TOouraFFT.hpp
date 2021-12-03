@@ -1,5 +1,5 @@
-#ifndef TKLBZ_FFT_OOURA
-#define TKLBZ_FFT_OOURA
+#ifndef _TKLB_FFT_OOURA
+#define _TKLB_FFT_OOURA
 
 
 #include "../TAudioBuffer.hpp"
@@ -125,4 +125,4 @@ namespace tklb {
 	};
 } // namespace
 
-#endif // TKLB_FFT_OOURA
+#endif // _TKLB_FFT_OOURA

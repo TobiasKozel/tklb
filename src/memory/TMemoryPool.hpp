@@ -1,5 +1,5 @@
-#ifndef TKLBZ_MEMORY_POOL
-#define TKLBZ_MEMORY_POOL
+#ifndef _TKLB_MEMORY_POOL
+#define _TKLB_MEMORY_POOL
 
 #include <utility>	// For std::forward()
 #include <cstdint>	// For uintptr_t
@@ -194,4 +194,4 @@ namespace tklb { namespace memory {
 	};
 } } // namespace tklb::memory
 
-#endif // TKLBZ_MEMORY_POOL
+#endif // _TKLB_MEMORY_POOL

@@ -1,5 +1,5 @@
-#ifndef TKLBZ_MEMORY_UTIL
-#define TKLBZ_MEMORY_UTIL
+#ifndef _TKLB_MEMORY_UTIL
+#define _TKLB_MEMORY_UTIL
 
 #ifndef TKLB_MEM_NO_STD
 	#include <cstring>
@@ -50,4 +50,4 @@ namespace tklb { namespace memory {
 
 } } // namesoace tklb::memory
 
-#endif // TKLBZ_MEMORY_UTIL
+#endif // _TKLB_MEMORY_UTIL

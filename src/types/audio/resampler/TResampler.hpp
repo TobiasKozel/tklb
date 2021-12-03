@@ -1,5 +1,5 @@
-#ifndef TKLBZ_RESAMPLER
-#define TKLBZ_RESAMPLER
+#ifndef _TKLB_RESAMPLER
+#define _TKLB_RESAMPLER
 
 /**
  * Using template interfaces isn't an option
@@ -23,4 +23,4 @@ namespace tklb {
 	#endif
 } // namespace
 
-#endif // TKLB_RESAMPLER
+#endif // _TKLB_RESAMPLER
