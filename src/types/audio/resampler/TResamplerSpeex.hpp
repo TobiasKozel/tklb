@@ -159,7 +159,7 @@ namespace tklb {
 		 */
 		Size estimateOut(const Size in) const {
 			TKLB_ASSERT(0 < mRateOut && 0 < mRateIn)
-			return std::round(in * (double(mRateOut) / double(mRateIn)));
+			return (Size) std::round(in * (double(mRateOut) / double(mRateIn)));
 		}
 
 		bool isInitialized() const { return mState != nullptr; }
