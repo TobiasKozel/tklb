@@ -606,12 +606,13 @@ namespace tklb {
 			length = (length == 0) ? valid : length;
 			length = std::min(valid - offset, length);
 			Size out = 0;
-			// TODO see how the cpu cache is handling this
-			for (Size i = 0; i < length; i++) {
-				for (uchar c = 0; c < chan; c++) {
-					buffer[out] = T2(mBuffers[c][i + offset]);
-					out++;
+			for (uchar c = 0; c < chan; c++) {
+				Size j = c;
+				for (Size i = 0; i < length; i++) {
+					buffer[j] = T2(mBuffers[c][i + offset]);
+					j += chan;
 				}
+				out += length;
 			}
 			return out / Size(channels());
 		}
