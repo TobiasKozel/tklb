@@ -77,10 +77,15 @@ namespace tklb {
 		 */
 		bool init(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
 			int err;
-			if (mState != nullptr) {
-				speex_resampler_destroy(mState);
+			if (rateIn == mRateIn && mRateOut == rateOut && mState != nullptr) {
+				// only clears out old data
+				speex_resampler_reset_mem(mState);
+			} else {
+				if (mState != nullptr) {
+					speex_resampler_destroy(mState);
+				}
+				mState = speex_resampler_init(MAX_CHANNELS, rateIn, rateOut, quality, &err);
 			}
-			mState = speex_resampler_init(MAX_CHANNELS, rateIn, rateOut, quality, &err);
 
 			mRateIn = rateIn;
 			mRateOut = rateOut;
