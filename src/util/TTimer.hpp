@@ -22,37 +22,33 @@ namespace tklb {
 
 		size_t mDivider;
 
-		#ifdef _MSC_VER
-			using Time = std::chrono::time_point<std::chrono::steady_clock>;
-		#else
-			using Time = std::chrono::system_clock::time_point;
-		#endif
+		using Time = std::chrono::time_point<std::chrono::steady_clock>;
 
 		Time mStart;
 
 	public:
 
-		static Time current() {
-			return std::chrono::high_resolution_clock::now();
+		static inline Time current() {
+			return std::chrono::steady_clock::now();
 		}
 
-		static size_t getMsSince(const Time& t) {
+		static inline size_t getMsSince(const Time& t) {
 			return std::chrono::duration_cast<std::chrono::milliseconds>(current() - t).count();
 		}
 
-		static size_t getUsSince(const Time& t) {
+		static inline  size_t getUsSince(const Time& t) {
 			return std::chrono::duration_cast<std::chrono::microseconds>(current() - t).count();
 		}
 
-		static size_t getNsSince(const Time& t) {
+		static inline size_t getNsSince(const Time& t) {
 			return std::chrono::duration_cast<std::chrono::nanoseconds>(current() - t).count();
 		}
 
 		SectionTimer(const char* message = "", Unit unit = Microseconds, size_t divider = 1) {
 			mMessage = message;
 			mUnit = unit;
-			mStart = current();
 			mDivider = divider;
+			mStart = current();
 		}
 
 		~SectionTimer() {
