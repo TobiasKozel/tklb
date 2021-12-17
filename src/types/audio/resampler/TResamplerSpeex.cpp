@@ -1,7 +1,7 @@
 
 // If the file gets compiled on it's own
 // we need to get the settings for the speex resampler
-#ifndef TKLBZ_RESAMPLER_SPEEX
+#ifndef _TKLB_RESAMPLER_SPEEX
 	#include "./TResamplerSpeex.hpp"
 #endif
 
