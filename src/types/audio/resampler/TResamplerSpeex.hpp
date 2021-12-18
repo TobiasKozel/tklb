@@ -194,6 +194,7 @@ namespace tklb {
 			copy.resize(buffer);
 			copy.set(buffer);
 			copy.sampleRate = rateIn;
+			buffer.sampleRate = rateOut;
 			copy.setValidSize(samples);
 
 			ResamplerSpeexTpl<T> resampler;
