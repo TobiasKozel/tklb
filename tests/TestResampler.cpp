@@ -6,6 +6,7 @@
 #include "../src/types/audio/resampler/TResamplerLinear.hpp"
 #include "../src/types/audio/resampler/TResamplerHold.hpp"
 #include "../src/types/audio/resampler/TResamplerSpeex.hpp"
+#include "../src/types/audio/resampler/TResamplerCosine.hpp"
 
 
 
@@ -68,8 +69,11 @@ int test() {
 	if (doTest<ResamplerLinear>() != 0) {
 		return 2;
 	}
-	if (doTest<ResamplerSpeex>() != 0) {
+	if (doTest<ResamplerCosine>() != 0) {
 		return 3;
+	}
+	if (doTest<ResamplerSpeex>() != 0) {
+		return 4;
 	}
 	return 0;
 }

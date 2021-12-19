@@ -1,11 +1,11 @@
-#ifndef _TKLB_RESAMPLER_LINEAR
-#define _TKLB_RESAMPLER_LINEAR
+#ifndef _TKLB_RESAMPLER_COSINE
+#define _TKLB_RESAMPLER_COSINE
 
 #include "../TAudioBuffer.hpp"
 
 namespace tklb {
 	template <typename T>
-	class ResamplerLinearTpl {
+	class ResamplerCosineTpl {
 		using uchar = unsigned char;
 		using uint = unsigned int;
 		using Buffer = AudioBufferTpl<T>;
@@ -16,12 +16,12 @@ namespace tklb {
 		T mOffset = 0;
 		T mLastFrame[Buffer::MAX_CHANNELS];
 	public:
-		ResamplerLinearTpl(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
+		ResamplerCosineTpl(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
 			for (auto& i : mLastFrame) { i = 0.0; }
 			init(rateIn, rateOut, maxBlock, quality);
 		}
 
-		ResamplerLinearTpl() = default;
+		ResamplerCosineTpl() = default;
 
 		/**
 		 * @brief setup the resampler
@@ -60,17 +60,16 @@ namespace tklb {
 				T last = mLastFrame[c];								// last sample
 				T mix = 0.0;
 				for (; output < out.size(); output++) {
-					const T position = output * mFactor;	// index in input buffer, somewhere between two samples
+					const T position = output * mFactor;			// index in input buffer, somewhere between two samples
 					const T lastPosition = std::floor(position);	// next sample index in the input buffer
 					const Size lastIndex = lastPosition;
 					const Size nextIndex = lastPosition + 1;		// next sample index in the input buffer this is the one we need to fetch
 
 					if (countIn <= nextIndex) { break; }
 
-					mix = position - lastPosition;					// mix factor between first and second sample
 					const T next = in[c][lastIndex];
+					T mix = 0.5 * (1.0 - cos((position - lastPosition) * 3.1416));
 					out[c][output] = last + mix * (next - last);
-					// out[c][o] = next * mix + last * (T(1.0) - mix);
 					last = next;
 				}
 				mLastFrame[c] = last;
@@ -132,7 +131,7 @@ namespace tklb {
 			copy.sampleRate = rateIn;
 			copy.setValidSize(samples);
 
-			ResamplerLinearTpl<T> resampler;
+			ResamplerCosineTpl<T> resampler;
 			resampler.init(rateIn, rateOut, copy.size(), quality);
 			buffer.resize(resampler.calculateBufferSize(samples));
 
@@ -142,11 +141,11 @@ namespace tklb {
 
 	// Default type
 	#ifdef TKLB_SAMPLE_FLOAT
-		using ResamplerLinear = ResamplerLinearTpl<float>;
+		using ResamplerCosine = ResamplerCosineTpl<float>;
 	#else
-		using ResamplerLinear = ResamplerLinearTpl<double>;
+		using ResamplerCosine = ResamplerCosineTpl<double>;
 	#endif
 
 } // namespace
 
-#endif // _TKLB_RESAMPLER_LINEAR
+#endif // _TKLB_RESAMPLER_COSINE
