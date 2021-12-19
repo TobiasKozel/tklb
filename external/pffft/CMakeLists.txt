@@ -11,11 +11,18 @@ option(DISABLE_SIMD_AVX "disable AVX CPU features? - " OFF)
 option(USE_SIMD_NEON   "force using NEON on ARM? (requires USE_SIMD)" OFF)
 option(USE_SCALAR_VECT "use 4-element vector scalar operations (if no other SIMD)" ON)
 
+# what to install?
+option(INSTALL_PFFFT      "install pffft to CMAKE_INSTALL_PREFIX?" ON)
+option(INSTALL_PFDSP      "install pfdsp to CMAKE_INSTALL_PREFIX?" OFF)
+option(INSTALL_PFFASTCONV "install pffastconv to CMAKE_INSTALL_PREFIX?" OFF)
+
 # test options
 option(USE_BENCH_FFTW   "use (system-installed) FFTW3 in fft benchmark?" OFF)
 option(USE_BENCH_GREEN  "use Green FFT in fft benchmark? - if exists in subdir" ON)
 option(USE_BENCH_KISS   "use KissFFT in fft benchmark? - if exists in subdir" ON)
 option(USE_BENCH_POCKET "use PocketFFT in fft benchmark? - if exists in subdir" ON)
+option(USE_BENCH_MKL    "use Intel MKL in fft benchmark? needs to be installed" OFF)
+option(USE_FFTPACK      "compile and use FFTPACK in fft benchmark & validation?" ON)
 
 option(USE_DEBUG_ASAN  "use GCC's address sanitizer?" OFF)
 
@@ -29,6 +36,10 @@ set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 98)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+# populate what to install
+set(INSTALL_TARGETS "")
+set(INSTALL_HEADERS "")
 
 
 if ( (NOT USE_TYPE_FLOAT) AND (NOT USE_TYPE_DOUBLE) )
@@ -103,11 +114,20 @@ else()
   endif()
 endif()
 
+set(STDCXXLIB "")
+if (MINGW)
+  set(STDCXXLIB "stdc++")
+endif()
+
+
 set( SIMD_FLOAT_HDRS simd/pf_float.h simd/pf_sse1_float.h simd/pf_altivec_float.h simd/pf_neon_float.h simd/pf_scalar_float.h )
 set( SIMD_DOUBLE_HDRS simd/pf_double.h simd/pf_avx_double.h simd/pf_scalar_double.h )
 
 if (USE_TYPE_FLOAT)
   set( FLOAT_SOURCES pffft.c pffft.h ${SIMD_FLOAT_HDRS} )
+  if (INSTALL_PFFFT)
+    set(INSTALL_HEADERS ${INSTALL_HEADERS} pffft.h)
+  endif()
 else()
   set( FLOAT_SOURCES  )
 endif()
@@ -115,6 +135,9 @@ endif()
 
 if (USE_TYPE_DOUBLE)
   set( DOUBLE_SOURCES pffft_double.c pffft_double.h ${SIMD_DOUBLE_HDRS} )
+  if (INSTALL_PFFFT)
+    set(INSTALL_HEADERS ${INSTALL_HEADERS} pffft_double.h)
+  endif()
 else()
   set( DOUBLE_SOURCES )
 endif()
@@ -122,6 +145,7 @@ endif()
 ######################################################
 
 add_library(PFFFT STATIC ${FLOAT_SOURCES} ${DOUBLE_SOURCES} pffft_common.c pffft_priv_impl.h pffft.hpp )
+set_target_properties(PFFFT PROPERTIES OUTPUT_NAME "pffft")
 target_compile_definitions(PFFFT PRIVATE _USE_MATH_DEFINES)
 if (USE_SCALAR_VECT)
   target_compile_definitions(PFFFT PRIVATE PFFFT_SCALVEC_ENABLED=1)
@@ -137,11 +161,17 @@ if (USE_SIMD AND USE_SIMD_NEON)
   target_compile_options(PFFFT PRIVATE "-mfpu=neon")
 endif()
 if (USE_SIMD AND USE_TYPE_DOUBLE)
-  if(WIN32)
+  if(MSVC)
     if(DISABLE_SIMD_AVX)
       set_property(SOURCE pffft_double.c PROPERTY COMPILE_FLAGS "/arch:SSE2")
     else()
       set_property(SOURCE pffft_double.c PROPERTY COMPILE_FLAGS "/arch:AVX")
+    endif()
+  elseif(CMAKE_COMPILER_IS_GNUCC)
+    if(DISABLE_SIMD_AVX)
+      set_property(SOURCE pffft_double.c PROPERTY COMPILE_FLAGS "-msse2")
+    else()
+      set_property(SOURCE pffft_double.c PROPERTY COMPILE_FLAGS "-mavx")
     endif()
   else()
     set_property(SOURCE pffft_double.c PROPERTY COMPILE_FLAGS "-march=native")
@@ -154,12 +184,17 @@ target_link_libraries( PFFFT ${MATHLIB} )
 set_property(TARGET PFFFT APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
+if (INSTALL_PFFFT)
+  set(INSTALL_TARGETS ${INSTALL_TARGETS} PFFFT)
+  set(INSTALL_HEADERS ${INSTALL_HEADERS} pffft.hpp)
+endif()
 
 ######################################################
 
 if (USE_TYPE_FLOAT)
 
   add_library(PFDSP STATIC pf_mixer.cpp pf_mixer.h pf_carrier.cpp pf_carrier.h pf_cic.cpp pf_cic.h fmv.h )
+  set_target_properties(PFDSP PROPERTIES OUTPUT_NAME "pfdsp")
   target_compile_definitions(PFDSP PRIVATE _USE_MATH_DEFINES)
   if (USE_DEBUG_ASAN)
     target_compile_options(PFDSP PRIVATE "-fsanitize=address")
@@ -172,22 +207,52 @@ if (USE_TYPE_FLOAT)
   set_property(TARGET PFDSP APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   )
+  if (INSTALL_PFDSP)
+    set(INSTALL_TARGETS ${INSTALL_TARGETS} PFDSP)
+    set(INSTALL_HEADERS ${INSTALL_HEADERS} pf_mixer.h pf_carrier.h pf_cic.h)
+  endif()
 endif()
 
 ######################################################
 
-add_library(FFTPACK STATIC fftpack.c fftpack.h)
-target_compile_definitions(FFTPACK PRIVATE _USE_MATH_DEFINES)
-target_link_libraries( FFTPACK ${MATHLIB} )
-set_property(TARGET FFTPACK APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-)
+if (USE_FFTPACK)
+
+  # float / single precision
+  add_library(FFTPACK_FLOAT STATIC fftpack.c fftpack.h)
+  target_compile_definitions(FFTPACK_FLOAT PRIVATE _USE_MATH_DEFINES)
+  target_compile_options(FFTPACK_FLOAT PRIVATE $<$<C_COMPILER_ID:GNU>:-Wall -Wextra -pedantic>)
+  target_link_libraries( FFTPACK_FLOAT ${MATHLIB} )
+  set_property(TARGET FFTPACK_FLOAT APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  )
+
+  # double precision
+  add_library(FFTPACK_DOUBLE STATIC fftpack.c fftpack.h)
+  target_compile_definitions(FFTPACK_DOUBLE PRIVATE _USE_MATH_DEFINES)
+  target_compile_definitions(FFTPACK_DOUBLE PUBLIC FFTPACK_DOUBLE_PRECISION)
+  target_compile_options(FFTPACK_DOUBLE PRIVATE $<$<C_COMPILER_ID:GNU>:-Wall -Wextra -pedantic>)
+  target_link_libraries( FFTPACK_DOUBLE ${MATHLIB} )
+  set_property(TARGET FFTPACK_DOUBLE APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  )
+
+  # builtin test program of fftpack
+  add_executable(test_fftpack_float fftpack.c fftpack.h)
+  target_compile_definitions(test_fftpack_float PRIVATE _USE_MATH_DEFINES TESTING_FFTPACK)
+  target_link_libraries(test_fftpack_float ${MATHLIB})
+
+  add_executable(test_fftpack_double fftpack.c fftpack.h)
+  target_compile_definitions(test_fftpack_double PRIVATE _USE_MATH_DEFINES FFTPACK_DOUBLE_PRECISION TESTING_FFTPACK)
+  target_link_libraries(test_fftpack_double ${MATHLIB})
+
+endif()
 
 ######################################################
 
 if (USE_TYPE_FLOAT)
   # only 'float' supported in PFFASTCONV
   add_library(PFFASTCONV STATIC pffastconv.c pffastconv.h pffft.h )
+  set_target_properties(PFFASTCONV PROPERTIES OUTPUT_NAME "pffastconv")
   target_compile_definitions(PFFASTCONV PRIVATE _USE_MATH_DEFINES)
   if (USE_DEBUG_ASAN)
     target_compile_options(PFFASTCONV PRIVATE "-fsanitize=address")
@@ -196,7 +261,21 @@ if (USE_TYPE_FLOAT)
   set_property(TARGET PFFASTCONV APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   )
+  if (INSTALL_PFFASTCONV)
+    set(INSTALL_TARGETS ${INSTALL_TARGETS} PFFASTCONV)
+    set(INSTALL_HEADERS ${INSTALL_HEADERS} pffastconv.h)
+  endif()
 endif()
+
+
+######################################################
+
+install( TARGETS ${INSTALL_TARGETS}  DESTINATION lib)
+install( FILES  ${INSTALL_HEADERS}  DESTINATION include)
+
+add_custom_target(uninstall
+    "${CMAKE_COMMAND}" -P "${CMAKE_SOURCE_DIR}/uninstall.cmake"
+)
 
 #######################################################
 
@@ -237,7 +316,7 @@ endif()
 if (USE_TYPE_DOUBLE)
   target_compile_definitions(test_pffft_cpp PRIVATE PFFFT_ENABLE_DOUBLE)
 endif()
-target_link_libraries( test_pffft_cpp  PFFFT ${ASANLIB} )
+target_link_libraries( test_pffft_cpp  PFFFT ${STDCXXLIB} ${ASANLIB} )
 
 ######################################################
 
@@ -249,7 +328,7 @@ endif()
 if (USE_TYPE_DOUBLE)
   target_compile_definitions(test_pffft_cpp_11 PRIVATE PFFFT_ENABLE_DOUBLE)
 endif()
-target_link_libraries( test_pffft_cpp_11  PFFFT ${ASANLIB} )
+target_link_libraries( test_pffft_cpp_11  PFFFT ${STDCXXLIB} ${ASANLIB} )
 
 set_property(TARGET test_pffft_cpp_11 PROPERTY CXX_STANDARD 11)
 set_property(TARGET test_pffft_cpp_11 PROPERTY CXX_STANDARD_REQUIRED ON)
@@ -277,11 +356,16 @@ endif()
 ######################################################
 
 if (USE_TYPE_FLOAT)
-  add_executable(bench_pffft_float   bench_pffft.c pffft.h fftpack.h)
+  add_executable(bench_pffft_float   bench_pffft.c pffft.h)
   target_compile_definitions(bench_pffft_float PRIVATE _USE_MATH_DEFINES)
   target_compile_definitions(bench_pffft_float PRIVATE PFFFT_ENABLE_FLOAT)
 
-  target_link_libraries( bench_pffft_float  PFFFT FFTPACK ${ASANLIB} )
+  target_link_libraries( bench_pffft_float  PFFFT ${ASANLIB} )
+
+  if (USE_FFTPACK)
+    target_compile_definitions(bench_pffft_float PRIVATE HAVE_FFTPACK=1)
+    target_link_libraries(bench_pffft_float  FFTPACK_FLOAT)
+  endif()
 
   if (USE_BENCH_FFTW)
     target_compile_definitions(bench_pffft_float PRIVATE HAVE_FFTW=1)
@@ -303,13 +387,29 @@ if (USE_TYPE_FLOAT)
     target_link_libraries(bench_pffft_float  PocketFFT)
   endif()
 
+  if (USE_BENCH_MKL)
+    if ( (CMAKE_SYSTEM_PROCESSOR STREQUAL "i686") OR (CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64") )
+      # has chances to work
+    else()
+      # other PROCESSORs could be "ppc", "ppc64",  "arm", "aarch64" - or something else?!
+      message(WARNING "using Intel MKL on '${CMAKE_SYSTEM_PROCESSOR}' might fail.")
+    endif()
+    message(STATUS "In case compiling/linking with Intel MKL fails, check CMakeLists.txt or deactivate USE_BENCH_MKL")
+    target_compile_definitions(bench_pffft_float PRIVATE HAVE_MKL=1)
+    target_link_libraries(bench_pffft_float  mkl_intel_lp64 mkl_sequential -lmkl_core)
+  endif()
 endif()
 
 if (USE_TYPE_DOUBLE)
-  add_executable(bench_pffft_double   bench_pffft.c pffft.h fftpack.h)
+  add_executable(bench_pffft_double   bench_pffft.c pffft.h)
   target_compile_definitions(bench_pffft_double PRIVATE _USE_MATH_DEFINES)
   target_compile_definitions(bench_pffft_double PRIVATE PFFFT_ENABLE_DOUBLE)
   target_link_libraries( bench_pffft_double  PFFFT ${ASANLIB} )
+
+  if (USE_FFTPACK)
+    target_compile_definitions(bench_pffft_double PRIVATE HAVE_FFTPACK=1)
+    target_link_libraries(bench_pffft_double  FFTPACK_DOUBLE)
+  endif()
 
   if (USE_BENCH_FFTW)
     target_compile_definitions(bench_pffft_double PRIVATE HAVE_FFTW=1)
@@ -319,6 +419,18 @@ if (USE_TYPE_DOUBLE)
   if (PATH_POCKET AND USE_BENCH_POCKET)
     target_compile_definitions(bench_pffft_double PRIVATE HAVE_POCKET_FFT=1)
     target_link_libraries(bench_pffft_double  PocketFFT)
+  endif()
+
+  if (USE_BENCH_MKL)
+    if ( (CMAKE_SYSTEM_PROCESSOR STREQUAL "i686") OR (CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64") )
+      # has chances to work
+    else()
+      # other PROCESSORs could be "ppc", "ppc64",  "arm", "aarch64" - or something else?!
+      message(WARNING "using Intel MKL on '${CMAKE_SYSTEM_PROCESSOR}' might fail.")
+    endif()
+    message(STATUS "In case compiling/linking with Intel MKL fails, check CMakeLists.txt or deactivate USE_BENCH_MKL")
+    target_compile_definitions(bench_pffft_double PRIVATE HAVE_MKL=1)
+    target_link_libraries(bench_pffft_double  mkl_intel_lp64 mkl_sequential -lmkl_core)
   endif()
 endif()
 
@@ -347,23 +459,35 @@ add_test(NAME test_fft_factors
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
+if (USE_FFTPACK)
+  add_test(NAME test_fftpack_float
+    COMMAND "${CMAKE_CURRENT_BINARY_DIR}/test_fftpack_float"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
+
+  add_test(NAME test_fftpack_double
+    COMMAND "${CMAKE_CURRENT_BINARY_DIR}/test_fftpack_double"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
+endif()
+
 
 if (USE_TYPE_FLOAT)
 
   add_test(NAME bench_pffft_pow2
-    COMMAND "${CMAKE_CURRENT_BINARY_DIR}/bench_pffft_float"
+    COMMAND "${CMAKE_CURRENT_BINARY_DIR}/bench_pffft_float" "--max-len" "128" "--quick"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
 
   add_test(NAME bench_pffft_non2
-    COMMAND "${CMAKE_CURRENT_BINARY_DIR}/bench_pffft_float" "--non-pow2"
+    COMMAND "${CMAKE_CURRENT_BINARY_DIR}/bench_pffft_float" "--non-pow2" "--max-len" "192" "--quick"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
 
-  add_test(NAME bench_plots
-    COMMAND bash "-c" "${CMAKE_CURRENT_SOURCE_DIR}/plots.sh"
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  )
+  # add_test(NAME bench_plots
+  #   COMMAND bash "-c" "${CMAKE_CURRENT_SOURCE_DIR}/plots.sh"
+  #   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  # )
 
   add_test(NAME test_pfconv_lens_symetric
     COMMAND "${CMAKE_CURRENT_BINARY_DIR}/test_pffastconv" "--no-bench" "--quick" "--sym"
@@ -376,12 +500,12 @@ if (USE_TYPE_FLOAT)
   )
 
   add_test(NAME bench_pfconv_symetric
-    COMMAND "${CMAKE_CURRENT_BINARY_DIR}/test_pffastconv" "--no-len" "--sym"
+    COMMAND "${CMAKE_CURRENT_BINARY_DIR}/test_pffastconv" "--no-len" "--quick" "--sym"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
 
   add_test(NAME bench_pfconv_non_sym
-    COMMAND "${CMAKE_CURRENT_BINARY_DIR}/test_pffastconv" "--no-len"
+    COMMAND "${CMAKE_CURRENT_BINARY_DIR}/test_pffastconv" "--no-len" "--quick"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
 

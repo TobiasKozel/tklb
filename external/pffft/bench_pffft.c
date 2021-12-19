@@ -1,8 +1,8 @@
 /*
   Copyright (c) 2013 Julien Pommier.
-  Copyright (c) 2019  Hayati Ayguen ( h_ayguen@web.de )
+  Copyright (c) 2019 Hayati Ayguen ( h_ayguen@web.de )
 
-  Small test & bench for PFFFT, comparing its performance with the scalar FFTPACK, FFTW, and Apple vDSP
+  Small test & bench for PFFFT, comparing its performance with the scalar FFTPACK, FFTW, Intel MKL, and Apple vDSP
 
   How to build: 
 
@@ -16,6 +16,9 @@
   clang -o test_pffft -DHAVE_FFTW -DHAVE_VECLIB -O3 -Wall -W pffft.c test_pffft.c fftpack.c -L/usr/local/lib -I/usr/local/include/ -lfftw3f -framework Accelerate
 
   as alternative: replace clang by gcc.
+
+  on macos, with fftw3 and Intel MKL:
+  clang -o test_pffft -I /opt/intel/mkl/include -DHAVE_FFTW -DHAVE_VECLIB -DHAVE_MKL  -O3 -Wall -W pffft.c test_pffft.c fftpack.c -L/usr/local/lib -I/usr/local/include/ -lfftw3f -framework Accelerate /opt/intel/mkl/lib/libmkl_{intel_lp64,sequential,core}.a
 
   on windows, with visual c++:
   cl /Ox -D_USE_MATH_DEFINES /arch:SSE test_pffft.c pffft.c fftpack.c
@@ -46,9 +49,11 @@ typedef PFFFTD_Setup PFFFT_SETUP;
 #define PFFFT_FUNC(F)  CONCAT_TOKENS(pffftd_, F)
 #endif
 
-#ifdef PFFFT_ENABLE_FLOAT
-
+#ifdef HAVE_FFTPACK
 #include "fftpack.h"
+#endif
+
+#ifdef PFFFT_ENABLE_FLOAT
 
 #ifdef HAVE_GREEN_FFTS
 #include "fftext.h"
@@ -111,12 +116,16 @@ typedef fftw_complex FFTW_COMPLEX;
 
 #endif /* HAVE_FFTW */
 
+#ifdef HAVE_MKL
+#  include <mkl/mkl_dfti.h>
+#endif
+
 #ifndef M_LN2
   #define M_LN2   0.69314718055994530942  /* log_e 2 */
 #endif
 
 
-#define NUM_FFT_ALGOS  9
+#define NUM_FFT_ALGOS  10
 enum {
   ALGO_FFTPACK = 0,
   ALGO_VECLIB,
@@ -125,8 +134,9 @@ enum {
   ALGO_GREEN,
   ALGO_KISS,
   ALGO_POCKET,
-  ALGO_PFFFT_U, /* = 7 */
-  ALGO_PFFFT_O  /* = 8 */
+  ALGO_MKL,
+  ALGO_PFFFT_U, /* = 8 */
+  ALGO_PFFFT_O  /* = 9 */
 };
 
 #define NUM_TYPES      7
@@ -149,13 +159,14 @@ const char * algoName[NUM_FFT_ALGOS] = {
   "Green        ",
   "Kiss         ",
   "Pocket       ",
+  "Intel MKL    ",
   "PFFFT-U(simd)",  /* unordered */
   "PFFFT (simd) "   /* ordered */
 };
 
 
 int compiledInAlgo[NUM_FFT_ALGOS] = {
-#ifdef PFFFT_ENABLE_FLOAT
+#ifdef HAVE_FFTPACK
   1, /* "FFTPack    " */
 #else
   0, /* "FFTPack    " */
@@ -186,6 +197,11 @@ int compiledInAlgo[NUM_FFT_ALGOS] = {
 #else
   0,
 #endif
+#if defined(HAVE_MKL)
+  1, /* "Intel MKL  " */
+#else
+  0,
+#endif
   1, /* "PFFFT_U    " */
   1  /* "PFFFT_O    " */
 };
@@ -198,6 +214,7 @@ const char * algoTableHeader[NUM_FFT_ALGOS][2] = {
 { "|  real  Green ", "|  cplx  Green " },
 { "|  real   Kiss ", "|  cplx   Kiss " },
 { "|  real Pocket ", "|  cplx Pocket " },
+{ "|  real   MKL  ", "|  cplx   MKL  " },
 { "| real PFFFT-U ", "| cplx PFFFT-U " },
 { "|  real  PFFFT ", "|  cplx  PFFFT " } };
 
@@ -272,18 +289,18 @@ double frand() {
 
 
 /* compare results with the regular fftpack */
-void pffft_validate_N(int N, int cplx) {
+int pffft_validate_N(int N, int cplx) {
 
-#ifdef PFFFT_ENABLE_FLOAT
+#ifdef HAVE_FFTPACK
 
   int Nfloat = N*(cplx?2:1);
   int Nbytes = Nfloat * sizeof(pffft_scalar);
-  float *ref, *in, *out, *tmp, *tmp2;
+  pffft_scalar *ref, *in, *out, *tmp, *tmp2;
   PFFFT_SETUP *s = PFFFT_FUNC(new_setup)(N, cplx ? PFFFT_COMPLEX : PFFFT_REAL);
   int pass;
 
 
-  if (!s) { printf("Skipping N=%d, not supported\n", N); return; }
+  if (!s) { printf("Skipping N=%d, not supported\n", N); return 0; }
   ref = PFFFT_FUNC(aligned_malloc)(Nbytes);
   in = PFFFT_FUNC(aligned_malloc)(Nbytes);
   out = PFFFT_FUNC(aligned_malloc)(Nbytes);
@@ -296,7 +313,7 @@ void pffft_validate_N(int N, int cplx) {
     /* printf("N=%d pass=%d cplx=%d\n", N, pass, cplx); */
     /* compute reference solution with FFTPACK */
     if (pass == 0) {
-      float *wrk = malloc(2*Nbytes+15*sizeof(pffft_scalar));
+      fftpack_real *wrk = malloc(2*Nbytes+15*sizeof(pffft_scalar));
       for (k=0; k < Nfloat; ++k) {
         ref[k] = in[k] = (float)( frand()*2-1 );
         out[k] = 1e30F;
@@ -319,7 +336,7 @@ void pffft_validate_N(int N, int cplx) {
 
     for (k = 0; k < Nfloat; ++k) ref_max = MAX(ref_max, (float)( fabs(ref[k]) ));
 
-      
+
     /* pass 0 : non canonical ordering of transform coefficients */
     if (pass == 0) {
       /* test forward transform, with different input / output */
@@ -354,7 +371,7 @@ void pffft_validate_N(int N, int cplx) {
       for (k=0; k < Nfloat; ++k) {
         if (!(fabs(ref[k] - out[k]) < 1e-3*ref_max)) {
           printf("%s forward PFFFT mismatch found for N=%d\n", (cplx?"CPLX":"REAL"), N);
-          exit(1);
+          return 1;
         }
       }
 
@@ -371,7 +388,7 @@ void pffft_validate_N(int N, int cplx) {
       for (k = 0; k < Nfloat; ++k) {
         if (fabs(in[k] - out[k]) > 1e-3 * ref_max) {
           printf("pass=%d, %s IFFFT does not match for N=%d\n", pass, (cplx?"CPLX":"REAL"), N); break;
-          exit(1);
+          return 1;
         }
       }
     }
@@ -402,7 +419,8 @@ void pffft_validate_N(int N, int cplx) {
         if (e > conv_max) conv_max = e;
       }
       if (conv_err > 1e-5*conv_max) {
-        printf("zconvolve error ? %g %g\n", conv_err, conv_max); exit(1);
+        printf("zconvolve error ? %g %g\n", conv_err, conv_max);
+        return 1;
       }
     }
 
@@ -416,18 +434,24 @@ void pffft_validate_N(int N, int cplx) {
   PFFFT_FUNC(aligned_free)(out);
   PFFFT_FUNC(aligned_free)(tmp);
   PFFFT_FUNC(aligned_free)(tmp2);
+  return 0;
 
-#endif /* PFFFT_ENABLE_FLOAT */
+#else
+  return 2;
+#endif /* HAVE_FFTPACK */
 }
 
-void pffft_validate(int cplx) {
+int pffft_validate(int cplx) {
   static int Ntest[] = { 16, 32, 64, 96, 128, 160, 192, 256, 288, 384, 5*96, 512, 576, 5*128, 800, 864, 1024, 2048, 2592, 4000, 4096, 12000, 36864, 0};
-  int k;
+  int k, r;
   for (k = 0; Ntest[k]; ++k) {
     int N = Ntest[k];
     if (N == 16 && !cplx) continue;
-    pffft_validate_N(N, cplx);
+    r = pffft_validate_N(N, cplx);
+    if (r)
+      return r;
   }
+  return 0;
 }
 
 int array_output_format = 1;
@@ -548,10 +572,10 @@ void benchmark_ffts(int N, int cplx, int withFFTWfullMeas, double iterCal, doubl
   /* FFTPack benchmark */
   Nmax = (cplx ? N*2 : N);
   X[Nmax] = checkVal;
-#ifdef PFFFT_ENABLE_FLOAT
+#ifdef HAVE_FFTPACK
   {
-    float *wrk = malloc(2*Nbytes + 15*sizeof(pffft_scalar));
-    te = uclock_sec();  
+    fftpack_real *wrk = malloc(2*Nbytes + 15*sizeof(pffft_scalar));
+    te = uclock_sec();
     if (cplx) cffti(N, wrk);
     else      rffti(N, wrk);
     t0 = uclock_sec();
@@ -909,6 +933,66 @@ void benchmark_ffts(int N, int cplx, int withFFTWfullMeas, double iterCal, doubl
 #endif
 
 
+#if defined(HAVE_MKL)
+  {
+    DFTI_DESCRIPTOR_HANDLE fft_handle;
+    MKL_LONG mkl_status, mkl_ret;
+    te = uclock_sec();
+    if (sizeof(float) == sizeof(pffft_scalar))
+      mkl_status = DftiCreateDescriptor(&fft_handle, DFTI_SINGLE, (cplx ? DFTI_COMPLEX : DFTI_REAL), 1, N);
+    else if (sizeof(double) == sizeof(pffft_scalar))
+      mkl_status = DftiCreateDescriptor(&fft_handle, DFTI_DOUBLE, (cplx ? DFTI_COMPLEX : DFTI_REAL), 1, N);
+    else
+      mkl_status = 1;
+
+    while (mkl_status == 0) {
+      mkl_ret = DftiSetValue(fft_handle, DFTI_PLACEMENT, DFTI_NOT_INPLACE);
+      if (mkl_ret) {
+        DftiFreeDescriptor(&fft_handle);
+        mkl_status = 1;
+        break;
+      }
+      mkl_ret = DftiCommitDescriptor(fft_handle);
+      if (mkl_ret) {
+        DftiFreeDescriptor(&fft_handle);
+        mkl_status = 1;
+        break;
+      }
+      break;
+    }
+
+    if (mkl_status == 0) {
+      t0 = uclock_sec();
+      tstop = t0 + max_test_duration;
+      max_iter = 0;
+
+      do {
+        for ( k = 0; k < step_iter; ++k ) {
+          assert( X[Nmax] == checkVal );
+          DftiComputeForward(fft_handle, &X[0], &Y[0]);
+          assert( X[Nmax] == checkVal );
+          DftiComputeBackward(fft_handle, &X[0], &Y[0]);
+          assert( X[Nmax] == checkVal );
+          ++max_iter;
+        }
+        t1 = uclock_sec();
+      } while ( t1 < tstop );
+
+      DftiFreeDescriptor(&fft_handle);
+
+      flops = (max_iter*2) * ((cplx ? 5 : 2.5)*N*log((double)N)/M_LN2); /* see http://www.fftw.org/speed/method.html */
+      tmeas[TYPE_ITER][ALGO_MKL] = max_iter;
+      tmeas[TYPE_MFLOPS][ALGO_MKL] = flops/1e6/(t1 - t0 + 1e-16);
+      tmeas[TYPE_DUR_TOT][ALGO_MKL] = t1 - t0;
+      tmeas[TYPE_DUR_NS][ALGO_MKL] = show_output("MKL", N, cplx, flops, t0, t1, max_iter, tableFile);
+      tmeas[TYPE_PREP][ALGO_MKL] = (t0 - te) * 1e3;
+      haveAlgo[ALGO_MKL] = 1;
+    } else {
+      show_output("MKL", N, cplx, -1, -1, -1, -1, tableFile);
+    }
+  }
+#endif
+
   /* PFFFT-U (unordered) benchmark */
   Nmax = (cplx ? pffftPow2N*2 : pffftPow2N);
   X[Nmax] = checkVal;
@@ -1070,9 +1154,11 @@ int main(int argc, char **argv) {
   int Npow2[NUMPOW2FFTLENS];  /* exp = 1 .. 21, -1 */
   const int *Nvalues = NULL;
   double tmeas[2][MAXNUMFFTLENS][NUM_TYPES][NUM_FFT_ALGOS];
-  double iterCalReal, iterCalCplx;
+  double iterCalReal = 0.0, iterCalCplx = 0.0;
 
   int benchReal=1, benchCplx=1, withFFTWfullMeas=0, outputTable2File=1, usePow2=1;
+  int max_N = 1024 * 1024 * 2;
+  int quicktest = 0;
   int realCplxIdx, typeIdx;
   int i, k;
   FILE *tableFile = NULL;
@@ -1113,8 +1199,28 @@ int main(int argc, char **argv) {
       Nvalues = NnonPow2;
       usePow2 = 0;
     }
+    else if (!strcmp(argv[i], "--max-len") && i+1 < argc) {
+      max_N = atoi(argv[i+1]);
+      ++i;
+    }
+    else if (!strcmp(argv[i], "--quick")) {
+      fprintf(stdout, "actived quicktest mode\n");
+      quicktest = 1;
+    }
+    else if (!strcmp(argv[i], "--validate")) {
+#ifdef HAVE_FFTPACK
+      int r;
+      fprintf(stdout, "validating PFFFT against %s FFTPACK ..\n", (benchCplx ? "complex" : "real"));
+      r = pffft_validate(benchCplx);
+      fprintf((r ? stderr : stderr), "pffft %s\n", (r ? "validation failed!" : "successful"));
+      return r;
+#else
+      fprintf(stderr, "validation not available without FFTPACK!\n");
+#endif
+      return 0;
+    }
     else /* if (!strcmp(argv[i], "--help")) */ {
-      printf("usage: %s [--array-format|--table] [--no-tab] [--real|--cplx] [--fftw-full-measure] [--non-pow2]\n", argv[0]);
+      printf("usage: %s [--array-format|--table] [--no-tab] [--real|--cplx] [--validate] [--fftw-full-measure] [--non-pow2] [--max-len <N>] [--quick]\n", argv[0]);
       exit(0);
     }
   }
@@ -1132,8 +1238,8 @@ int main(int argc, char **argv) {
 #else
     algoName[ALGO_FFTW_AUTO] = "FFTWD(meas)"; /* "FFTW (auto)" */
 #endif
-    algoTableHeader[NUM_FFT_ALGOS][0] = "|real FFTWmeas "; /* "|real FFTWauto " */
-    algoTableHeader[NUM_FFT_ALGOS][0] = "|cplx FFTWmeas "; /* "|cplx FFTWauto " */
+    algoTableHeader[ALGO_FFTW_AUTO][0] = "|real FFTWmeas "; /* "|real FFTWauto " */
+    algoTableHeader[ALGO_FFTW_AUTO][1] = "|cplx FFTWmeas "; /* "|cplx FFTWauto " */
   }
 #endif
 
@@ -1155,6 +1261,7 @@ int main(int argc, char **argv) {
   */
 
   /* calibrate test duration */
+  if (!quicktest)
   {
     double t0, t1, dur;
     printf("calibrating fft benchmark duration at size N = 512 ..\n");
@@ -1174,11 +1281,11 @@ int main(int argc, char **argv) {
 
   if (!array_output_format) {
     if (benchReal) {
-      for (i=0; Nvalues[i] > 0; ++i)
+      for (i=0; Nvalues[i] > 0 && Nvalues[i] <= max_N; ++i)
         benchmark_ffts(Nvalues[i], 0 /* real fft */, withFFTWfullMeas, iterCalReal, tmeas[0][i], haveAlgo, NULL);
     }
     if (benchCplx) {
-      for (i=0; Nvalues[i] > 0; ++i)
+      for (i=0; Nvalues[i] > 0 && Nvalues[i] <= max_N; ++i)
         benchmark_ffts(Nvalues[i], 1 /* cplx fft */, withFFTWfullMeas, iterCalCplx, tmeas[1][i], haveAlgo, NULL);
     }
 
@@ -1220,7 +1327,7 @@ int main(int argc, char **argv) {
       print_table(":|\n", tableFile);
     }
 
-    for (i=0; Nvalues[i] > 0; ++i) {
+    for (i=0; Nvalues[i] > 0 && Nvalues[i] <= max_N; ++i) {
       {
         double t0, t1;
         print_table_fftsize(Nvalues[i], tableFile);
@@ -1275,7 +1382,7 @@ int main(int argc, char **argv) {
               fprintf(f, "%s, ", algoName[k]);
           fprintf(f, "\n");
         }
-        for (i=0; Nvalues[i] > 0; ++i)
+        for (i=0; Nvalues[i] > 0 && Nvalues[i] <= max_N; ++i)
         {
           {
             fprintf(f, "%d, %.3f, ", Nvalues[i], log10((double)Nvalues[i])/log10(2.0) );

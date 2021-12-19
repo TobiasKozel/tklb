@@ -14,11 +14,19 @@
 #include <assert.h>
 #include <string.h>
 
+#if defined(__linux__)
 #define HAVE_SYS_TIMES
+#endif
 
 #ifdef HAVE_SYS_TIMES
 #  include <sys/times.h>
 #  include <unistd.h>
+#endif
+
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#define VC_EXTRALEAN
+#include <windows.h>
 #endif
 
 #define BENCH_REF_TRIG_FUNC       1
@@ -78,7 +86,7 @@
         return ((double)t.tms_utime) / ttclk;
     }
 
-#elif 0
+#elif defined(WIN32)
     // https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getprocesstimes
     double uclock_sec(int find_start)
     {
