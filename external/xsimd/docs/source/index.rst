@@ -19,6 +19,9 @@ vendors and compilers.
 `xsimd` provides a unified means for using these features for library authors. Namely, it enables manipulation of batches of numbers with the same arithmetic
 operators as for single values. It also provides accelerated implementation of common mathematical functions operating on batches.
 
+`xsimd` makes it easy to write a single algorithm, generate one version of the algorithm per micro-architecture and pick the best one at runtime, based on the
+running processor capability.
+
 You can find out more about this implementation of C++ wrappers for SIMD intrinsics at the `The C++ Scientist`_. The mathematical functions are a
 lightweight implementation of the algorithms also used in `boost.SIMD`_.
 
@@ -36,17 +39,17 @@ lightweight implementation of the algorithms also used in `boost.SIMD`_.
 
 The following SIMD instruction set extensions are supported:
 
-+--------------+----------------------------------------------------+
-| Architecture | Instruction set extensions                         |
-+==============+====================================================+
-| x86          | SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, FMA3, AVX2 |
-+--------------+----------------------------------------------------+
-| x86          | AVX512 (gcc7 and higher)                           |
-+--------------+----------------------------------------------------+
-| x86 AMD      | same as above + SSE4A, FMA4, XOP                   |
-+--------------+----------------------------------------------------+
-| ARM          | ARMv7, ARMv8                                       |
-+--------------+----------------------------------------------------+
++--------------+---------------------------------------------------------+
+| Architecture | Instruction set extensions                              |
++==============+=========================================================+
+| x86          | SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, FMA3, AVX2 |
++--------------+---------------------------------------------------------+
+| x86          | AVX512 (gcc7 and higher)                                |
++--------------+---------------------------------------------------------+
+| x86 AMD      | same as above + SSE4A, FMA4, XOP                        |
++--------------+---------------------------------------------------------+
+| ARM          | ARMv7, ARMv8                                            |
++--------------+---------------------------------------------------------+
 
 Licensing
 ---------
@@ -71,15 +74,24 @@ This software is licensed under the BSD-3-Clause license. See the LICENSE file f
    vectorized_code
 
 .. toctree::
+   :caption: MIGRATION GUIDE
+   :maxdepth: 1
+
+   migration_guide
+
+
+.. toctree::
    :caption: API REFERENCE
    :maxdepth: 2
-   
+
    api/instr_macros
    api/batch_index
    api/data_transfer
    api/batch_manip
    api/math_index
    api/aligned_allocator
+   api/arch
+   api/dispatching
 
 .. _The C++ Scientist: http://johanmabille.github.io/blog/archives/
 .. _boost.SIMD: https://github.com/NumScale/boost.simd

@@ -4,14 +4,12 @@
 
    The full license is in the file LICENSE, distributed with this software.
 
-Wrapper types
-=============
+Batch types
+===========
 
 .. toctree::
 
-   xsimd_base
-   xsimd_batch_bool
    xsimd_batch
-   xsimd_complex_bool_base
-   xsimd_complex_base
+   xsimd_batch_bool
+   xsimd_batch_complex
    available_wrappers

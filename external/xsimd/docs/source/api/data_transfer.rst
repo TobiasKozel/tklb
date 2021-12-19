@@ -7,17 +7,14 @@
 Data transfer
 =============
 
-Data transfer instructions
---------------------------
-
-.. doxygengroup:: data_transfer
+.. doxygengroup:: batch_data_transfer
    :project: xsimd
    :content-only:
 
-Generic load and store
-----------------------
+The following empty types are used for tag dispatching:
 
-.. doxygengroup:: generic_load_store
+.. doxygenstruct:: xsimd::aligned_mode
    :project: xsimd
-   :content-only:
 
+.. doxygenstruct:: xsimd::unaligned_mode
+   :project: xsimd

@@ -11,7 +11,7 @@
 #include "../types/TLockGuard.hpp"
 
 #ifndef TKLB_NO_SIMD
-	#include "../../external/xsimd/include/xsimd/config/xsimd_config.hpp"
+	#include "../../external/xsimd/include/xsimd/config/xsimd_arch.hpp"
 #endif
 
 namespace tklb { namespace memory {
@@ -30,7 +30,7 @@ namespace tklb { namespace memory {
 		using Lock = LockGuard<Mutex>;
 
 		#ifndef TKLB_NO_SIMD
-			static constexpr Size DEFAULT_ALIGN = XSIMD_DEFAULT_ALIGNMENT;
+			static constexpr Size DEFAULT_ALIGN = xsimd::default_arch::alignment();
 		#else
 			static constexpr Size DEFAULT_ALIGN = 16;
 		#endif

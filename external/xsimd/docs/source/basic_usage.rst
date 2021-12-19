@@ -10,7 +10,7 @@ Basic usage
 Explicit use of an instruction set extension
 --------------------------------------------
 
-Here is an example that computes the mean of two sets of 4 double floating point values, assuming AVX extension is supported:
+Here is an example that computes the mean of two sets of 4 double floating point values, using the AVX extension:
 
 .. code::
 
@@ -21,12 +21,14 @@ Here is an example that computes the mean of two sets of 4 double floating point
 
     int main(int argc, char* argv[])
     {
-        xs::batch<double, 4> a(1.5, 2.5, 3.5, 4.5);
-        xs::batch<double, 4> b(2.5, 3.5, 4.5, 5.5);
+        xs::batch<double, xs::avx> a = {1.5, 2.5, 3.5, 4.5};
+        xs::batch<double, xs::avx> b = {2.5, 3.5, 4.5, 5.5};
         auto mean = (a + b) / 2;
         std::cout << mean << std::endl;
         return 0;
     }
+
+Note that in that case, the instruction set is explicilty specified in the batch type.
 
 This example outputs:
 
@@ -37,7 +39,7 @@ This example outputs:
 Auto detection of the instruction set extension to be used
 ----------------------------------------------------------
 
-The same computation operating on vectors and using the most performant instruction set available:
+The same computation operating on vectors and using the most performant instruction set available, using a code that's generic on the batch size:
 
 .. code::
 
@@ -46,7 +48,7 @@ The same computation operating on vectors and using the most performant instruct
     #include "xsimd/xsimd.hpp"
 
     namespace xs = xsimd;
-    using vector_type = std::vector<double, xsimd::aligned_allocator<double, XSIMD_DEFAULT_ALIGNMENT>>;
+    using vector_type = std::vector<double, xsimd::aligned_allocator<double>>;
 
     void mean(const vector_type& a, const vector_type& b, vector_type& res)
     {
@@ -67,3 +69,4 @@ The same computation operating on vectors and using the most performant instruct
         }
     }
 
+In that case, the architecture is chosen based on the compilation flags, prioritizing the largest width and the most recent instruction set.
