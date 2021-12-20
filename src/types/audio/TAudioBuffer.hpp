@@ -476,6 +476,12 @@ namespace tklb {
 		uchar channels() const { return mChannels; }
 
 		/**
+		 * @brief Maximum number of channels that can be stored inside
+		 * @return constexpr uchar
+		 */
+		constexpr uchar maxChannels() const { return MAX_CHANNELS; }
+
+		/**
 		 * @brief Returns the allocated length of the buffer
 		 */
 		Size size() const { return mSize; }
@@ -518,18 +524,26 @@ namespace tklb {
 		}
 
 	public:
+
 		/**
-		 * @brief Returns a array owned by the object containing pointers to all the channels.
+		 * @brief Fills an 2d array of size maxChannels() with pointers to each channel
+		 * @param put Pointers go here
 		 */
-		T** getRaw() {
+		void getRaw(T** put) {
 			TKLB_ASSERT_STATE(assertOnConstMem())
-			TKLB_ASSERT(false) // TODO
-			return nullptr;
+			for (uchar c = 0; c < MAX_CHANNELS; c++) {
+				put[c] = mBuffers[c].data();
+			}
 		}
 
-		const T** getRaw() const {
-			TKLB_ASSERT(false) // TODO
-			return nullptr;
+		/**
+		 * @brief Fills an 2d array of size maxChannels() with pointers to each channel
+		 * @param put Pointers go here
+		 */
+		void getRaw(const T** put) const {
+			for (uchar c = 0; c < MAX_CHANNELS; c++) {
+				put[c] = mBuffers[c].data();
+			}
 		}
 
 		/**

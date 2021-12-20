@@ -1,5 +1,7 @@
 #!/bin/sh
 
+cd "$(dirname "$0")/."
+
 echo "Updating xsimd"
 rm -rf ./xsimd
 rm ./master
@@ -41,6 +43,10 @@ curl -LO https://raw.githubusercontent.com/tronkko/dirent/master/include/dirent.
 echo "Updating dr_wav"
 rm ./dr_wav.h
 curl -LO https://raw.githubusercontent.com/mackron/dr_libs/master/dr_wav.h > /dev/null 2>&1
+
+echo "Updating stb_vorbis"
+rm ./stb_vorbis.c
+curl -LO https://raw.githubusercontent.com/nothings/stb/master/stb_vorbis.c
 
 echo "Downloading hiir"
 HIIR="hiir-1.33.zip"
