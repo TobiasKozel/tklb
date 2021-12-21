@@ -48,7 +48,7 @@ namespace tklb {
 			out.resize(streamLength, Size(info.channels)); // will fail at channels higher than allowed
 
 			if (std::is_same<float, T>::value) {
-				float* buffer[out.maxChannels()];
+				float* buffer[out.maxChannels];
 				out.getRaw(buffer);
 				Size got = stb_vorbis_get_samples_float(vorbis, info.channels, buffer, streamLength);
 				out.setValidSize(got);

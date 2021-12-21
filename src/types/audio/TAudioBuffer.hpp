@@ -479,7 +479,7 @@ namespace tklb {
 		 * @brief Maximum number of channels that can be stored inside
 		 * @return constexpr uchar
 		 */
-		constexpr uchar maxChannels() const { return MAX_CHANNELS; }
+		static constexpr uchar maxChannels = MAX_CHANNELS;
 
 		/**
 		 * @brief Returns the allocated length of the buffer
