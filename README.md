@@ -1,5 +1,12 @@
 # TKLB Readme
 
+## TODOs
+- clean up allocator and mempool mess
+- single array AudioBuffer
+- FFT convolution
+
+
+
 ## General
 
 ### TKLB_NO_ASSERT
