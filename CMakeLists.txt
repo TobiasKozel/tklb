@@ -10,11 +10,16 @@ set(tklb_SOURCES
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON) # needed for clang
 
-if (BUILD_SHARED_LIBS)
-	add_library(tklb SHARED ${tklb_SOURCES})
+if(DEFINED TKLB_BUILD_SHARED_LIBS)
+	if (TKLB_BUILD_SHARED_LIBS)
+		add_library(tklb SHARED ${tklb_SOURCES})
+	else()
+		add_library(tklb STATIC ${tklb_SOURCES})
+	endif()
 else()
-	add_library(tklb STATIC ${tklb_SOURCES})
+	add_library(tklb ${tklb_SOURCES}) # default cmake behavior
 endif()
+
 
 TARGET_INCLUDE_DIRECTORIES(tklb
 	PUBLIC
