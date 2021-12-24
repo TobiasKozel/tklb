@@ -154,7 +154,7 @@ namespace tklb {
 			for (uchar c = 0; c < channels; c++) {
 				set(samples[c] + offsetSrc, length, c, offsetDst);
 			}
-		};
+		}
 
 		/**
 		 * @brief Set from another buffer object, will not adjust size and channel count!
@@ -176,7 +176,7 @@ namespace tklb {
 			for (uchar c = 0; c < buffer.channels(); c++) {
 				set(buffer[c] + offsetSrc, length, c, offsetDst);
 			}
-		};
+		}
 
 		/**
 		 * @brief Set the entire buffer to a constant value
