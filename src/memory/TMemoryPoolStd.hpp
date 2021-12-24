@@ -35,7 +35,7 @@ namespace tklb { namespace memory {
 
 		void* allocate(Size size) override {
 			void* ptr = mAllocate(size + sizeof(Size));
-
+			TKLB_TRACK_ALLOCATE(ptr, size)
 			if (ptr == nullptr) { return nullptr; }
 			mPool.allocated += size;
 
@@ -51,6 +51,7 @@ namespace tklb { namespace memory {
 				static_cast<char*>(ptr) - sizeof(Size)
 			);
 			mPool.allocated -= block.size;
+			TKLB_TRACK_FREE(&block, block.size)
 			return mDeallocate(&block);
 		}
 
