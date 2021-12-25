@@ -3,18 +3,20 @@
 
 #include "./THeapBuffer.hpp"
 namespace tklb {
-	/**
-	 * Handle to a object contained in a buffer
-	 */
-	using Handle = unsigned int;
 
-	template <class T, typename MemberType = Handle>
+	/**
+	 * @brief TODO broken don't use. A buffer to access contents via a Handle with validity checks
+	 * @details Type stored in here needs to store it's own id in a Handle member.
+	 * @tparam T type to store
+	 * @tparam Handle type to index elements
+	 * @tparam MaskSplit At what bit to split the Handle for validation
+	 */
+	template <class T, typename Handle = unsigned int, int MaskSplit = sizeof(Handle) * 4>
 	class HandleBuffer : public HeapBuffer<T, true> {
 
 		using Base = HeapBuffer<T, true>;
 		using Size = typename Base::Size;
 
-		static constexpr int MaskSplit = 16; // at which bit to split the mask
 		static constexpr Handle MaskId = (1 << (MaskSplit)) - 1;
 		static constexpr Handle MaskIndex = ~MaskId;
 
@@ -26,12 +28,27 @@ namespace tklb {
 		Size mOffset;
 
 	public:
-		HandleBuffer(MemberType T::*member) {
+
+		/**
+		 * @brief Since 0 is a valid handle, this is used to indicate a invalid one
+		 */
+		static constexpr Handle InvalidHandle = ~0;
+
+		/**
+		 * @brief Construct a new Handle Buffer object
+		 * @param member Pointer to the member variable used for validation
+		 */
+		HandleBuffer(Handle T::*member) {
 			// nice
 			mOffset = Size(((char*) &(((T*)nullptr)->*member)) - ((char*)nullptr));
 		}
 
-		Size getLastFree() const { return mLastFree; }
+		template <class Func>
+		void forEach(const Func&& func) {
+			for (Size i = 0; i < Base::size(); i++) {
+				// if (*(Base::data() + i))
+			}
+		}
 
 		T* at(const Handle& handle) {
 			const Handle index = (handle & MaskIndex) >> MaskSplit;
@@ -68,7 +85,7 @@ namespace tklb {
 				// no free slot
 				ret = Base::size();
 				if (!Base::push(object)) {
-					return false; // something went wrong
+					return InvalidHandle; // something went wrong
 				}
 			} else {
 				// use free slot
