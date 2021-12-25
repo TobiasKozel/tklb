@@ -71,7 +71,8 @@ namespace tklb {
 					const T next = in[c][lastIndex];
 					out[c][output] = last + mix * (next - last);
 					// out[c][o] = next * mix + last * (T(1.0) - mix);
-					last = next;
+					last = next; // TODO tkbl this seems like bullshit
+					// ! fix this mess since this gets carried over after one sample and no interpolation happens ?
 				}
 				mLastFrame[c] = last;
 				lastMix = mix;
