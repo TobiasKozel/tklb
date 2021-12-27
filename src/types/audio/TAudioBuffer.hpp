@@ -19,46 +19,30 @@ namespace tklb {
 
 	/**
 	 * @brief Class for handling the most basic audio needs
-	 * Does convenient type conversions
+	 * @details Does convenient type conversions
 	 * TODO check if using a single buffer instead of one for each channel
 	 * improves performance
+	 *
+	 * @tparam T Sample type. Can be anything std::is_arithmetic
+	 * @tparam STORAGE Storage type, tklb::HeapBuffer for now since there are a few things missing in a std::vector
 	 */
-	template <typename T>
+	template <typename T, class STORAGE = HeapBuffer<T, 16>>
 	class AudioBufferTpl {
 		static_assert(std::is_arithmetic<T>::value, "Need arithmetic type.");
 	public:
-		/**
-		 * @brief Sample type exposed for convenience
-		 */
-		using sample = T;
-
-		template <class T2>
-		/**
-		 * @brief Aligned vector type
-		 */
-		using Buffer = HeapBuffer<T2, true>;
-
+		using Sample = T;
+		using Storage = STORAGE;
 		using uchar = unsigned char;
-		using uint = unsigned int;
 		using ushort = unsigned short;
-		using Size = typename Buffer<T>::Size;
-
-	#ifdef TKLB_MAXCHANNELS
-		static constexpr uchar MAX_CHANNELS = TKLB_MAXCHANNELS;
-	#else
-		static constexpr uchar MAX_CHANNELS = 2;
-	#endif
+		using uint = unsigned int;
+		using Size = typename Storage::Size;
 
 	#ifndef TKLB_NO_SIMD
-		static constexpr Size stride = xsimd::simd_type<T>::size;
+		static constexpr Size Stride = xsimd::simd_type<T>::size;
 	#endif
 
-	static_assert(1 <= MAX_CHANNELS, "No channels isn't going to work");
-	static_assert(2 <= MAX_CHANNELS, "Having only one channel will break FFTs and convolution");
-
 	private:
-		Buffer<T> mBuffers[MAX_CHANNELS]; // TODO performance use a single linear buffer maybe
-		Size mSize = 0; // TODO preformance throw this out and use heapbuffer size
+		Storage mBuffer;
 		Size mValidSize = 0; // TODO use for set add and multiply
 		uchar mChannels = 0;
 
@@ -83,7 +67,6 @@ namespace tklb {
 
 		~AudioBufferTpl() {
 			TKLB_ASSERT_STATE(mChannels = 0;)
-			TKLB_ASSERT_STATE(mSize = 0;)
 			TKLB_ASSERT_STATE(mValidSize = 0;)
 		}
 
@@ -92,7 +75,6 @@ namespace tklb {
 		 * Don't know why
 		 */
 		AudioBufferTpl(AudioBufferTpl&& source) = default;
-
 		AudioBufferTpl& operator= (AudioBufferTpl&& source) = default;
 
 		AudioBufferTpl& operator= (const AudioBufferTpl&) = delete;
@@ -230,31 +212,22 @@ namespace tklb {
 		}
 
 		/**
-		 * @brief Resizes the buffer to the desired length and channel count.
-		 * If the validSize = 0 it will be set to the new size for convenience.
+		 * @brief ! Will not keep the contents! Resizes the buffer to the desired length and channel count.
+		 * @details If the validSize = 0 it will be set to the new size for convenience.
 		 * @param length The desired length in Samples. 0 will deallocate.
 		 * @param channels Desired channel count. 0 will deallocate.
 		 */
-		void resize(const Size length, uchar channels) {
-			if (channels == mChannels && size() == length) {
-				return;
-			}
-			TKLB_ASSERT(channels <= MAX_CHANNELS)
-			channels = std::min(channels, uchar(MAX_CHANNELS));
-			for(uchar c = 0; c < channels; c++) {
-				mBuffers[c].resize(length);
-			}
-			for (uchar c = channels; c < MAX_CHANNELS; c++) {
-				mBuffers[c].resize(0);
-			}
+		bool resize(const Size length, uchar channels) {
+			if (channels == mChannels && size() == length) { return true; }
+			mBuffer.resize(channels * length);
 
 			mChannels = channels;
-			mSize = length;
 			if (mValidSize == 0) {
-				mValidSize = mSize;
+				mValidSize = length;
 			} else {
-				mValidSize = std::min(mValidSize, mSize);
+				mValidSize = std::min(mValidSize, length);
 			}
+			return true;
 		}
 
 		/**
@@ -296,11 +269,11 @@ namespace tklb {
 
 			#ifndef TKLB_NO_SIMD
 				if (std::is_same<T2, T>::value) {
-					const Size vectorize = length - (length % stride);
+					const Size vectorize = length - (length % Stride);
 					for (uchar c = 0; c < channelCount; c++) {
 						T* out = get(c) + offsetDst;
 						const T* in = reinterpret_cast<const T*>(buffer[c]) + offsetSrc;
-						for(Size i = 0; i < vectorize; i += stride) {
+						for(Size i = 0; i < vectorize; i += Stride) {
 							xsimd::simd_type<T> a = xsimd::load_aligned(in + i);
 							xsimd::simd_type<T> b = xsimd::load_aligned(out + i);
 							xsimd::store_aligned(out + i, (a + b));
@@ -345,11 +318,11 @@ namespace tklb {
 
 			#ifndef TKLB_NO_SIMD
 				if (std::is_same<T2, T>::value) {
-					const Size vectorize = length - (length % stride);
+					const Size vectorize = length - (length % Stride);
 					for (uchar c = 0; c < channelsCount; c++) {
 						T* out = get(c) + offsetDst;
 						const T* in = reinterpret_cast<const T*>(buffer[c]) + offsetSrc;
-						for(Size i = 0; i < vectorize; i += stride) {
+						for(Size i = 0; i < vectorize; i += Stride) {
 							xsimd::simd_type<T> a = xsimd::load_aligned(in + i);
 							xsimd::simd_type<T> b = xsimd::load_aligned(out + i);
 							xsimd::store_aligned(out + i, (a * b));
@@ -380,10 +353,10 @@ namespace tklb {
 			const Size length = size();
 
 			#ifndef TKLB_NO_SIMD
-				const Size vectorize = length - (length % stride);
+				const Size vectorize = length - (length % Stride);
 				for (uchar c = 0; c < channels(); c++) {
 					T* out = get(c);
-					for(Size i = 0; i < vectorize; i += stride) {
+					for(Size i = 0; i < vectorize; i += Stride) {
 						xsimd::simd_type<T> b = xsimd::load_aligned(out + i);
 						xsimd::store_aligned(out + i, (b * value));
 					}
@@ -409,10 +382,10 @@ namespace tklb {
 			const Size length = size();
 
 			#ifndef TKLB_NO_SIMD
-				const Size vectorize = length - (length % stride);
+				const Size vectorize = length - (length % Stride);
 				for (uchar c = 0; c < channels(); c++) {
 					T* out = get(c);
-					for(Size i = 0; i < vectorize; i += stride) {
+					for(Size i = 0; i < vectorize; i += Stride) {
 						xsimd::simd_type<T> b = xsimd::load_aligned(out + i);
 						xsimd::store_aligned(out + i, (b + value));
 					}
@@ -434,34 +407,26 @@ namespace tklb {
 		 * @brief Inject forgeign memory to be used by the buffer.
 		 * Potentially dangerous but useful when splitting up channels for processing
 		 * @param mem Modifiable memory (No type conversions here)
-		 * @param size Size of the buffer
-		 * @param channel The channel index
+		 * @param size Size of the entire buffer
+		 * @param channels How many channels are contained in mem
 		 */
-		void inject(T* mem, const Size size, const uchar channel = 0) {
-			TKLB_ASSERT(channel < MAX_CHANNELS)
-			mBuffers[channel].inject(mem, size);
-			mSize = size;
+		void inject(T* mem, const Size size, const uchar channel) {
+			mBuffer.inject(mem, size);
 			mValidSize = size;
-			if (mChannels < channel + 1) {
-				mChannels = channel + 1;
-			}
+			mChannels = channel;
 		}
 
 		/**
 		 * @brief Inject const forgeign memory to be used by the buffer.
 		 * Potentially dangerous but useful when splitting up channels for processing
 		 * @param mem Const memory (No type conversions here)
-		 * @param size Size of the buffer
-		 * @param channel The channel index
+		 * @param size Size of the entire buffer
+		 * @param channels How many channels are contained in mem
 		 */
-		void inject(const T* mem, const Size size, const uchar channel = 0) {
-			TKLB_ASSERT(channel < MAX_CHANNELS)
-			mBuffers[channel].inject(mem, size);
-			mSize = size;
+		void inject(const T* mem, const Size size, const uchar channels) {
+			mBuffer.inject(mem, size);
 			mValidSize = size;
-			if (mChannels < channel + 1) {
-				mChannels = channel + 1;
-			}
+			mChannels = channels;
 		}
 
 		/**
@@ -470,15 +435,9 @@ namespace tklb {
 		uchar channels() const { return mChannels; }
 
 		/**
-		 * @brief Maximum number of channels that can be stored inside
-		 * @return constexpr uchar
-		 */
-		static constexpr uchar maxChannels = MAX_CHANNELS;
-
-		/**
 		 * @brief Returns the allocated length of the buffer
 		 */
-		Size size() const { return mSize; }
+		inline Size size() const { return mBuffer.size() / mChannels; }
 
 		/**
 		 * @brief fReturns the length of actually valid audio in the buffer.
@@ -495,27 +454,19 @@ namespace tklb {
 			mValidSize = v;
 		}
 
-		T* get(const uchar channel) {
+		inline T* get(const uchar channel) {
 			TKLB_ASSERT(channel < mChannels)
-			return mBuffers[channel].data();
+			return mBuffer.data() + (channel * size());
 		};
 
-		const T* get(const uchar channel) const {
+		inline const T* get(const uchar channel) const {
 			TKLB_ASSERT(channel < mChannels)
-			return mBuffers[channel].data();
+			return mBuffer.data() + (channel * size());
 		};
 
 		const T* operator[](const uchar channel) const { return get(channel); }
 
 		T* operator[](const uchar channel) { return get(channel); }
-
-	private:
-		void assertOnConstMem() {
-			for (uchar c = 0; c < MAX_CHANNELS; c++) {
-				// non const accessor will cause an assertsion
-				T* mem = mBuffers[c].data();
-			}
-		}
 
 	public:
 
@@ -525,8 +476,8 @@ namespace tklb {
 		 */
 		void getRaw(T** put) {
 			TKLB_ASSERT_STATE(assertOnConstMem())
-			for (uchar c = 0; c < MAX_CHANNELS; c++) {
-				put[c] = mBuffers[c].data();
+			for (uchar c = 0; c < mChannels; c++) {
+				put[c] = get(c);
 			}
 		}
 
@@ -535,8 +486,8 @@ namespace tklb {
 		 * @param put Pointers go here
 		 */
 		void getRaw(const T** put) const {
-			for (uchar c = 0; c < MAX_CHANNELS; c++) {
-				put[c] = mBuffers[c].data();
+			for (uchar c = 0; c < mChannels; c++) {
+				put[c] = get(c);
 			}
 		}
 
@@ -616,14 +567,18 @@ namespace tklb {
 			Size out = 0;
 			for (uchar c = 0; c < chan; c++) {
 				Size j = c;
+				const T* data = get(c);
 				for (Size i = 0; i < length; i++) {
-					buffer[j] = T2(mBuffers[c][i + offset]);
+					buffer[j] = T2(data[i + offset]);
 					j += chan;
 				}
 				out += length;
 			}
 			return out / Size(channels());
 		}
+
+	private:
+		void assertOnConstMem() { T* data = mBuffer.data(); }
 	};
 
 

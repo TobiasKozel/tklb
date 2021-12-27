@@ -54,11 +54,11 @@ int conversion(AudioBuffer& buffer) {
 
 	buffer.set(fbuf, length, channels, 0, length / 2);
 
-	AudioBuffer::sample* l = buffer[0];
-	AudioBuffer::sample* r = buffer[1];
+	AudioBuffer::Sample* l = buffer[0];
+	AudioBuffer::Sample* r = buffer[1];
 
 	for (int i = 0; i < length; i++) {
-		AudioBuffer::sample expected = (i >= (length / 2)) ? 1.0 : 0;
+		AudioBuffer::Sample expected = (i >= (length / 2)) ? 1.0 : 0;
 		if (!close(expected, l[i])) {
 			return 5;
 		}

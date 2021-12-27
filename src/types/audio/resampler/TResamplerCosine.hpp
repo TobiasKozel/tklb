@@ -14,7 +14,8 @@ namespace tklb {
 		uint mRateIn, mRateOut;
 		double mFactor = 1.0;
 		T mOffset = 0;
-		T mLastFrame[Buffer::MAX_CHANNELS];
+		static constexpr Size MAX_CHANNELS = 32;
+		T mLastFrame[MAX_CHANNELS];
 	public:
 		ResamplerCosineTpl(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
 			for (auto& i : mLastFrame) { i = 0.0; }
@@ -33,7 +34,8 @@ namespace tklb {
 		 * @param quality Quality factor from 1-10. Higher results in better quality and higher CPU usage. Depending on implementataion may not do anything.
 		 * @return True on success
 		 */
-		bool init(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
+		bool init(uint rateIn, uint rateOut, uint maxBlock = 512, uchar channels = 2, uchar quality = 5) {
+			TKLB_ASSERT(channels <= MAX_CHANNELS)
 			mRateIn = rateIn;
 			mRateOut = rateOut;
 			mFactor = double(mRateIn) / double(mRateOut);

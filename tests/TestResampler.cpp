@@ -19,8 +19,8 @@ int doTest() {
 	const int blockSize = 256;
 	const int channels = TKLB_MAXCHANNELS;
 
-	Resampler resamplerUp(rateLow, rateHigh, blockSize);
-	Resampler resamplerDown(rateHigh, rateLow, blockSize);
+	Resampler resamplerUp(rateLow, rateHigh, blockSize, channels);
+	Resampler resamplerDown(rateHigh, rateLow, blockSize, channels);
 
 	// TODO this isn't realy accurate since the delay is in the current samplerate or the resampler
 	int latency = resamplerDown.getLatency();

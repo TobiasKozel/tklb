@@ -13,7 +13,7 @@ namespace tklb {
 
 		uint mSize;
 		// No idea what this is
-		AudioBuffer::Buffer<int> mIp;
+		HeapBuffer<int, 16> mIp;
 		// or this, prolly lookup tables
 		AudioBufferDouble mW;
 		AudioBufferDouble mBuffer;

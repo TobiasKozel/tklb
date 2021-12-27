@@ -1,26 +1,50 @@
 #ifndef _TKLB_HEAPBUFFER
 #define _TKLB_HEAPBUFFER
 
-#include "../util/TAssert.h"
-#include "../memory/TMemory.hpp"
-
 #include <algorithm>	// For std::max
 #include <cmath>		// For std::ceil
+#include <cstring>
+
+
+// #define TKLB_NO_STDLIB
+
+#ifndef TKLB_NO_STDLIB
+	#include "../memory/TAllocator.hpp"
+#else
+	namespace tklb {
+		template <class T>
+		struct DummyAllocator {
+			T* allocate(size_t n) noexcept { return nullptr; }
+			void deallocate(T* ptr, size_t n) noexcept { }
+		};
+	}
+#endif // TKLB_NO_STDLIB
+
+
+#ifndef TKLB_ASSERT
+	#define TKLB_ASSERT(cond)
+	#define TKLB_ASSERT_STATE(statement)
+#endif
 
 namespace tklb {
-	constexpr size_t _HeapBufferDefaultGranularity(size_t size) {
-		return std::max(1024 / size, static_cast<size_t>(1));
-	}
 
 	/**
-	 * Basically a bad std::vector which can also work with foreign memory.
-	 * Classes stored inside need to have a default contructor
-	 *
-	 * TODO add iterator
+	 * @brief Basically a bad std::vector without exceptions which can also work with foreign memory.
+	 * @tparam T Element type need to have a default contructor
+	 * @tparam ALIGNMENT Memory alignment in bytes needs to be a power of 2. Defaults to 0
+	 * @tparam ALLOCATOR Normal allocator class defaults to non basic malloc/free wrapper
+	 * @tparam SIZE Size type used for index, defaults to unsigned int to save some space
 	 */
-	template <
-		typename T, bool Aligned = false,
-		unsigned int Granularity = _HeapBufferDefaultGranularity(sizeof(T))
+	template <typename T,
+		int ALIGNMENT = 0,
+		class ALLOCATOR =
+	#ifndef TKLB_NO_STDLIB
+		StdAllocator
+	#else
+		DummyAllocator
+	#endif
+		<unsigned char>, // TODO this sucks, but need byte sized allocations for alignment
+		typename SIZE = unsigned int
 	>
 	class HeapBuffer {
 	public:
@@ -28,15 +52,15 @@ namespace tklb {
 		 * everything using the heapbuffer uses this type
 		 * Always needs to be unsigned!
 		 */
-		using Size = unsigned int;
+		using Size = SIZE;
+
+		static constexpr Size Alignment = ALIGNMENT;
+
+		static constexpr Size ChunkSize = 16;
 
 	private:
+		ALLOCATOR mAllocator;
 		T* mBuf = nullptr;			// Underlying buffer
-		/**
-		 * TODO move this in a template param
-		 * Memory pool used for allocations
-		 */
-		memory::MemoryPool& mPool;
 		Size mSize = 0; // elements in buffer
 
 		/**
@@ -55,19 +79,7 @@ namespace tklb {
 		 * @brief Setup the buffer with a size. User has to check if allocation was successful.
 		 * @param size Size in elements of the buffer
 		 */
-		HeapBuffer(
-			const Size size = 0
-		) : mPool(TKLB_DEFAULT_POOL) {
-			if (size != 0) { resize(size); }
-		}
-
-		/**
-		 * @brief Provide a pool
-		 */
-		HeapBuffer(
-			memory::MemoryPool& pool,
-			const Size size = 0
-		) : mPool(pool) {
+		HeapBuffer(const Size size = 0) {
 			if (size != 0) { resize(size); }
 		}
 
@@ -75,36 +87,29 @@ namespace tklb {
 		 * @brief Copy Constructor, calls set()
 		 * Failed allocations have to be checked
 		 */
-		HeapBuffer(
-			const HeapBuffer<T>& source
-		) : mPool(source.getPool()) {
-			set(source);
-		}
+		template <int Alignment2, class Allocator2, typename Size2>
+		HeapBuffer(const HeapBuffer<T, Alignment2, Allocator2, Size2>& source) { set(source); }
 
-		HeapBuffer(const T* data, Size size) : mPool(TKLB_DEFAULT_POOL) {
-			set(data, size);
-		}
+		HeapBuffer(const T* data, Size size) { set(data, size); }
 
 		/**
 		 * @brief Move contructor, will mark the original buffer as injected
 		 */
 		HeapBuffer(HeapBuffer&& source) :
-			mPool(source.mPool),
 			mBuf(source.mBuf),
 			mSize(source.mSize),
 			mRealSize(source.mRealSize)
 		{
 			TKLB_ASSERT_STATE(IS_CONST = source.IS_CONST)
-			source.mRealSize = 0;
+			source.disown();
 		}
 
 		HeapBuffer& operator= (HeapBuffer&& source) {
-			TKLB_ASSERT(&mPool == &source.mPool)
+			TKLB_ASSERT_STATE(IS_CONST == source.IS_CONST)
 			mBuf = source.mBuf;
 			mSize = source.mSize;
 			mRealSize = source.mRealSize;
-			TKLB_ASSERT_STATE(IS_CONST = source.IS_CONST)
-			source.mRealSize = 0;
+			source.disown();
 			return *this;
 		}
 
@@ -119,7 +124,8 @@ namespace tklb {
 		 * contructors will called
 		 * @return True on success
 		 */
-		bool set(const HeapBuffer<T>& source) {
+		 template <int Alignment2, class Allocator2, typename Size2>
+		bool set(const HeapBuffer<T, Alignment2, Allocator2, Size2>& source) {
 			return set(source.data(), source.size());
 		}
 
@@ -151,7 +157,7 @@ namespace tklb {
 		void inject(T* mem, const Size size, const Size realSize = 0) {
 			if (!injected() && mBuf != nullptr) { resize(0); };
 			TKLB_ASSERT_STATE(IS_CONST = false)
-			mRealSize = 0;
+			disown();
 			mBuf = mem;
 			mSize = size;
 		}
@@ -173,8 +179,11 @@ namespace tklb {
 		 * Leak prone.
 		 */
 		void disown() {
+			TKLB_ASSERT(mRealSize != 0)
 			mRealSize = 0;
 		}
+
+		bool empty() const { return mSize == 0; }
 
 		T* data() {
 			// Don't use non const access when using injected const memory
@@ -200,6 +209,12 @@ namespace tklb {
 			return mBuf[index];
 		}
 
+		const T* begin() const { return mBuf; }
+		const T* end () const { return mBuf + mSize; }
+
+		T* begin() { return mBuf; }
+		T* end () { return mBuf + mSize; }
+
 		T& last() {
 			TKLB_ASSERT(0 < mSize)
 			return mBuf[mSize - 1];
@@ -216,7 +231,7 @@ namespace tklb {
 		 */
 		bool reserve(const Size size) {
 			if (size  < mRealSize) { return true; }
-			return allocate(closestChunkSize(size));
+			return allocate(size);
 		}
 
 		/**
@@ -292,7 +307,7 @@ namespace tklb {
 			if (mSize <= index) { return false; }
 			mBuf[index].~T(); // Call destructor
 			if (index != mSize - 1) { // fill the gap with the last element
-				memory::copy(mBuf + index, mBuf + (mSize - 1), sizeof(T));
+				memcpy(mBuf + index, mBuf + (mSize - 1), sizeof(T));
 			}
 			mSize--;
 			return true;
@@ -332,8 +347,6 @@ namespace tklb {
 				return false;
 			}
 			for (Size i = 0; i < mSize; i++) {
-				// not using the allocator to delete since this is
-				// only intended for pointer buffers
 				delete mBuf[i];
 			}
 			resize(0);
@@ -365,8 +378,6 @@ namespace tklb {
 		 */
 		Size allocated() const { return mRealSize * sizeof(T); }
 
-		memory::MemoryPool& getPool() const { return mPool; }
-
 	private:
 		/**
 		 * @brief Allocated the exact size requsted and copies existing objects.
@@ -375,50 +386,64 @@ namespace tklb {
 		bool allocate(Size chunk) noexcept {
 			T* oldBuf = mBuf;
 			if (0 < chunk) {
-				T* newBuf = nullptr;
+				const Size bytes = chunk * sizeof(T);
 				// TODO tklb Consider using realloc
-				if (Aligned) {
-					newBuf = reinterpret_cast<T*>(
-						mPool.allocateAligned(chunk * sizeof(T))
-					);
-				} else {
-					newBuf = reinterpret_cast<T*>(
-						mPool.allocate(chunk * sizeof(T))
-					);
-				}
+				void* newBuf = mAllocator.allocate(bytes + Alignment);
 				if (newBuf == nullptr) {
-					TKLB_ASSERT(false)
-					return false; // ! Allocation failed
+					TKLB_ASSERT(false);
+					return false;
 				}
+
+				if (Alignment != 0) {
+					// Mask with zeroes at the end to floor the pointer to an aligned block
+					// for these casts to work, the type needs to be as wide as void*
+					const size_t mask = ~(size_t(Alignment - 1));
+					const size_t pointer = reinterpret_cast<size_t>(newBuf);
+					const size_t floored = pointer & mask;
+					const size_t aligned = floored + Alignment;
+
+					// Not enough space before aligned memory to store original ptr
+					// This only happens when malloc doesn't align to sizeof(size_t)
+					TKLB_ASSERT(sizeof(Size) <= (aligned - pointer))
+
+					newBuf = reinterpret_cast<void*>(aligned);
+					size_t* original = reinterpret_cast<size_t*>(newBuf) - 1;
+					*(original) = pointer;
+					TKLB_ASSERT(size_t(newBuf) % Alignment == 0)
+				}
+
+
 				if (0 < mSize && oldBuf != nullptr && newBuf != nullptr) {
 					// copy existing content
 					// TODO tklb only copy the new realsize which might be smaller
-					memory::copy(newBuf, oldBuf, std::min(mSize, chunk) * sizeof(T));
+					memcpy(newBuf, oldBuf, std::min(mSize, chunk) * sizeof(T));
 				}
-				mBuf = newBuf;
+				mBuf = (T*) newBuf;
 			} else {
 				mBuf = nullptr;
 			}
 
 			if (oldBuf != nullptr && !injected() && mRealSize > 0) {
-				// Get rif of oldbuffer, object destructors were alredy called
-				if (Aligned) {
-					mPool.deallocateAligned(oldBuf);
+				// Get rif of oldbuffer, object destructors were already called
+				if (Alignment == 0) {
+					mAllocator.deallocate(reinterpret_cast<unsigned char*>(oldBuf), mRealSize);
 				} else {
-					mPool.deallocate(oldBuf);
+					auto original = *(reinterpret_cast<void**>(oldBuf) - 1);
+					mAllocator.deallocate(reinterpret_cast<unsigned char*>(original), mRealSize);
 				}
 			}
 			TKLB_ASSERT_STATE(IS_CONST = false)
 			mRealSize = chunk;
-			TKLB_CHECK_HEAP()
+			// TKLB_CHECK_HEAP()
 			return true;
 		}
 
 		Size closestChunkSize(Size chunk) const {
-			return Granularity * Size(std::ceil(chunk / double(Granularity)));
+			return ChunkSize * Size(std::ceil(chunk / double(ChunkSize)));
 		}
 	};
 
 } // namespace
 
 #endif // _TKLB_HEAPBUFFER
+

@@ -6,11 +6,6 @@
 	#include <stdlib.h>
 #endif
 
-#ifndef TKLB_TRACK_ALLOCATE
-	#define TKLB_TRACK_ALLOCATE(ptr, size)
-	#define TKLB_TRACK_FREE(ptr, size)
-#endif
-
 namespace tklb { namespace memory {
 
 	/**

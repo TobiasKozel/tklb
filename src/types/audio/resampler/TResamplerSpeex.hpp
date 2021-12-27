@@ -50,7 +50,6 @@ namespace tklb {
 
 		uint mRateIn, mRateOut;
 		AudioBufferFloat mConvertOut, mConvertIn;
-		static constexpr uchar MAX_CHANNELS = AudioBufferFloat::MAX_CHANNELS;
 		SpeexResamplerState* mState = nullptr;
 
 	public:
@@ -75,7 +74,7 @@ namespace tklb {
 		 * @param quality Quality factor from 1-10. Higher results in better quality and higher CPU usage. Depending on implementataion may not do anything.
 		 * @return True on success
 		 */
-		bool init(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
+		bool init(uint rateIn, uint rateOut, uint maxBlock = 512, uchar maxChannels = 2, uchar quality = 5) {
 			int err;
 			if (rateIn == mRateIn && mRateOut == rateOut && mState != nullptr) {
 				// only clears out old data
@@ -84,15 +83,15 @@ namespace tklb {
 				if (mState != nullptr) {
 					speex_resampler_destroy(mState);
 				}
-				mState = speex_resampler_init(MAX_CHANNELS, rateIn, rateOut, quality, &err);
+				mState = speex_resampler_init(maxChannels, rateIn, rateOut, quality, &err);
 			}
 
 			mRateIn = rateIn;
 			mRateOut = rateOut;
 			// Conversion buffers if not doing float resampling
 			if (!std::is_same<T, float>::value) {
-				mConvertIn.resize(maxBlock, MAX_CHANNELS);
-				mConvertOut.resize(calculateBufferSize(maxBlock), MAX_CHANNELS);
+				mConvertIn.resize(maxBlock, maxChannels);
+				mConvertOut.resize(calculateBufferSize(maxBlock), maxChannels);
 			}
 			return err == 0;
 		}
@@ -198,7 +197,7 @@ namespace tklb {
 			copy.setValidSize(samples);
 
 			ResamplerSpeexTpl<T> resampler;
-			resampler.init(rateIn, rateOut, copy.size(), quality);
+			resampler.init(rateIn, rateOut, copy.size(), buffer.channels(), quality);
 			buffer.resize(resampler.calculateBufferSize(samples));
 
 			resampler.process(copy, buffer);

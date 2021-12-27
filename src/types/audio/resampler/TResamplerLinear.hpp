@@ -6,17 +6,19 @@
 namespace tklb {
 	template <typename T>
 	class ResamplerLinearTpl {
+
 		using uchar = unsigned char;
 		using uint = unsigned int;
 		using Buffer = AudioBufferTpl<T>;
 		using Size = typename Buffer::Size;
 
+		static constexpr Size MAX_CHANNELS = 32;
 		uint mRateIn, mRateOut;
 		double mFactor = 1.0;
 		T mOffset = 0;
-		T mLastFrame[Buffer::MAX_CHANNELS];
+		T mLastFrame[MAX_CHANNELS]; // don't think we'll need more any time soon
 	public:
-		ResamplerLinearTpl(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
+		ResamplerLinearTpl(uint rateIn, uint rateOut, uint maxBlock = 512, uchar channels = 2, uchar quality = 5) {
 			for (auto& i : mLastFrame) { i = 0.0; }
 			init(rateIn, rateOut, maxBlock, quality);
 		}
@@ -33,7 +35,8 @@ namespace tklb {
 		 * @param quality Quality factor from 1-10. Higher results in better quality and higher CPU usage. Depending on implementataion may not do anything.
 		 * @return True on success
 		 */
-		bool init(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
+		bool init(uint rateIn, uint rateOut, uint maxBlock = 512, uchar channels = 2, uchar quality = 5) {
+			TKLB_ASSERT(channels <= MAX_CHANNELS)
 			mRateIn = rateIn;
 			mRateOut = rateOut;
 			mFactor = double(mRateIn) / double(mRateOut);
@@ -134,7 +137,7 @@ namespace tklb {
 			copy.setValidSize(samples);
 
 			ResamplerLinearTpl<T> resampler;
-			resampler.init(rateIn, rateOut, copy.size(), quality);
+			resampler.init(rateIn, rateOut, copy.size(), buffer.channels(), quality);
 			buffer.resize(resampler.calculateBufferSize(samples));
 
 			resampler.process(copy, buffer);

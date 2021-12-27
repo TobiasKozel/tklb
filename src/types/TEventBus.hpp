@@ -1,11 +1,8 @@
 #ifndef _TKLB_EVENT_BUS
 #define _TKLB_EVENT_BUS
 
-#ifdef USE_HEAPBUFFER
-	#include "./THeapBuffer.hpp"
-#else
-	#include "./TStackBuffer.hpp"
-#endif // USE_HEAPBUFFER
+
+#include "./THeapBuffer.hpp"
 
 #include "./TMutexDummy.hpp"
 #include "./TDelegate.hpp"
@@ -17,11 +14,7 @@ namespace tklb {
 	template <int EVENT_COUNT, typename EventId = int, class MutexType = MutexDummy>
 	class EventBus {
 		class BaseSubscription;
-		#ifdef USE_HEAPBUFFER
-			using Subscriptions = HeapBuffer<BaseSubscription*>;
-		#else
-			using Subscriptions = StackBuffer<BaseSubscription*, 2>;
-		#endif
+		using Subscriptions = HeapBuffer<BaseSubscription*>;
 
 		Subscriptions mEvents[EVENT_COUNT];
 		MutexType mMutex;
