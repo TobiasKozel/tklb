@@ -16,6 +16,11 @@
 
 
 namespace tklb {
+#ifdef TKLB_NO_SIMD
+	constexpr size_t DEFAULT_ALIGNMENT = 16;
+#else
+	constexpr size_t DEFAULT_ALIGNMENT = xsimd::default_arch::alignment();
+#endif // TKLB_NO_SIMD
 
 	/**
 	 * @brief Class for handling the most basic audio needs
@@ -26,7 +31,7 @@ namespace tklb {
 	 * @tparam T Sample type. Can be anything std::is_arithmetic
 	 * @tparam STORAGE Storage type, tklb::HeapBuffer for now since there are a few things missing in a std::vector
 	 */
-	template <typename T, class STORAGE = HeapBuffer<T, 16>>
+	template <typename T, class STORAGE = HeapBuffer<T, DEFAULT_ALIGNMENT>>
 	class AudioBufferTpl {
 		static_assert(std::is_arithmetic<T>::value, "Need arithmetic type.");
 	public:
@@ -43,7 +48,7 @@ namespace tklb {
 
 	private:
 		Storage mBuffer;
-		Size mValidSize = 0; // TODO use for set add and multiply
+		Size mValidSize = 0;
 		uchar mChannels = 0;
 
 	public:
@@ -98,8 +103,8 @@ namespace tklb {
 		) {
 			static_assert(std::is_arithmetic<T2>::value, "Need arithmetic type.");
 			if (mChannels <= channel) { return; }
-			TKLB_ASSERT(size() >= offsetDst)
-			length = std::min(length, size() - offsetDst);
+			TKLB_ASSERT(validSize() >= offsetDst)
+			length = std::min(length, validSize() - offsetDst);
 			T* out = get(channel);
 			if (std::is_same<T2, T>::value) {
 				memory::copy(out + offsetDst, samples, sizeof(T) * length);
@@ -148,7 +153,7 @@ namespace tklb {
 			const Size offsetSrc = 0,
 			const Size offsetDst = 0
 		) {
-			length = length == 0 ? buffer.size() : length;
+			length = length == 0 ? buffer.validSize() : length;
 			for (uchar c = 0; c < buffer.channels(); c++) {
 				set(buffer[c] + offsetSrc, length, c, offsetDst);
 			}
@@ -165,8 +170,8 @@ namespace tklb {
 			Size length = 0,
 			const Size offsetDst = 0
 		) {
-			TKLB_ASSERT(size() >= offsetDst)
-			length = std::min(size() - offsetDst, length ? length : size());
+			TKLB_ASSERT(validSize() >= offsetDst)
+			length = std::min(validSize() - offsetDst, length ? length : validSize());
 			for (uchar c = 0; c < channels(); c++) {
 				std::fill_n(get(c) + offsetDst, length, value);
 			}
@@ -189,8 +194,8 @@ namespace tklb {
 			const Size offsetDst = 0
 		) {
 			static_assert(std::is_arithmetic<T2>::value, "Need arithmetic type.");
-			TKLB_ASSERT(size() >= offsetDst)
-			length = std::min(size() - offsetDst, length);
+			TKLB_ASSERT(validSize() >= offsetDst)
+			length = std::min(validSize() - offsetDst, length);
 			offsetSrc *= channels;
 			for (uchar c = 0; c < std::min(channels, mChannels); c++) {
 				T* out = get(c);
@@ -214,14 +219,18 @@ namespace tklb {
 		/**
 		 * @brief ! Will not keep the contents! Resizes the buffer to the desired length and channel count.
 		 * @details If the validSize = 0 it will be set to the new size for convenience.
+		 * The size reported back when calling size is can be larger if the data is aligned
 		 * @param length The desired length in Samples. 0 will deallocate.
 		 * @param channels Desired channel count. 0 will deallocate.
 		 */
 		bool resize(const Size length, uchar channels) {
 			if (channels == mChannels && size() == length) { return true; }
-			mBuffer.resize(channels * length);
+			// We need to ensure each channel is aligned so we add some padding after each channel
+			const auto elementAlign = mBuffer.closestChunkSize(length, mBuffer.Alignment / sizeof(T));
+			mBuffer.resize(channels * elementAlign);
 
 			mChannels = channels;
+
 			if (mValidSize == 0) {
 				mValidSize = length;
 			} else {
@@ -261,10 +270,10 @@ namespace tklb {
 			Size offsetSrc = 0,
 			Size offsetDst = 0
 		) {
-			TKLB_ASSERT(size() >= offsetDst)
-			TKLB_ASSERT(buffer.size() >= offsetSrc)
-			length = length == 0 ? buffer.size() - offsetSrc : length;
-			length = std::min(buffer.size() - offsetSrc, size() - offsetDst);
+			TKLB_ASSERT(validSize() >= offsetDst)
+			TKLB_ASSERT(buffer.validSize() >= offsetSrc)
+			length = length == 0 ? buffer.validSize() - offsetSrc : length;
+			length = std::min(buffer.validSize() - offsetSrc, validSize() - offsetDst);
 			const uchar channelCount = std::min(buffer.channels(), channels());
 
 			#ifndef TKLB_NO_SIMD
@@ -310,10 +319,10 @@ namespace tklb {
 			Size offsetSrc = 0,
 			Size offsetDst = 0
 		) {
-			TKLB_ASSERT(size() >= offsetDst)
-			TKLB_ASSERT(buffer.size() >= offsetSrc)
-			length = length == 0 ? buffer.size() - offsetSrc : length;
-			length = std::min(buffer.size() - offsetSrc, size() - offsetDst);
+			TKLB_ASSERT(validSize() >= offsetDst)
+			TKLB_ASSERT(buffer.validSize() >= offsetSrc)
+			length = length == 0 ? buffer.validSize() - offsetSrc : length;
+			length = std::min(buffer.validSize() - offsetSrc, validSize() - offsetDst);
 			const uchar channelsCount = std::min(buffer.channels(), channels());
 
 			#ifndef TKLB_NO_SIMD
@@ -350,7 +359,7 @@ namespace tklb {
 		 * @param value Constant to multiply the buffer with
 		 */
 		void multiply(T value) {
-			const Size length = size();
+			const Size length = validSize();
 
 			#ifndef TKLB_NO_SIMD
 				const Size vectorize = length - (length % Stride);
@@ -379,7 +388,7 @@ namespace tklb {
 		 * @param value
 		 */
 		void add(T value) {
-			const Size length = size();
+			const Size length = validSize();
 
 			#ifndef TKLB_NO_SIMD
 				const Size vectorize = length - (length % Stride);
@@ -410,10 +419,15 @@ namespace tklb {
 		 * @param size Size of the entire buffer
 		 * @param channels How many channels are contained in mem
 		 */
-		void inject(T* mem, const Size size, const uchar channel) {
+		bool inject(T* mem, const Size size, const uchar channels) {
+			if (!mBuffer.isAligned(mem)) {
+				TKLB_ASSERT(false)
+				return false;
+			}
+			TKLB_ASSERT(size % channels == 0)
 			mBuffer.inject(mem, size);
-			mValidSize = size;
-			mChannels = channel;
+			mValidSize = size / channels;
+			mChannels = channels;
 		}
 
 		/**
@@ -423,9 +437,14 @@ namespace tklb {
 		 * @param size Size of the entire buffer
 		 * @param channels How many channels are contained in mem
 		 */
-		void inject(const T* mem, const Size size, const uchar channels) {
+		bool inject(const T* mem, const Size size, const uchar channels) {
+			if (!mBuffer.isAligned(mem)) {
+				TKLB_ASSERT(false)
+				return false;
+			}
+			TKLB_ASSERT(size % channels == 0)
 			mBuffer.inject(mem, size);
-			mValidSize = size;
+			mValidSize = size / channels;
 			mChannels = channels;
 		}
 
@@ -440,7 +459,7 @@ namespace tklb {
 		inline Size size() const { return mBuffer.size() / mChannels; }
 
 		/**
-		 * @brief fReturns the length of actually valid audio in the buffer.
+		 * @brief Returns the length of actually valid audio in the buffer.
 		 * TODO tklb make sure this is used consistently
 		 */
 		Size validSize() const { return mValidSize; }
@@ -451,24 +470,23 @@ namespace tklb {
 		 */
 		void setValidSize(const Size v) {
 			TKLB_ASSERT(v <= size());
-			mValidSize = v;
+			mValidSize = std::min(size(), v);
 		}
 
 		inline T* get(const uchar channel) {
 			TKLB_ASSERT(channel < mChannels)
-			return mBuffer.data() + (channel * size());
+			// We use the size of the buffer itself since this will result in aligned addresses
+			return mBuffer.data() + (channel * (mBuffer.size() / mChannels));
 		};
 
 		inline const T* get(const uchar channel) const {
 			TKLB_ASSERT(channel < mChannels)
-			return mBuffer.data() + (channel * size());
+			return mBuffer.data() + (channel * (mBuffer.size() / mChannels));
 		};
 
-		const T* operator[](const uchar channel) const { return get(channel); }
+		inline const T* operator[](const uchar channel) const { return get(channel); }
 
-		T* operator[](const uchar channel) { return get(channel); }
-
-	public:
+		inline T* operator[](const uchar channel) { return get(channel); }
 
 		/**
 		 * @brief Fills an 2d array of size maxChannels() with pointers to each channel

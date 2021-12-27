@@ -36,7 +36,7 @@ namespace tklb {
 	 * @tparam SIZE Size type used for index, defaults to unsigned int to save some space
 	 */
 	template <typename T,
-		int ALIGNMENT = 0,
+		size_t ALIGNMENT = 0,
 		class ALLOCATOR =
 	#ifndef TKLB_NO_STDLIB
 		StdAllocator
@@ -54,9 +54,9 @@ namespace tklb {
 		 */
 		using Size = SIZE;
 
-		static constexpr Size Alignment = ALIGNMENT;
+		static constexpr size_t Alignment = ALIGNMENT;
 
-		static constexpr Size ChunkSize = 16;
+		static constexpr size_t ChunkSize = 16;
 
 	private:
 		ALLOCATOR mAllocator;
@@ -193,14 +193,14 @@ namespace tklb {
 
 		const T* data() const { return mBuf; }
 
-		const T& operator[](const Size index) const {
+		inline const T& operator[](const Size index) const {
 			#ifdef TKLB_MEM_TRACE
 				TKLB_ASSERT(index < mSize)
 			#endif
 			return mBuf[index];
 		}
 
-		T& operator[](const Size index) {
+		inline T& operator[](const Size index) {
 			#ifdef TKLB_MEM_TRACE
 				TKLB_ASSERT(index < mSize)
 			#endif
@@ -243,7 +243,7 @@ namespace tklb {
 		 * @return Whether the allocation was successful
 		 */
 		bool resize(const Size size, const bool downsize = true) {
-			const Size chunked = closestChunkSize(size);
+			const Size chunked = closestChunkSize(size, ChunkSize);
 
 			if (size < mSize && mBuf != nullptr) { // downsize means destroy objects
 				for (Size i = size; i < mSize; i++) {
@@ -275,7 +275,7 @@ namespace tklb {
 		bool push(const T& object) {
 			Size newSize = mSize + 1;
 			if (mRealSize < newSize) {
-				if (allocate(closestChunkSize(newSize))) {
+				if (allocate(closestChunkSize(newSize, ChunkSize))) {
 					new (mBuf + mSize) T(object);
 				} else {
 					TKLB_ASSERT(false)
@@ -378,6 +378,15 @@ namespace tklb {
 		 */
 		Size allocated() const { return mRealSize * sizeof(T); }
 
+		static Size closestChunkSize(Size size, Size chunk) {
+			const double chunkMin = std::max(double(chunk), 1.0);
+			return chunk * Size(std::ceil(size / double(chunkMin)));
+		}
+
+		static bool isAligned(const void* ptr) {
+			return size_t(ptr) % Alignment == 0;
+		}
+
 	private:
 		/**
 		 * @brief Allocated the exact size requsted and copies existing objects.
@@ -404,12 +413,12 @@ namespace tklb {
 
 					// Not enough space before aligned memory to store original ptr
 					// This only happens when malloc doesn't align to sizeof(size_t)
-					TKLB_ASSERT(sizeof(Size) <= (aligned - pointer))
+					TKLB_ASSERT(sizeof(size_t) <= (aligned - pointer))
 
 					newBuf = reinterpret_cast<void*>(aligned);
 					size_t* original = reinterpret_cast<size_t*>(newBuf) - 1;
 					*(original) = pointer;
-					TKLB_ASSERT(size_t(newBuf) % Alignment == 0)
+					TKLB_ASSERT(isAligned(newBuf))
 				}
 
 
@@ -436,10 +445,6 @@ namespace tklb {
 			mRealSize = chunk;
 			// TKLB_CHECK_HEAP()
 			return true;
-		}
-
-		Size closestChunkSize(Size chunk) const {
-			return ChunkSize * Size(std::ceil(chunk / double(ChunkSize)));
 		}
 	};
 
