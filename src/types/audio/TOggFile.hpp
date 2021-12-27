@@ -7,6 +7,11 @@
 
 #define STB_VORBIS_NO_PUSHDATA_API // Don't need this
 #define STB_VORBIS_NO_INTEGER_CONVERSION // don't need either
+
+#ifdef TKLB_NO_STDIO
+	#define STB_VORBIS_NO_STDIO
+#endif
+
 #include "../../../external/stb_vorbis.c"
 #include <type_traits>
 
@@ -28,7 +33,11 @@ namespace tklb {
 			stb_vorbis* vorbis;
 			int error = 0;
 			if (length == 0) {
+			#ifndef TKLB_NO_STDIO
 				vorbis = stb_vorbis_open_filename(path, &error, nullptr);
+			#else
+				return false;
+			#endif
 			} else {
 				vorbis = stb_vorbis_open_memory(
 					reinterpret_cast<const unsigned char*>(path), length, &error, nullptr
