@@ -1,6 +1,8 @@
 #ifndef _TKLB_STRING
 #define _TKLB_STRING
 
+#include "./THeapBuffer.hpp"
+#include <cstring>
 namespace tklb {
 	/**
 	 * @brief Super simple class to hold and compare strings on the stack
@@ -52,9 +54,72 @@ namespace tklb {
 				if (str[i] == '\0') { break; }
 				mData[i] = str[i];
 			}
-			for(; i < N; i++) { mData[i] = 0; }
-			mData[N - 1] = '\n'; // always terminate
+			for(; i < N; i++) { mData[i] = '\0'; }
+			mData[N - 1] = '\0'; // just in case, will run over the last char
 		}
+	};
+
+	template <class STORAGE = HeapBuffer<char>>
+	class String {
+		STORAGE mData;
+		using Size = typename STORAGE::Size;
+	public:
+		String() { }
+		String(const char* str) { set(str); }
+		String(const String* str) { set(*str); };
+		String(const String& str) { set(str); };
+		String& operator=(const char* str) { set(str); return *this; }
+		String& operator=(const String& str) { set(str); return *this; };
+
+		const char* c_str() const { return mData.data(); }
+		const char& operator[](const Size index) const { return mData[index]; }
+		char& operator[](const Size index) { return mData[index]; }
+		Size size() const { return mData.size(); }
+		bool empty() const { return mData.empty(); }
+
+		char* data() { return mData.data(); }
+
+		void set(const String& str) {
+			mData.set(str.c_str(), str.size());
+		}
+
+		void set(const char* str) {
+			if (str == nullptr) { return; }
+			const Size size = strlen(str) + 1;		// keep the terminator
+			mData.resize(size);
+			mData.set(str, size);
+		}
+
+		void append(const String& str) {
+			const Size start = mData.size() - 1;	// crop off own terminator
+			mData.resize(start + str.size()); 		// keeps the old data
+			for (Size i = 0; i < str.size(); i++) {
+				mData[start + i] = str[i];
+			}
+		}
+
+		void append(const char* str) {
+			String s = str;
+			append(s);
+		}
+
+		void prepend(const String& str) {
+			const Size oldSize = mData.size();
+			mData.resize(oldSize + str.size() - 1);
+			for (Size i = 0; i < oldSize; i++) {
+				mData[mData.size() - i] = mData[oldSize - i];
+			}
+			for (Size i = 0; i < str.size() - 1; i++) { // crop off other terminator
+				mData[i] = str[i];
+			}
+		}
+
+		void prepend(const char* str) {
+			String s = str;
+			prepend(s);
+		}
+
+		void reserve(Size size) { mData.reserve(size); }
 	};
 
 } // namespace tklb

@@ -4,9 +4,9 @@
 #include "./TAudioBuffer.hpp"
 
 namespace tklb {
-	template <typename T>
-	class AudioRingBufferTpl : public AudioBufferTpl<T> {
-		using Base = AudioBufferTpl<T>;
+	template <typename T, class STORAGE = HeapBuffer<T, DEFAULT_ALIGNMENT>>
+	class AudioRingBufferTpl : public AudioBufferTpl<T, STORAGE> {
+		using Base = AudioBufferTpl<T, STORAGE>;
 		using uchar = unsigned char;
 		using Size = typename Base::Size;
 		Size mHead = 0;
@@ -16,7 +16,7 @@ namespace tklb {
 		AudioRingBufferTpl() { }
 
 		AudioRingBufferTpl(const Size length, const uchar channels)
-			: AudioBufferTpl<T>(length, channels) { }
+			: AudioBufferTpl<T, STORAGE>(length, channels) { }
 
 		void reset() {
 			Base::set(0.0);
@@ -31,8 +31,8 @@ namespace tklb {
 		 * @param offsetDst Where to start in the destination buffer
 		 * @return How many elements where retrieved
 		 */
-		template <typename T2>
-		Size peek(AudioBufferTpl<T2>& out, Size elements, Size offsetSrc = 0, Size offsetDst = 0) {
+		template <typename T2, class STORAGE2>
+		Size peek(AudioBufferTpl<T2, STORAGE2>& out, Size elements, Size offsetSrc = 0, Size offsetDst = 0) {
 			const Size head = mHead - offsetSrc; // Offset the head
 			if (elements > head) {
 				elements = head; // Clamp the elements to peek to the elements in the buffer
@@ -67,8 +67,8 @@ namespace tklb {
 		 * @param offsetDst Where to start in the destination buffer
 		 * @return How many elements where retrieved
 		 */
-		template <typename T2>
-		Size pop(AudioBufferTpl<T2>& out, const Size elements, Size offsetSrc = 0, Size offsetDst = 0) {
+		template <typename T2, class STORAGE2>
+		Size pop(AudioBufferTpl<T2, STORAGE2>& out, const Size elements, Size offsetSrc = 0, Size offsetDst = 0) {
 			const Size elementsOut = peek(out, elements, offsetSrc, offsetDst);
 			mHead -= elementsOut; // Move the head back, can't exceed bounds since it was clamped in peek
 			return elementsOut;
@@ -80,8 +80,8 @@ namespace tklb {
 		 * @param offsetSrc Where to start in the source buffer
 		 * @return How many elements where stored in the ring buffer
 		 */
-		template <typename T2>
-		Size push(const AudioBufferTpl<T2>& in, Size offsetSrc = 0) {
+		template <typename T2, class STORAGE2>
+		Size push(const AudioBufferTpl<T2, STORAGE2>& in, Size offsetSrc = 0) {
 			const Size spaceLeftHead = Base::size() - mHead; // Space left before exceeding upper buffer bounds
 			Size elements = in.validSize();
 			if (elements > spaceLeftHead) {

@@ -13,12 +13,12 @@
 #endif
 
 namespace tklb {
-	template <typename T>
+	template <typename T, class Buffer = AudioBufferTpl<T>>
 	#ifdef TKLB_RESAMPLER_LINEAR
-		using ResamplerTpl = ResamplerLinearTpl<T>;
+		using ResamplerTpl = ResamplerLinearTpl<T, Buffer>;
 		using Resampler = ResamplerLinear;
 	#else
-		using ResamplerTpl = ResamplerSpeexTpl<T>;
+		using ResamplerTpl = ResamplerSpeexTpl<T, Buffer>;
 		using Resampler = ResamplerSpeex;
 	#endif
 } // namespace

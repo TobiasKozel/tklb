@@ -41,11 +41,10 @@ static inline void* speex_realloc (void* ptr, int size) {
 
 namespace tklb {
 
-	template <typename T>
+	template <typename T, class Buffer = AudioBufferTpl<T>>
 	class ResamplerSpeexTpl {
 		using uchar = unsigned char;
 		using uint = unsigned int;
-		using Buffer = AudioBufferTpl<T>;
 		using Size = typename Buffer::Size;
 
 		uint mRateIn, mRateOut;
@@ -200,7 +199,7 @@ namespace tklb {
 			resampler.init(rateIn, rateOut, copy.size(), buffer.channels(), quality);
 			buffer.resize(resampler.calculateBufferSize(samples));
 
-			resampler.process(copy, buffer);
+			// resampler.process(copy, buffer);
 		}
 
 	};

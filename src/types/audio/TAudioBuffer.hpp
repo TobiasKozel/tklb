@@ -146,9 +146,9 @@ namespace tklb {
 		 * @param offsetSrc Start offset in the source buffer
 		 * @param offsetDst Start offset in the target buffer
 		 */
-		template <typename T2>
+		template <typename T2, class STORAGE2>
 		void set(
-			const AudioBufferTpl<T2>& buffer,
+			const AudioBufferTpl<T2, STORAGE2>& buffer,
 			Size length = 0,
 			const Size offsetSrc = 0,
 			const Size offsetDst = 0
@@ -210,8 +210,8 @@ namespace tklb {
 		/**
 		 * @brief Match the size of the provided buffer and copy the contents
 		 */
-		template <typename T2>
-		void clone(const AudioBufferTpl<T2>& buffer) {
+		template <typename T2, class STORAGE2>
+		void clone(const AudioBufferTpl<T2, STORAGE2>& buffer) {
 			resize(buffer);
 			set(buffer);
 		}
@@ -227,6 +227,7 @@ namespace tklb {
 			if (channels == mChannels && size() == length) { return true; }
 			// We need to ensure each channel is aligned so we add some padding after each channel
 			const auto elementAlign = mBuffer.closestChunkSize(length, mBuffer.Alignment / sizeof(T));
+			mBuffer.resize(0); // deallocate so we don't copy old misaligned signal over
 			mBuffer.resize(channels * elementAlign);
 
 			mChannels = channels;
@@ -251,8 +252,8 @@ namespace tklb {
 		/**
 		 * @brief Resize to match the provided buffer
 		 */
-		template <typename T2>
-		void resize(const AudioBufferTpl<T2>& buffer) {
+		template <typename T2, class STORAGE2>
+		void resize(const AudioBufferTpl<T2, STORAGE2>& buffer) {
 			resize(buffer.size(), buffer.channels());
 		}
 
@@ -263,9 +264,9 @@ namespace tklb {
 		 * @param offsetSrc Start offset in the source buffer
 		 * @param offsetDst Start offset in the target buffer
 		 */
-		template <typename T2>
+		template <typename T2, class STORAGE2>
 		void add(
-			const AudioBufferTpl<T2>& buffer,
+			const AudioBufferTpl<T2, STORAGE2>& buffer,
 			Size length = 0,
 			Size offsetSrc = 0,
 			Size offsetDst = 0
@@ -312,7 +313,7 @@ namespace tklb {
 		 * @param offsetIn Start offset in the source buffer
 		 * @param offset Start offset in the target buffer
 		 */
-		template <typename T2>
+		template <typename T2, class STORAGE2>
 		void multiply(
 			const AudioBufferTpl<T2>& buffer,
 			Size length = 0,
@@ -456,7 +457,7 @@ namespace tklb {
 		/**
 		 * @brief Returns the allocated length of the buffer
 		 */
-		inline Size size() const { return mBuffer.size() / mChannels; }
+		inline Size size() const { return (!mBuffer.empty()) && mBuffer.size() / mChannels; }
 
 		/**
 		 * @brief Returns the length of actually valid audio in the buffer.

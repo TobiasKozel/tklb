@@ -60,8 +60,8 @@ namespace tklb {
 
 	private:
 		ALLOCATOR mAllocator;
-		T* mBuf = nullptr;			// Underlying buffer
-		Size mSize = 0; // elements in buffer
+		T* mBuf = nullptr;		// Underlying buffer
+		Size mSize = 0;			// elements in buffer
 
 		/**
 		 * the actually allocated size
@@ -75,11 +75,12 @@ namespace tklb {
 		TKLB_ASSERT_STATE(bool IS_CONST = false)
 
 	public:
+		HeapBuffer() = default;
 		/**
 		 * @brief Setup the buffer with a size. User has to check if allocation was successful.
 		 * @param size Size in elements of the buffer
 		 */
-		HeapBuffer(const Size size = 0) {
+		HeapBuffer(const Size size) {
 			if (size != 0) { resize(size); }
 		}
 
@@ -124,7 +125,7 @@ namespace tklb {
 		 * contructors will called
 		 * @return True on success
 		 */
-		 template <int Alignment2, class Allocator2, typename Size2>
+		template <int Alignment2, class Allocator2, typename Size2>
 		bool set(const HeapBuffer<T, Alignment2, Allocator2, Size2>& source) {
 			return set(source.data(), source.size());
 		}
