@@ -4,12 +4,11 @@
 #include "../TAudioBuffer.hpp"
 
 namespace tklb {
-	template <typename T>
+	template <typename T, class Buffer = AudioBufferTpl<T>>
 	class ResamplerLinearTpl {
 
 		using uchar = unsigned char;
 		using uint = unsigned int;
-		using Buffer = AudioBufferTpl<T>;
 		using Size = typename Buffer::Size;
 
 		static constexpr Size MAX_CHANNELS = 32;
@@ -136,7 +135,7 @@ namespace tklb {
 			copy.sampleRate = rateIn;
 			copy.setValidSize(samples);
 
-			ResamplerLinearTpl<T> resampler;
+			ResamplerLinearTpl<T, Buffer> resampler;
 			resampler.init(rateIn, rateOut, copy.size(), buffer.channels(), quality);
 			buffer.resize(resampler.calculateBufferSize(samples));
 

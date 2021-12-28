@@ -128,6 +128,8 @@ namespace tklb {
 			prepend(s);
 		}
 
+		void resize(Size size) { mData.resize(size); }
+
 		void reserve(Size size) { mData.reserve(size); }
 	};
 

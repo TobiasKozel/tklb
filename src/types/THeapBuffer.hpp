@@ -389,6 +389,7 @@ namespace tklb {
 		}
 
 		static bool isAligned(const void* ptr) {
+			if (Alignment == 0) { return true; }
 			return size_t(ptr) % Alignment == 0;
 		}
 

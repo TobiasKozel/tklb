@@ -2,6 +2,7 @@
 #define _TKLB_AUDIOBUFFER
 
 #include <algorithm>
+#include <limits>
 #include <type_traits>	// std::is_arithmetic
 
 #include "../../memory/TMemory.hpp"
@@ -86,6 +87,36 @@ namespace tklb {
 		AudioBufferTpl(const AudioBufferTpl&) = delete;
 		AudioBufferTpl(const AudioBufferTpl*) = delete;
 
+		/**
+		 * @brief Figure out if conversions between types like float -> int or int -> short
+		 * need scaling applied
+		 * @tparam T2 Other type compared to own type
+		 * @return true Scaling needs to be applied
+		 * @return false No scaling needs to be applied
+		 * @see getConversionScale
+		 */
+		template <typename T2>
+		static constexpr bool needsScaling() {
+			if (std::is_floating_point<T>::value && std::is_floating_point<T2>::value) {
+				return false;
+			}
+			return std::numeric_limits<T>::max() != std::numeric_limits<T2>::max();
+		}
+
+		/**
+		 * @brief calculate the scale factor needed between the types
+		 * @tparam T2 Other type
+		 * @tparam Ratio Floating point type since the value can be smaller than 1
+		 * @return constexpr Ratio
+		 */
+		template <typename T2, typename Ratio = float>
+		static constexpr Ratio getConversionScale() {
+			const Ratio maxt = std::is_floating_point<T>::value ?
+				1.0 : std::numeric_limits<T>::max() - 1;
+			const Ratio maxt2 = std::is_floating_point<T2>::value ?
+				1.0 : std::numeric_limits<T2>::max() - 1;
+			return maxt / maxt2;
+		}
 
 		/**
 		 * @brief Set a single channel from an array
@@ -107,10 +138,21 @@ namespace tklb {
 			length = std::min(length, size() - offsetDst);
 			T* out = get(channel);
 			if (std::is_same<T2, T>::value) {
+				// Types are identical
 				memory::copy(out + offsetDst, samples, sizeof(T) * length);
 			} else {
-				for (Size i = 0; i < length; i++) {
-					out[i + offsetDst] = static_cast<T>(samples[i]);
+				if (!needsScaling<T2>()) {
+					// Both floats means they need to be converted but not scaled
+					for (Size i = 0; i < length; i++) {
+						out[i + offsetDst] = static_cast<T>(samples[i]);
+					}
+				} else {
+					// We also need to scale
+					// float -> int, int -> float, short -> int
+					constexpr double scale = getConversionScale<T2>();
+					for (Size i = 0; i < length; i++) {
+						out[i + offsetDst] = static_cast<T>(samples[i] * scale);
+					}
 				}
 			}
 		}
@@ -199,8 +241,15 @@ namespace tklb {
 			offsetSrc *= channels;
 			for (uchar c = 0; c < std::min(channels, mChannels); c++) {
 				T* out = get(c);
-				for(Size i = 0, j = c + offsetSrc; i < length; i++, j+= channels) {
-					out[i + offsetDst] = static_cast<T>(samples[j]);
+				if (!needsScaling<T2>()) {
+					for(Size i = 0, j = c + offsetSrc; i < length; i++, j+= channels) {
+						out[i + offsetDst] = static_cast<T>(samples[j]);
+					}
+				} else {
+					constexpr double scale = getConversionScale<T2>();
+					for(Size i = 0, j = c + offsetSrc; i < length; i++, j+= channels) {
+						out[i + offsetDst] = static_cast<T>(samples[j] * scale);
+					}
 				}
 			}
 			mValidSize = length;
@@ -315,7 +364,7 @@ namespace tklb {
 		 */
 		template <typename T2, class STORAGE2>
 		void multiply(
-			const AudioBufferTpl<T2>& buffer,
+			const AudioBufferTpl<T2, STORAGE2>& buffer,
 			Size length = 0,
 			Size offsetSrc = 0,
 			Size offsetDst = 0
@@ -537,8 +586,15 @@ namespace tklb {
 			if (std::is_same<T2, T>::value) {
 				memory::copy(target, source, sizeof(T) * length);
 			} else {
-				for (Size i = 0; i < length; i++) {
-					target[i] = T2(source[i]);
+				if (!needsScaling<T2>()) {
+					for (Size i = 0; i < length; i++) {
+						target[i] = T2(source[i]);
+					}
+				} else {
+					constexpr double scale = getConversionScale<T2>();
+					for (Size i = 0; i < length; i++) {
+						target[i] = T2(source[i] * scale);
+					}
 				}
 			}
 			return length;
@@ -589,9 +645,17 @@ namespace tklb {
 			for (uchar c = 0; c < chan; c++) {
 				Size j = c;
 				const T* data = get(c);
-				for (Size i = 0; i < length; i++) {
-					buffer[j] = T2(data[i + offset]);
-					j += chan;
+				if (!needsScaling<T2>()) {
+					for (Size i = 0; i < length; i++) {
+						buffer[j] = T2(data[i + offset]);
+						j += chan;
+					}
+				} else {
+					constexpr double scale = getConversionScale<T2>();
+					for (Size i = 0; i < length; i++) {
+						buffer[j] = T2(data[i + offset] * scale);
+						j += chan;
+					}
 				}
 				out += length;
 			}

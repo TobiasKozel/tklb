@@ -57,10 +57,14 @@ namespace tklb {
 			out.resize(streamLength, Size(info.channels)); // will fail at channels higher than allowed
 
 			if (std::is_same<float, T>::value) {
-				HeapBuffer<float*> buffer;
+				HeapBuffer<T*> buffer;
 				buffer.resize(info.channels);
 				out.getRaw(buffer.data());
-				Size got = stb_vorbis_get_samples_float(vorbis, info.channels, buffer.data(), streamLength);
+				// seems evil but where only here if it's alredy a float**
+				float** fbuf = reinterpret_cast<float**>(buffer.data());
+				Size got = stb_vorbis_get_samples_float(
+					vorbis, info.channels, fbuf, streamLength
+				);
 				out.setValidSize(got);
 				stb_vorbis_close(vorbis);
 				return got == streamLength;

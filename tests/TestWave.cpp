@@ -18,7 +18,9 @@ int test() {
 		const int rate2 = 50001;
 		AudioBuffer sample;
 		AudioBuffer resampled;
-		wave::load("/home/usr/git/master/VAEG/VAE/external/tklb/tests/test_folder/LRMonoPhase4.wav", sample);
+		wave::load<AudioBuffer::Sample, AudioBuffer>(
+			"/home/usr/git/master/VAEG/VAE/external/tklb/tests/test_folder/LRMonoPhase4.wav", sample
+		);
 		Resampler resamplerUp(sample.sampleRate, rate2, blockSize);
 		Resampler resamplerDown(rate2, sample.sampleRate, blockSize);
 		resampled.resize(resamplerUp.calculateBufferSize(sample.size()), sample.channels());
@@ -43,7 +45,9 @@ int test() {
 		// 		sample[c][i] = sin(i * 0.1);
 		// 	}
 		// }
-		wave::write(sample, "/home/usr/git/master/VAEG/VAE/external/tklb/tests/test_folder/test.wav");
+		wave::write<AudioBuffer::Sample, AudioBuffer>(
+			sample, "/home/usr/git/master/VAEG/VAE/external/tklb/tests/test_folder/test.wav"
+		);
 	}
 	return 0;
 }
