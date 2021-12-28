@@ -33,7 +33,9 @@ namespace tklb {
 		bool operator==(const char* str) const {
 			if (N == 0) { return false; }
 			for(Size i = 0; i < N; i++) {
-				if (str[i] == '\0') { break; }
+				if (str[i] == '\0') {
+					return str[i] == mData[i];
+				}
 				if (str[i] != mData[i]) { return false; }
 			}
 			return true;
