@@ -24,11 +24,11 @@ namespace tklb {
 		 * @param out The buffer to store the result in
 		 * @param length The length of the wav file buffer if not reading from file
 		 */
-		template <typename T>
-		bool load(const char* path, AudioBufferTpl<T>& out, typename AudioBufferTpl<T>::Size length = 0) {
-			using Size = typename AudioBufferTpl<T>::Size;
-			using uchar = typename AudioBufferTpl<T>::uchar;
-			using ushort = typename AudioBufferTpl<T>::ushort;
+		template <typename T, class Buffer = AudioBufferTpl<T>>
+		bool load(const char* path, Buffer& out, typename Buffer::Size length = 0) {
+			using Size = typename Buffer::Size;
+			using uchar = unsigned char;
+			using ushort = unsigned short;
 
 			stb_vorbis* vorbis;
 			int error = 0;
@@ -57,9 +57,10 @@ namespace tklb {
 			out.resize(streamLength, Size(info.channels)); // will fail at channels higher than allowed
 
 			if (std::is_same<float, T>::value) {
-				float* buffer[out.maxChannels];
-				out.getRaw(buffer);
-				Size got = stb_vorbis_get_samples_float(vorbis, info.channels, buffer, streamLength);
+				HeapBuffer<float*> buffer;
+				buffer.resize(info.channels);
+				out.getRaw(buffer.data());
+				Size got = stb_vorbis_get_samples_float(vorbis, info.channels, buffer.data(), streamLength);
 				out.setValidSize(got);
 				stb_vorbis_close(vorbis);
 				return got == streamLength;

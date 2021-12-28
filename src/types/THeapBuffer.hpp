@@ -117,7 +117,10 @@ namespace tklb {
 		HeapBuffer& operator= (const HeapBuffer&) = delete;
 		HeapBuffer(const HeapBuffer*) = delete;
 
-		~HeapBuffer() { resize(0); }
+		~HeapBuffer() {
+			if (injected()) { return; }
+			resize(0);
+		}
 
 		/**
 		 * @brief Resizes and copies the contents of the source Buffer
@@ -180,6 +183,7 @@ namespace tklb {
 		 * Leak prone.
 		 */
 		void disown() {
+			if (empty()) { return; }
 			TKLB_ASSERT(mRealSize != 0)
 			mRealSize = 0;
 		}
@@ -246,7 +250,7 @@ namespace tklb {
 		bool resize(const Size size, const bool downsize = true) {
 			const Size chunked = closestChunkSize(size, ChunkSize);
 
-			if (size < mSize && mBuf != nullptr) { // downsize means destroy objects
+			if (size < mSize && mBuf != nullptr && !injected()) { // downsize means destroy objects
 				for (Size i = size; i < mSize; i++) {
 					mBuf[i].~T(); // Call destructor
 				}
@@ -407,6 +411,7 @@ namespace tklb {
 				if (Alignment != 0) {
 					// Mask with zeroes at the end to floor the pointer to an aligned block
 					// for these casts to work, the type needs to be as wide as void*
+					const size_t _align = Alignment;
 					const size_t mask = ~(size_t(Alignment - 1));
 					const size_t pointer = reinterpret_cast<size_t>(newBuf);
 					const size_t floored = pointer & mask;

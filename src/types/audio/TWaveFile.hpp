@@ -4,9 +4,6 @@
 #include "../../memory/TMemory.hpp"
 #include "./TAudioBuffer.hpp"
 
-
-#define TKLB_NO_STDIO
-
 #ifdef TKLB_NO_STDIO
 	#define DR_WAV_NO_STDIO
 #endif
@@ -36,8 +33,8 @@ namespace tklb {
 		 * @param out The buffer to store the result in
 		 * @param length The length of the wav file buffer if not reading from file
 		 */
-		template <typename T>
-		bool load(const char* path, AudioBufferTpl<T>& out, typename AudioBufferTpl<T>::Size length = 0) {
+		template <typename T, class Buffer = AudioBufferTpl<T>>
+		bool load(const char* path, Buffer& out, typename Buffer::Size length = 0) {
 			drwav_allocation_callbacks drwaveCallbacks {
 				nullptr,		// No userdata
 				&_::drwaveMalloc,
@@ -45,9 +42,9 @@ namespace tklb {
 				&_::drwaveFree
 			};
 
-			using Size = typename AudioBufferTpl<T>::Size;
-			using uchar = typename AudioBufferTpl<T>::uchar;
-			using ushort = typename AudioBufferTpl<T>::ushort;
+			using Size = typename Buffer::Size;
+			using uchar = unsigned char;
+			using ushort = unsigned short;
 
 			drwav wav;
 			if (length == 0) {
@@ -66,7 +63,7 @@ namespace tklb {
 			constexpr Size chunkSize = 128;
 			Size read = 0;
 			HeapBuffer<float> chunkBuffer;
-			chunkBuffer.resize(chunkSize);
+			chunkBuffer.resize(chunkSize * wav.channels);
 
 			out.sampleRate = wav.sampleRate;
 			out.resize(Size(wav.totalPCMFrameCount), Size(wav.channels));
@@ -113,9 +110,9 @@ namespace tklb {
 		/**
 		 * @brief Write audiobuffer to file or memory
 		 */
-		template <typename T>
+		template <typename T, class Buffer = AudioBufferTpl<T>>
 		bool write(
-			const AudioBufferTpl<T>& in,
+			const Buffer& in,
 			const char* path,
 			const WaveOptions&& options = {},
 			HeapBuffer<char>* out = nullptr
@@ -128,7 +125,7 @@ namespace tklb {
 			};
 			drwav wav;
 
-			using Size = typename AudioBufferTpl<T>::Size;
+			using Size = typename Buffer::Size;
 
 			drwav_data_format droptions;
 			TKLB_ASSERT(in.sampleRate != 0) // Set a samplerate

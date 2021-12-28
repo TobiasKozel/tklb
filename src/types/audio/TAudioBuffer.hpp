@@ -103,8 +103,8 @@ namespace tklb {
 		) {
 			static_assert(std::is_arithmetic<T2>::value, "Need arithmetic type.");
 			if (mChannels <= channel) { return; }
-			TKLB_ASSERT(validSize() >= offsetDst)
-			length = std::min(length, validSize() - offsetDst);
+			TKLB_ASSERT(size() >= offsetDst)
+			length = std::min(length, size() - offsetDst);
 			T* out = get(channel);
 			if (std::is_same<T2, T>::value) {
 				memory::copy(out + offsetDst, samples, sizeof(T) * length);
@@ -170,8 +170,8 @@ namespace tklb {
 			Size length = 0,
 			const Size offsetDst = 0
 		) {
-			TKLB_ASSERT(validSize() >= offsetDst)
-			length = std::min(validSize() - offsetDst, length ? length : validSize());
+			TKLB_ASSERT(size() >= offsetDst)
+			length = std::min(size() - offsetDst, length ? length : size());
 			for (uchar c = 0; c < channels(); c++) {
 				std::fill_n(get(c) + offsetDst, length, value);
 			}
@@ -194,8 +194,8 @@ namespace tklb {
 			const Size offsetDst = 0
 		) {
 			static_assert(std::is_arithmetic<T2>::value, "Need arithmetic type.");
-			TKLB_ASSERT(validSize() >= offsetDst)
-			length = std::min(validSize() - offsetDst, length);
+			TKLB_ASSERT(size() >= offsetDst)
+			length = std::min(size() - offsetDst, length);
 			offsetSrc *= channels;
 			for (uchar c = 0; c < std::min(channels, mChannels); c++) {
 				T* out = get(c);
@@ -457,7 +457,9 @@ namespace tklb {
 		/**
 		 * @brief Returns the allocated length of the buffer
 		 */
-		inline Size size() const { return (!mBuffer.empty()) && mBuffer.size() / mChannels; }
+		inline Size size() const {
+			return mBuffer.empty() ? 0 : mBuffer.size() / mChannels;
+		}
 
 		/**
 		 * @brief Returns the length of actually valid audio in the buffer.
