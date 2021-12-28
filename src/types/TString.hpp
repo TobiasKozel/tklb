@@ -23,6 +23,7 @@ namespace tklb {
 
 		template <int N2>
 		bool operator==(const StackString<N2> &b) const {
+			if (N == 0) { return false; }
 			for(Size i = 0; i < (N < N2 ? N : N2); i++) {
 				if (mData[i] != b[i]) { return false; }
 			}
@@ -30,6 +31,7 @@ namespace tklb {
 		}
 
 		bool operator==(const char* str) const {
+			if (N == 0) { return false; }
 			for(Size i = 0; i < N; i++) {
 				if (str[i] == '\0') { break; }
 				if (str[i] != mData[i]) { return false; }
@@ -37,9 +39,13 @@ namespace tklb {
 			return true;
 		}
 
-		bool empty() const { return mData[0] == '\0'; }
+		bool empty() const {
+			if (N == 0) { return true; }
+			return mData[0] == '\0';
+		}
 
-		bool size() const {
+		Size size() const {
+			if (N == 0) { return 0; }
 			for (Size i = 0; i < N; i++) {
 				if (mData[i] == '\0') {
 					return i;
@@ -49,6 +55,7 @@ namespace tklb {
 		}
 
 		void set(const char* str) {
+			if (N == 0) { return; }
 			Size i = 0;
 			for(i = 0; i < N; i++) {
 				if (str[i] == '\0') { break; }
