@@ -195,11 +195,11 @@ namespace tklb {
 			buffer.sampleRate = rateOut;
 			copy.setValidSize(samples);
 
-			ResamplerSpeexTpl<T> resampler;
+			ResamplerSpeexTpl<T, Buffer> resampler;
 			resampler.init(rateIn, rateOut, copy.size(), buffer.channels(), quality);
 			buffer.resize(resampler.calculateBufferSize(samples));
 
-			// resampler.process(copy, buffer);
+			resampler.process(copy, buffer);
 		}
 
 	};
