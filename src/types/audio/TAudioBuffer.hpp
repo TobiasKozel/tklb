@@ -105,16 +105,17 @@ namespace tklb {
 
 		/**
 		 * @brief calculate the scale factor needed between the types
-		 * @tparam T2 Other type
+		 * @tparam T1 Source type
+		 * @tparam T2 target type
 		 * @tparam Ratio Floating point type since the value can be smaller than 1
 		 * @return constexpr Ratio
 		 */
-		template <typename T2, typename Ratio = float>
+		template <typename T1, typename T2, typename Ratio = float>
 		static constexpr Ratio getConversionScale() {
-			const Ratio maxt = std::is_floating_point<T>::value ?
-				1.0 : std::numeric_limits<T>::max() - 1;
-			const Ratio maxt2 = std::is_floating_point<T2>::value ?
+			const Ratio maxt = std::is_floating_point<T2>::value ?
 				1.0 : std::numeric_limits<T2>::max() - 1;
+			const Ratio maxt2 = std::is_floating_point<T1>::value ?
+				1.0 : std::numeric_limits<T1>::max() - 1;
 			return maxt / maxt2;
 		}
 
@@ -149,7 +150,7 @@ namespace tklb {
 				} else {
 					// We also need to scale
 					// float -> int, int -> float, short -> int
-					constexpr double scale = getConversionScale<T2>();
+					constexpr auto scale = getConversionScale<T2, T>();
 					for (Size i = 0; i < length; i++) {
 						out[i + offsetDst] = static_cast<T>(samples[i] * scale);
 					}
@@ -246,7 +247,7 @@ namespace tklb {
 						out[i + offsetDst] = static_cast<T>(samples[j]);
 					}
 				} else {
-					constexpr double scale = getConversionScale<T2>();
+					constexpr auto scale = getConversionScale<T2, T>();
 					for(Size i = 0, j = c + offsetSrc; i < length; i++, j+= channels) {
 						out[i + offsetDst] = static_cast<T>(samples[j] * scale);
 					}
@@ -591,7 +592,7 @@ namespace tklb {
 						target[i] = T2(source[i]);
 					}
 				} else {
-					constexpr double scale = getConversionScale<T2>();
+					constexpr auto scale = getConversionScale<T, T2>();
 					for (Size i = 0; i < length; i++) {
 						target[i] = T2(source[i] * scale);
 					}
@@ -651,7 +652,7 @@ namespace tklb {
 						j += chan;
 					}
 				} else {
-					constexpr double scale = getConversionScale<T2>();
+					constexpr auto scale = getConversionScale<T, T2>();
 					for (Size i = 0; i < length; i++) {
 						buffer[j] = T2(data[i + offset] * scale);
 						j += chan;
