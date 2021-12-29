@@ -16,15 +16,18 @@
 	#else
 		#include <cassert>
 		#define TKLB_ASSERT(condition) assert(condition);
+		// #include <signal.h>
+		// #define TKLB_ASSERT(condition) if (!(condition)) { raise(SIGTRAP); }
 	#endif
 
+#endif // TKLB_NO_ASSERT
 
+#endif // TKLB_ASSERT
+
+#ifndef TKLB_ASSERT_STATE
 	/**
 	 * @brief This can be used to write some additional code
 	 * only needed when doing assertions
 	 */
 	#define TKLB_ASSERT_STATE(condition) condition;
-
-#endif // TKLB_NO_ASSERT
-
-#endif // TKLB_ASSERT
+#endif // TKLB_ASSERT_STATE
