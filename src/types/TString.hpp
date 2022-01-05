@@ -14,7 +14,7 @@ namespace tklb {
 		char mData[N];
 		using Size = unsigned int;
 	public:
-		StackString() { for (auto& i : mData) { i = '\0'; } }
+		StackString() { for (Size i = 0; i < N; i++) { mData[i] = '\0'; } }
 		StackString(const char* str) { set(str); }
 		StackString& operator=(const char* str) { set(str); return *this; }
 		const char* c_str() const { return mData; }
@@ -94,7 +94,7 @@ namespace tklb {
 
 		void set(const char* str) {
 			if (str == nullptr) { return; }
-			const Size size = strlen(str) + 1;		// keep the terminator
+			const Size size = Size(strlen(str)) + 1;		// keep the terminator
 			mData.resize(size);
 			mData.set(str, size);
 		}

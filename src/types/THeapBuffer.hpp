@@ -106,7 +106,7 @@ namespace tklb {
 		}
 
 		HeapBuffer& operator= (HeapBuffer&& source) {
-			TKLB_ASSERT_STATE(IS_CONST == source.IS_CONST)
+			TKLB_ASSERT_STATE(IS_CONST = source.IS_CONST)
 			mBuf = source.mBuf;
 			mSize = source.mSize;
 			mRealSize = source.mRealSize;

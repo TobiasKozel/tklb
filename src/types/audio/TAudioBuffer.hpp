@@ -113,9 +113,9 @@ namespace tklb {
 		template <typename T1, typename T2, typename Ratio = float>
 		static constexpr Ratio getConversionScale() {
 			const Ratio maxt = std::is_floating_point<T2>::value ?
-				1.0 : std::numeric_limits<T2>::max() - 1;
+				Ratio(1.0) : Ratio(std::numeric_limits<T2>::max()) - Ratio(1);
 			const Ratio maxt2 = std::is_floating_point<T1>::value ?
-				1.0 : std::numeric_limits<T1>::max() - 1;
+				Ratio(1.0) : Ratio(std::numeric_limits<T1>::max()) - Ratio(1);
 			return maxt / maxt2;
 		}
 
