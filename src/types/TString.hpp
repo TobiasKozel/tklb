@@ -13,13 +13,26 @@ namespace tklb {
 	class StackString {
 		char mData[N];
 		using Size = unsigned int;
+		static constexpr char Terminator = '\0';
 	public:
-		StackString() { for (Size i = 0; i < N; i++) { mData[i] = '\0'; } }
+		StackString() { for (Size i = 0; i < N; i++) { mData[i] = Terminator; } }
 		StackString(const char* str) { set(str); }
 		StackString& operator=(const char* str) { set(str); return *this; }
-		const char* c_str() const { return mData; }
-		const char& operator[](const Size index) const { return mData[index]; }
-		char& operator[](const Size index) { return mData[index]; }
+
+		const char* c_str() const {
+			if (N == 0) { return nullptr; }
+			return mData;
+		}
+		const char& operator[](const Size index) const {
+			TKLB_ASSERT(index < N)
+			if (N <= index) { return Terminator; }
+			return mData[index];
+		}
+
+		char& operator[](const Size index) {
+			TKLB_ASSERT(index < N)
+			return mData[index];
+		}
 
 		template <int N2>
 		bool operator==(const StackString<N2> &b) const {
@@ -33,7 +46,7 @@ namespace tklb {
 		bool operator==(const char* str) const {
 			if (N == 0) { return false; }
 			for(Size i = 0; i < N; i++) {
-				if (str[i] == '\0') {
+				if (str[i] == Terminator) {
 					return str[i] == mData[i];
 				}
 				if (str[i] != mData[i]) { return false; }
@@ -43,13 +56,13 @@ namespace tklb {
 
 		bool empty() const {
 			if (N == 0) { return true; }
-			return mData[0] == '\0';
+			return mData[0] == Terminator;
 		}
 
 		Size size() const {
 			if (N == 0) { return 0; }
 			for (Size i = 0; i < N; i++) {
-				if (mData[i] == '\0') {
+				if (mData[i] == Terminator) {
 					return i;
 				}
 			}
@@ -60,11 +73,11 @@ namespace tklb {
 			if (N == 0) { return; }
 			Size i = 0;
 			for(i = 0; i < N; i++) {
-				if (str[i] == '\0') { break; }
+				if (str[i] == Terminator) { break; }
 				mData[i] = str[i];
 			}
-			for(; i < N; i++) { mData[i] = '\0'; }
-			mData[N - 1] = '\0'; // just in case, will run over the last char
+			for(; i < N; i++) { mData[i] = Terminator; }
+			mData[N - 1] = Terminator; // just in case, will run over the last char
 		}
 	};
 
