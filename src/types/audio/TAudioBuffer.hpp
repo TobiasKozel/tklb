@@ -628,18 +628,20 @@ namespace tklb {
 		 * @param buffer The array to fill with interleaved audio
 		 * @param length Number of frames to interleave (not the length of the interleaved buffer)
 		 * @param offset Offset for the sourcebuffer (this)
+		 * @param chan maximum channels the output buffer can hold
 		 * @return Number of frames emitted
 		 */
 		template <typename T2>
 		Size putInterleaved(
 			T2* buffer,
 			Size length = 0,
-			const Size offset = 0
+			const Size offset = 0,
+			uchar chan = 0
 		) const {
 			static_assert(std::is_arithmetic<T2>::value, "Need arithmetic type.");
 			const Size valid = validSize();
 			TKLB_ASSERT(offset <= valid)
-			const uchar chan = channels();
+			chan = (chan == 0) ? channels() : std::min(chan, channels());
 			length = (length == 0) ? valid : length;
 			length = std::min(valid - offset, length);
 			Size out = 0;
