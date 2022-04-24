@@ -109,6 +109,10 @@ namespace tklb {
 
 		/**
 		 * @brief Write audiobuffer to file or memory
+		 * @param in The audio buffer to write, needs samplerate to be set
+		 * @param path The file path to write to can be nullptr
+		 * @param option Wave options to pass
+		 * @param out Buffer to write the wave file to if path is nullptr
 		 */
 		template <typename T, class Buffer = AudioBufferTpl<T>>
 		bool write(
@@ -125,7 +129,9 @@ namespace tklb {
 			};
 			drwav wav;
 
-			using Size = typename Buffer::Size;
+			// TODO tklb this causes issues somehow
+			// using Size = typename Buffer::Size;
+			using Size = size_t;
 
 			drwav_data_format droptions;
 			TKLB_ASSERT(in.sampleRate != 0) // Set a samplerate

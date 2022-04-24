@@ -253,7 +253,7 @@ namespace tklb {
 					}
 				}
 			}
-			mValidSize = length;
+			mValidSize = offsetDst + length;
 		}
 
 
