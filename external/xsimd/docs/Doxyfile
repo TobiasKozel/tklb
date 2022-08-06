@@ -2,6 +2,7 @@ PROJECT_NAME      = "xsimd"
 XML_OUTPUT        = xml
 INPUT             = ../include/xsimd/types/xsimd_api.hpp \
                     ../include/xsimd/types/xsimd_batch.hpp \
+                    ../include/xsimd/types/xsimd_batch_constant.hpp \
                     ../include/xsimd/config/xsimd_arch.hpp \
                     ../include/xsimd/config/xsimd_config.hpp \
                     ../include/xsimd/memory/xsimd_alignment.hpp \
@@ -13,8 +14,10 @@ INPUT             = ../include/xsimd/types/xsimd_api.hpp \
                     ../include/xsimd/types/xsimd_avx512dq_register.hpp \
                     ../include/xsimd/types/xsimd_avx512f_register.hpp \
                     ../include/xsimd/types/xsimd_avx_register.hpp \
-                    ../include/xsimd/types/xsimd_fma3_register.hpp \
-                    ../include/xsimd/types/xsimd_fma5_register.hpp \
+                    ../include/xsimd/types/xsimd_fma3_avx_register.hpp \
+                    ../include/xsimd/types/xsimd_fma3_avx2_register.hpp \
+                    ../include/xsimd/types/xsimd_fma3_sse_register.hpp \
+                    ../include/xsimd/types/xsimd_fma4_register.hpp \
                     ../include/xsimd/types/xsimd_neon64_register.hpp \
                     ../include/xsimd/types/xsimd_neon_register.hpp \
                     ../include/xsimd/types/xsimd_sse2_register.hpp \
@@ -34,6 +37,7 @@ RECURSIVE         = YES
 QUIET             = YES
 JAVADOC_AUTOBRIEF = YES
 WARN_IF_UNDOCUMENTED = NO
+WARN_AS_ERROR = NO
 ENABLE_PREPROCESSING = YES
 MACRO_EXPANSION      = YES
 EXPAND_ONLY_PREDEF   = YES

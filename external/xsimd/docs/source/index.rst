@@ -46,7 +46,7 @@ The following SIMD instruction set extensions are supported:
 +--------------+---------------------------------------------------------+
 | x86          | AVX512 (gcc7 and higher)                                |
 +--------------+---------------------------------------------------------+
-| x86 AMD      | same as above + SSE4A, FMA4, XOP                        |
+| x86 AMD      | same as above + FMA4                                    |
 +--------------+---------------------------------------------------------+
 | ARM          | ARMv7, ARMv8                                            |
 +--------------+---------------------------------------------------------+
@@ -87,8 +87,14 @@ This software is licensed under the BSD-3-Clause license. See the LICENSE file f
    api/instr_macros
    api/batch_index
    api/data_transfer
-   api/batch_manip
+   api/arithmetic_index
+   api/comparison_index
+   api/bitwise_operators_index
    api/math_index
+   api/reducer_index
+   api/cast_index
+   api/misc_index
+   api/batch_manip
    api/aligned_allocator
    api/arch
    api/dispatching

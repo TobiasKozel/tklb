@@ -9,7 +9,8 @@
  * The full license is in the file LICENSE, distributed with this software. *
  ****************************************************************************/
 
-#include "../types/xsimd_fma3_register.hpp"
+#include "../types/xsimd_fma3_sse_register.hpp"
+#include "../types/xsimd_fma4_register.hpp"
 #include "../types/xsimd_sse2_register.hpp"
 #include "../types/xsimd_sse3_register.hpp"
 #include "../types/xsimd_sse4_1_register.hpp"
@@ -17,7 +18,8 @@
 
 #include "../types/xsimd_avx2_register.hpp"
 #include "../types/xsimd_avx_register.hpp"
-#include "../types/xsimd_fma5_register.hpp"
+#include "../types/xsimd_fma3_avx2_register.hpp"
+#include "../types/xsimd_fma3_avx_register.hpp"
 
 #include "../types/xsimd_avx512bw_register.hpp"
 #include "../types/xsimd_avx512cd_register.hpp"

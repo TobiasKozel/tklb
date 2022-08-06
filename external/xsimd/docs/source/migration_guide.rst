@@ -50,13 +50,16 @@ Batch Types
 The second argument of :cpp:class:`xsimd::batch` is now a type that represents
 an architecture, instead of an integer.
 
+The previous behavior can be emulated through the
+:cpp:class:`xsimd::make_sized_batch` utility.
+
 Batch of Complex Types
 **********************
 
-Loading a batch of complex from an ``xtl::complex<T>`` now yields an
-``xsimd::batch<std::complex<T>>`` instead of an ``xtl::complex<T>``. It is still
+Loading a batch of complex from an ``xtl::xcomplex<T>`` now yields an
+``xsimd::batch<std::complex<T>>`` instead of an ``xtl::xcomplex<T>``. It is still
 possible to store an ``xsimd::batch<std::complex<T>>`` to an
-``xtl::complex<T>``.
+``xtl::xcomplex<T>``.
 
 
 Loading Batches

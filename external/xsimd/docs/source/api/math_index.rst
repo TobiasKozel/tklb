@@ -1,4 +1,4 @@
-.. Copyright (c) 2016, Johan Mabille, Sylvain Corlay 
+.. Copyright (c) 2016, Johan Mabille, Sylvain Corlay
 
    Distributed under the terms of the BSD 3-Clause License.
 
@@ -25,6 +25,7 @@
        background: initial;
    }
    </style>
+
 
 Mathematical functions
 ======================
@@ -93,15 +94,17 @@ Mathematical functions
 
    power_functions
 
-+---------------------------------------+----------------------------------------------------+
-| :ref:`pow <pow-function-reference>`   | power function                                     |
-+---------------------------------------+----------------------------------------------------+
-| :ref:`sqrt <sqrt-function-reference>` | square root function                               |
-+---------------------------------------+----------------------------------------------------+
-| :ref:`cbrt <cbrt-function-reference>` | cubic root function                                |
-+---------------------------------------+----------------------------------------------------+
-| :ref:`hypot <hypot-func-ref>`         | hypotenuse function                                |
-+---------------------------------------+----------------------------------------------------+
++-----------------------------------------+----------------------------------------------------+
+| :ref:`pow <pow-function-reference>`     | power function                                     |
++-----------------------------------------+----------------------------------------------------+
+| :ref:`rsqrt <rsqrt-function-reference>` | reciprocal square root function                    |
++-----------------------------------------+----------------------------------------------------+
+| :ref:`sqrt <sqrt-function-reference>`   | square root function                               |
++-----------------------------------------+----------------------------------------------------+
+| :ref:`cbrt <cbrt-function-reference>`   | cubic root function                                |
++-----------------------------------------+----------------------------------------------------+
+| :ref:`hypot <hypot-func-ref>`           | hypotenuse function                                |
++-----------------------------------------+----------------------------------------------------+
 
 .. toctree::
 

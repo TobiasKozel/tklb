@@ -48,6 +48,17 @@ echo "Updating stb_vorbis"
 rm ./stb_vorbis.c
 curl -LO https://raw.githubusercontent.com/nothings/stb/master/stb_vorbis.c
 
+echo "Updating stb_sprintf"
+rm ./stb_sprintf.h
+curl -LO https://raw.githubusercontent.com/nothings/stb/master/stb_sprintf.h
+
+echo "Updating tracey"
+curl -LO https://github.com/wolfpld/tracy/archive/refs/tags/v0.8.2.zip
+unzip ./v0.8.2.zip > /dev/null 2>&1
+rm ./v0.8.2.zip
+rm -rf ./tracy
+mv ./tracy-0.8.2 ./tracy
+
 echo "Downloading hiir"
 HIIR="hiir-1.33.zip"
 rm -rf ./hiir

@@ -246,6 +246,8 @@ public:
    *     the imag() part contains the result for the Nyquist frequency Samplerate/2
    *   both 0-frequency and half frequency components, which are real,
    *   are assembled in the first entry as  F(0)+i*F(N/2).
+   *   with the output size N/2 complex values, it is obvious, that the
+   *   result for negative frequencies are not output, cause of symmetry.
    *
    * input and output may alias - if you do nasty type conversion.
    * return is just the given output parameter 'spectrum'.
@@ -1018,7 +1020,7 @@ class PFAlloc {
 
     // allocate but don't initialize num elements of type T
     pointer allocate (size_type num, const void* = 0) {
-        pointer ret = (pointer)( alignedAlloc<T>(num) );
+        pointer ret = (pointer)( alignedAlloc<T>(int(num)) );
         return ret;
     }
 

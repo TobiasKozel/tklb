@@ -4,8 +4,8 @@
 
    The full license is in the file LICENSE, distributed with this software.
 
-Batch manipulation functions
-============================
+Conditional expression
+======================
 
 .. toctree::
 
@@ -15,6 +15,6 @@ Batch manipulation functions
 
 
 .. _select-function-reference:
-.. doxygenfunction:: select(batch_bool<T, A> const &cond, batch<T, A> const &true_br, batch<T, A> const &false_br)
+.. doxygenfunction:: xsimd::select(batch_bool<T, A> const&, batch<T, A> const&, batch<T, A> const&)
    :project: xsimd
 
