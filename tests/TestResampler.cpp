@@ -26,7 +26,7 @@ int doTest() {
 	int latency = resamplerDown.getLatency();
 	latency += resamplerUp.getLatency();
 
-	AudioBuffer bufLow, bufHigh, bufLowReference;
+	tklb::AudioBuffer bufLow, bufHigh, bufLowReference;
 	bufLow.sampleRate = rateLow;
 	bufHigh.sampleRate = rateHigh;
 
@@ -63,16 +63,16 @@ int doTest() {
 }
 
 int test() {
-	if (doTest<ResamplerHold>() != 0) {
+	if (doTest<tklb::ResamplerHold>() != 0) {
 		return 1;
 	}
-	if (doTest<ResamplerLinear>() != 0) {
+	if (doTest<tklb::ResamplerLinear>() != 0) {
 		return 2;
 	}
-	if (doTest<ResamplerCosine>() != 0) {
+	if (doTest<tklb::ResamplerCosine>() != 0) {
 		return 3;
 	}
-	if (doTest<ResamplerSpeex>() != 0) {
+	if (doTest<tklb::ResamplerSpeex>() != 0) {
 		return 4;
 	}
 	return 0;

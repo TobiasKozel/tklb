@@ -27,6 +27,11 @@ namespace tklb {
 		return min(_max, max(v, _min));
 	}
 
+	template <typename T>
+	inline T abs(const T& v) {
+		return T(0) <= v ? v : -v;
+	}
+
 	template <typename T, typename T2>
 	inline T lerp(const T& v1, const T& v2, const T2& t) {
 		return v1 + t * (v2 - v1);

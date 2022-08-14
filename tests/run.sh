@@ -30,6 +30,7 @@ function test {
 	fi
 }
 
+echo "Test ${source_file}"
 test "g++ -std=c++14 -O3 -march=native -DTKLB_TEST"
 test "g++ -std=c++14 -O3 -march=native -DTKLB_TEST -DTKLB_NO_SIMD"
 test "g++ -std=c++14 -O3 -march=native -DTKLB_TEST -DTKLB_SAMPLE_FLOAT"

@@ -1,11 +1,14 @@
 #ifndef _TKLB_EVENT_BUS
 #define _TKLB_EVENT_BUS
 
-
 #include "./THeapBuffer.hpp"
 
 #include "./TMutexDummy.hpp"
 #include "./TDelegate.hpp"
+
+#ifndef TKLB_ASSERT
+	#define TKLB_ASSERT(cond)
+#endif
 
 namespace tklb {
 	/**

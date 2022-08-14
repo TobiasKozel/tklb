@@ -3,8 +3,7 @@
 
 
 int test() {
-
-	HeapBuffer<float*> list;
+	tklb::HeapBuffer<float*> list;
 	const int size = 1024;
 	float arr[size];
 

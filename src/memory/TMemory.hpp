@@ -1,44 +1,154 @@
 #ifndef _TKLB_MEMORY
 #define _TKLB_MEMORY
 
-#include "./TMemoryPool.hpp"
-#include "./TMemoryPoolStd.hpp"
-#include "./TMemoryPoolStack.hpp"
+#include <new>			// For placement new with parameters
+#include <utility>		// forward constructor parameters
+#include <stddef.h>		// size_t
+
+#ifndef TKLB_NO_STDLIB
+	#include <stdlib.h>	// malloc & free
+	#include <cstring>	// memcpy & memset
+#endif
+
+#ifdef TKLB_USE_PROFILER
+	#include "../util/TProfiler.hpp"
+#else
+	#define TKLB_PROFILER_MALLOC(ptr, size)
+	#define TKLB_PROFILER_FREE(ptr)
+#endif
 
 /**
- * Defaut pool used when nothing else is specified
- * Will be define in every compilation unit, but the referenced object is the same
+ * @brief Main allocation function.
+ *        Use TKLB_MALLOC which allows tracking memory.
+ *        If need be this can be implemented by the user
+ *        to redirect allocations.
+ * @param bytes Bytes to allocate unaligned
+ * @return void* Resulting memory
  */
-#define TKLB_DEFAULT_POOL tklb::memory::MemoryPoolStd::instance()
-#define TKLB_STD_POOL tklb::memory::MemoryPoolStd::instance()
+void* tklb_malloc(size_t bytes);
 
-#ifndef _DEGUG
+/**
+ * @brief Main free function. Use TKLB_FREE instead which allows tracking
+ * @param ptr
+ */
+void tklb_free(void* ptr);
+
+#if !defined(TKLB_NO_STDLIB) && defined(TKLB_IMPL) && !defined(TKLB_CUSTOM_MALLOC)
+	#ifdef TKLB_MEMORY_CHECK
+		#include "./TMemoryCheck.hpp"
+
+		void* tklb_malloc(size_t bytes) {
+			using MagicBlock = tklb::memory::check::MagicBlock;
+			return MagicBlock::construct(malloc(bytes + MagicBlock::sizeNeeded()), bytes);
+		}
+
+		void tklb_free(void* ptr) {
+			if (ptr == nullptr) { return; }
+			using MagicBlock = tklb::memory::check::MagicBlock;
+			auto result = MagicBlock::check(ptr);
+			if (result.overrun || result.underrun) {
+				TKLB_ASSERT(false)
+			}
+
+			if (!result.underrun) {
+				free(result.ptr);
+			}
+		}
+	#else // TKLB_MEMORY_CHECK
+		void* tklb_malloc(size_t bytes) {
+			return malloc(bytes);
+		}
+		void tklb_free(void* ptr) {
+			free(ptr);
+		}
+	#endif // TKLB_MEMORY_CHECK
+#endif // memory impl
+
 namespace tklb { namespace memory {
 	/**
-	 * Only for debugging!
-	 * tklb::memory::DefaultPoolDebug.mPool
-	 * TODO this is a little whacky and instances are different across compile units
+	 * @brief Acts like new. Allocate and construct object.
+	 * @param args Arguments passed to class contructor
 	 */
-	static MemoryPool& DefaultPoolDebug = TKLB_DEFAULT_POOL;
-	// constexpr int PoolSize = 300 * 1024 * 1024;
-	// MemoryPoolStack DefaultPool = MemoryPoolStack(malloc(PoolSize), PoolSize);
-} } // namespace tklb::memory
+	template <class T, typename ... Args>
+	static T* create(Args&& ... args) {
+		constexpr auto size = sizeof(T);
+		void* ptr = tklb_malloc(size);
+		if (ptr == nullptr) { return nullptr; }
+		new (ptr) T(std::forward<Args>(args)...);
+		return reinterpret_cast<T*>(ptr);
+	}
 
-#endif
+	/**
+	 * @brief Acts like delete. Destroy the object and dispose the memory.
+	 */
+	template <class T>
+	static void dispose(T* ptr) {
+		if (ptr == nullptr) { return; }
+		ptr->~T();
+		tklb_free(ptr);
+	}
 
-// Macros for easy default Pool access
-#define TKLB_MALLOC(size)				TKLB_DEFAULT_POOL.allocate(size)
-#define TKLB_FREE(ptr)					TKLB_DEFAULT_POOL.deallocate(ptr)
-#define TKLB_REALLOC(ptr, size)			TKLB_DEFAULT_POOL.reallocate(ptr, size)
-#define TKLB_CALLOC(num, size) 			TKLB_DEFAULT_POOL.clearallocate(num, size)
-#define TKLB_MALLOC_ALIGNED(size, ...)	TKLB_DEFAULT_POOL.allocateAligned(size, ##__VA_ARGS__)
-#define TKLB_FREE_ALIGNED(ptr)			TKLB_DEFAULT_POOL.deallocateAligned(ptr)
-#define TKLB_NEW(T, ...)				TKLB_DEFAULT_POOL.create<T>(__VA_ARGS__)
-#define TKLB_DELETE(ptr)				TKLB_DEFAULT_POOL.dispose(ptr)
-#define TKLB_CHECK_HEAP()
+	/**
+	 * @brief memcpy wrapper
+	 */
+	static inline void copy(void* dst, const void* src, const size_t size) {
+	#ifdef TKLB_NO_STDLIB
+		auto source = reinterpret_cast<const unsigned char*>(src);
+		auto destination = reinterpret_cast<unsigned char*>(dst);
+		for (size_t i = 0; i < size; i++) {
+			destination[i] = source[i];
+		}
+	#else // TKLB_MEM_NO_STD
+		memcpy(dst, src, size);
+	#endif // TKLB_MEM_NO_STD
+	}
 
-#ifdef TKLB_MEM_MONKEY_PATCH
-	#include "./TMemoryMonkeyPatch.hpp"
-#endif
+	static inline void stringCopy(char* dst, const char* src, size_t size, bool terminate = true) {
+		for (size_t i = 0; i < size; i++) {
+			dst[i] = src[i];
+			if (src[i] == '\0') { return; }
+		}
+		if (terminate) {
+			// run over the last char to make sure it's terminated
+			dst[size - 1] = '\0';
+		}
+	}
 
-#endif // TKLB_MEMORY
+	/**
+	 * @brief Set memory, similar to std::fill_n
+	 *
+	 * @tparam T Element Type
+	 * @param dst memory
+	 * @param elements
+	 * @param val
+	 */
+	template <typename T>
+	static inline void set(void* dst, size_t elements, const T val) {
+		auto pointer = reinterpret_cast<T*>(dst);
+		for (size_t i = 0; i < elements; i++) {
+			pointer[i] = val;
+		}
+	}
+
+	/**
+	 * @brief Zero the memory
+	 *
+	 * @param dst
+	 * @param bytes
+	 */
+	static inline void zero(void* dst, size_t bytes) {
+		set<unsigned char>(dst, bytes, 0);
+	}
+} } // tklb::memory
+
+
+#ifndef TKLB_MALLOC // TODO TKLB memory tracer should take a detour
+	#define TKLB_MALLOC(size)				tklb_malloc(size);
+	#define TKLB_FREE(ptr)					tklb_free(ptr);
+	#define TKLB_REALLOC(ptr, size)			; // TODO TKLB
+	#define TKLB_CALLOC(num, size) 			; // TODO TKLB
+	#define TKLB_NEW(T, ...)				tklb::memory::create<T>(__VA_ARGS__);
+	#define TKLB_DELETE(T, ptr)				tklb::memory::dispose<T>(ptr);
+#endif // TKLB_MALLOC
+
+#endif // _TKLB_MEMORY

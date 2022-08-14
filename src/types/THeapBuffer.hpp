@@ -1,49 +1,30 @@
 #ifndef _TKLB_HEAPBUFFER
 #define _TKLB_HEAPBUFFER
 
-#include <algorithm>	// For std::max
-#include <cmath>		// For std::ceil
-#include <cstring>
+#include <new>			// placement new
 
-
-// #define TKLB_NO_STDLIB
-
-#ifndef TKLB_NO_STDLIB
-	#include "../memory/TAllocator.hpp"
-#else
-	namespace tklb {
-		template <class T>
-		struct DummyAllocator {
-			T* allocate(size_t n) noexcept { return nullptr; }
-			void deallocate(T* ptr, size_t n) noexcept { }
-		};
-	}
-#endif // TKLB_NO_STDLIB
-
+#include "../util/TMath.hpp"
+#include "../memory/TAllocator.hpp"
 
 #ifndef TKLB_ASSERT
 	#define TKLB_ASSERT(cond)
+#endif
+#ifndef TKLB_ASSERT_STATE
 	#define TKLB_ASSERT_STATE(statement)
 #endif
 
 namespace tklb {
-
 	/**
-	 * @brief Basically a bad std::vector without exceptions which can also work with foreign memory.
-	 * @tparam T Element type need to have a default contructor
-	 * @tparam ALIGNMENT Memory alignment in bytes needs to be a power of 2. Defaults to 0
+	 * @brief Basically a bad std::vector without exceptions which can also work with borrowed memory.
+	 * @tparam T Element type. Needs to have a default contructor
+	 * @tparam ALIGNMENT Memory alignment in bytes needs to be a power of 2. Defaults to 0 for no alignment
 	 * @tparam ALLOCATOR Normal allocator class defaults to non basic malloc/free wrapper
 	 * @tparam SIZE Size type used for index, defaults to unsigned int to save some space
 	 */
-	template <typename T,
+	template <
+		typename T = unsigned char,
 		size_t ALIGNMENT = 0,
-		class ALLOCATOR =
-	#ifndef TKLB_NO_STDLIB
-		StdAllocator
-	#else
-		DummyAllocator
-	#endif
-		<unsigned char>, // TODO this sucks, but need byte sized allocations for alignment
+		class ALLOCATOR = DefaultAllocator<>,
 		typename SIZE = unsigned int
 	>
 	class HeapBuffer {
@@ -56,6 +37,10 @@ namespace tklb {
 
 		static constexpr size_t Alignment = ALIGNMENT;
 
+		/**
+		 * @brief allocations will happens in these chunk sizes
+		 *        TODO maybe expose this.
+		 */
 		static constexpr size_t ChunkSize = 16;
 
 	private:
@@ -384,8 +369,14 @@ namespace tklb {
 		Size allocated() const { return mRealSize * sizeof(T); }
 
 		static Size closestChunkSize(Size size, Size chunk) {
-			const double chunkMin = std::max(double(chunk), 1.0);
-			return chunk * Size(std::ceil(size / double(chunkMin)));
+			if (size == 0) { return 0; }
+			if (size == chunk) {return chunk; }
+			chunk = tklb::max(chunk, Size(1));
+			if (size % chunk == 0) {
+				return size;
+			}
+			// need an additioncal chunk to fit
+			return ((size / chunk) + 1) * chunk;
 		}
 
 		static bool isAligned(const void* ptr) {
@@ -432,7 +423,7 @@ namespace tklb {
 				if (0 < mSize && oldBuf != nullptr && newBuf != nullptr) {
 					// copy existing content
 					// TODO tklb only copy the new realsize which might be smaller
-					memcpy(newBuf, oldBuf, std::min(mSize, chunk) * sizeof(T));
+					memory::copy(newBuf, oldBuf, min(mSize, chunk) * sizeof(T));
 				}
 				mBuf = (T*) newBuf;
 			} else {

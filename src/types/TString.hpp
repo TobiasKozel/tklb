@@ -2,7 +2,7 @@
 #define _TKLB_STRING
 
 #include "./THeapBuffer.hpp"
-#include <cstring>
+
 namespace tklb {
 	/**
 	 * @brief Super simple class to hold and compare strings on the stack
@@ -81,9 +81,15 @@ namespace tklb {
 		}
 	};
 
+	/**
+	 * @brief Simple std string replacement
+	 *
+	 * @tparam STORAGE
+	 */
 	template <class STORAGE = HeapBuffer<char>>
 	class String {
 		STORAGE mData;
+		static constexpr char Terminator = '\0';
 		using Size = typename STORAGE::Size;
 	public:
 		String() { }
@@ -96,9 +102,30 @@ namespace tklb {
 		const char* c_str() const { return mData.data(); }
 		const char& operator[](const Size index) const { return mData[index]; }
 		char& operator[](const Size index) { return mData[index]; }
+
+
+		bool operator==(const char* b) const {
+			// size includes the terminator
+			for (Size i = 0; i < mData.size(); i++) {
+				if ((*this)[i] != b[i]) {
+					return false;
+				}
+				if (b[i] == Terminator) {
+					return true; // both are equal and at the end
+				}
+			}
+			// We have reached the terminator of this but not on b
+			return false;
+		}
+		bool operator!=(const char* b) const { return !((*this) == b); }
+
+		/**
+		 * @brief length of string INCLUDING null terminator
+		 *
+		 * @return Size
+		 */
 		Size size() const { return mData.size(); }
 		bool empty() const { return mData.empty(); }
-
 		char* data() { return mData.data(); }
 
 		void set(const String& str) {
@@ -110,6 +137,7 @@ namespace tklb {
 			const Size size = Size(strlen(str)) + 1;		// keep the terminator
 			mData.resize(size);
 			mData.set(str, size);
+			mData[size - 1] = '\0';
 		}
 
 		void append(const String& str) {

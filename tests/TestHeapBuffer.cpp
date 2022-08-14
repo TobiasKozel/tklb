@@ -1,9 +1,8 @@
+#include "./TestCommon.hpp"
 #include "../src/types/THeapBuffer.hpp"
 
 template <class T>
 using HeapBufferType = tklb::HeapBuffer<T>;
-
-#include "./TestCommon.hpp"
 
 int ObjectCount = 0;
 int ConstructorCount = 0;
@@ -73,8 +72,8 @@ int runTest() {
 			LifeCycleTest* pop = TKLB_NEW(LifeCycleTest);
 			heap.push(*push);
 			heap.pop(pop);
-			TKLB_DELETE(push);
-			TKLB_DELETE(pop);
+			TKLB_DELETE(LifeCycleTest, push);
+			TKLB_DELETE(LifeCycleTest, pop);
 		}
 	}
 
@@ -86,10 +85,10 @@ int runTest() {
 }
 
 int test() {
-	int res = runTest<HeapBuffer<LifeCycleTest>>();
+	int res = runTest<tklb::HeapBuffer<LifeCycleTest>>();
 	if (res) return res;
-	res = runTest<HeapBuffer<LifeCycleTest, 16>>();
+	res = runTest<tklb::HeapBuffer<LifeCycleTest, 16>>();
 	if (res) return res;
-	res = runTest<HeapBuffer<LifeCycleTest, 32, StdAllocator<unsigned char>, size_t>>();
+	res = runTest<tklb::HeapBuffer<LifeCycleTest, 32, tklb::DefaultAllocator<unsigned char>, size_t>>();
 	return res;
 }

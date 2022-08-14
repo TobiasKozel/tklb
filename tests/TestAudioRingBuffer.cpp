@@ -1,15 +1,15 @@
 #include "./TestCommon.hpp"
 
-#define TKLB_MAXCHANNELS 16
-
 #include "../src/types/audio/TAudioBuffer.hpp"
 #include "../src/types/audio/TAudioRingBuffer.hpp"
+
+#include <cmath>
 
 int test() {
 	const int size = 1024;
 	const int sourceSize = size * 10;
 	const int channels = 4;
-	AudioBuffer source, dest;
+	tklb::AudioBuffer source, dest;
 	source.resize(sourceSize, channels);
 	dest.resize(sourceSize, channels);
 
@@ -21,7 +21,7 @@ int test() {
 	}
 
 	{
-		AudioRingBuffer buffer(size, channels);
+		tklb::AudioRingBuffer buffer(size, channels);
 		int inpos = 0;
 			int outpos = 0;
 		source.setValidSize(100);

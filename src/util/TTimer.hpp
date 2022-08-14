@@ -1,29 +1,40 @@
+/**
+ * @file TTimer.hpp
+ * @author Tobias Kozel
+ * @brief Simple wrapper around the std chrono stuff to make measuring easier
+ * @version 0.1
+ * @date 2022-08-05
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 #ifndef _TKLB_TIMER
 #define _TKLB_TIMER
 
-#include <string>
 #include <chrono>
 #include <ctime>
 #include <stdio.h>
-#include "./TPrint.h"
 
 namespace tklb {
 
+	/**
+	 * @brief Measures time from construction to dedstruction and
+	 *        prints the result in the given unit.
+	 */
 	class SectionTimer {
 	public:
-		enum Unit {
+		enum class Unit {
 			Miliseconds,
 			Microseconds,
-			Nanoseconds
+			Nanoseconds,
+			Cycles
 		} mUnit;
 
 	private:
 		const char* mMessage;
-
 		size_t mDivider;
-
 		using Time = std::chrono::time_point<std::chrono::steady_clock>;
-
 		Time mStart;
 
 	public:
@@ -44,7 +55,7 @@ namespace tklb {
 			return std::chrono::duration_cast<std::chrono::nanoseconds>(current() - t).count();
 		}
 
-		SectionTimer(const char* message = "", Unit unit = Microseconds, size_t divider = 1) {
+		SectionTimer(const char* message = "", Unit unit = Unit::Microseconds, size_t divider = 1) {
 			mMessage = message;
 			mUnit = unit;
 			mDivider = divider;
@@ -52,34 +63,20 @@ namespace tklb {
 		}
 
 		~SectionTimer() {
-			if(mUnit == Nanoseconds) {
-				TKLB_PRINT("%s\t%zu\tnanoseconds\n", mMessage, getNsSince(mStart) / mDivider)
+			if(mUnit == Unit::Nanoseconds) {
+				printf("%s\t%zu\tnanoseconds\n", mMessage, getNsSince(mStart) / mDivider);
 			}
-			if (mUnit == Microseconds) {
-				TKLB_PRINT("%s\t%zu\tmicroseconds\n", mMessage, getUsSince(mStart) / mDivider)
+			if (mUnit == Unit::Microseconds) {
+				printf("%s\t%zu\tmicroseconds\n", mMessage, getUsSince(mStart) / mDivider);
 			}
-			if (mUnit == Miliseconds) {
-				TKLB_PRINT("%s\t%zu\tmilliseconds\n", mMessage, getMsSince(mStart) / mDivider)
+			if (mUnit == Unit::Miliseconds) {
+				printf("%s\t%zu\tmilliseconds\n", mMessage, getMsSince(mStart) / mDivider);
+			}
+			if (mUnit == Unit::Cycles) {
+				printf("%s\t%zu\tmilliseconds\n", mMessage,  (current() - mStart).count() / mDivider);
 			}
 		}
 	};
-
-	class SectionClock {
-		const char* mMessage;
-		std::clock_t mStart;
-
-	public:
-		SectionClock(const char* message = "") {
-			mMessage = message;
-			mStart = std::clock();
-		}
-
-		~SectionClock() {
-			std::clock_t now = std::clock();
-			TKLB_PRINT("%s\t%i\tCycles\n", mMessage, int(now - mStart))
-		}
-	};
-
 } // namespace
 
 #endif // TKLB_TIMER

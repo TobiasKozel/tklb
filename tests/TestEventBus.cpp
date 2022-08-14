@@ -8,7 +8,7 @@ int test() {
 		TOTAL_COUNT
 	};
 
-	using Bus = EventBus<TOTAL_COUNT, EventList>;
+	using Bus = tklb::EventBus<TOTAL_COUNT, EventList>;
 
 	Bus bus;
 

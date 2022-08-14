@@ -1,43 +1,121 @@
 #ifndef _TKLB_MEMORY_POOL_STACK
 #define _TKLB_MEMORY_POOL_STACK
 
-#include "./TMemoryPool.hpp"
-#include "../util/TAssert.h"
+#include <cstdint>	// uintptr_t
+
+#include "../types/TSpinLock.hpp"
+#include "../types/TLockGuard.hpp"
+#include "./TMemory.hpp"
+
+#ifndef TKLB_ASSERT
+	#define TKLB_ASSERT(cond)
+#endif
 
 namespace tklb { namespace memory {
+
 	/**
-	 * @brief Stack based pool
+	 * @brief This class can manage sub allocations of arbitrary size from a
+	 *        chunk of memory provided beforehand.
 	 */
-	class MemoryPoolStack final : public MemoryPool {
+	class FixedPool {
+		/**
+		 * @brief Type used to store sizes,
+		 * seems wasteful on 64bit machines but memory needs to be aligned
+		 * so it behaves like gcc malloc
+		 */
+		using Size = uintptr_t;
+		using Byte = unsigned char;
+		using Mutex = SpinLock;
+		using Lock = LockGuard<Mutex>;
+
+		/**
+		 * @brief Struct used to mark every allocation;
+		 */
+		struct Block {
+			/**
+			 * @brief The size of the allocation following this block
+			 */
+			Size size;
+			/**
+			 * @brief The usable memory of a block starts AT this variable.
+			 *        If size is 0, this tells us how much free space there is
+			 *        before the next block or end of the pool.
+			 */
+			Size space;
+		};
+
+		// This needs to be enough for the Block struct
+		static_assert(sizeof(Block) <= 2 * sizeof(Size), "Not enough space to store spare block!");
+
+		Size poolSize = 0;			///< Total pool size excluding this struct
+		Mutex mutex;				///< Locking isn't ideal but easy
+		Size allocatedSpace = 0;	///< Used space
+		/**
+		 * Start of the usable pool space
+		 * this does not store the pointer, but the location location itself is used
+		 */
+		Byte* memory = nullptr;
+
 	public:
-		MemoryPoolStack(void* pool, Size size) : MemoryPool(pool, size) {
-			if (mPool.allocated == 0) {
-				// first block marks empty space
-				Block& block = *reinterpret_cast<Block*>(mPool.memory);
-				block.size = 0;
-				block.space = mPool.size;
-			}
+		FixedPool(void* pool, Size size) {
+			memory = reinterpret_cast<Byte*>(pool);
+
+			// first block marks empty space
+			Block& block = *reinterpret_cast<Block*>(memory);
+			block.size = 0;
+			block.space = size;
+			poolSize = size;
 		}
 
-		void* allocate(Size size) override {
-			if (size == 0) { return nullptr; }
+		~FixedPool() {
+			TKLB_ASSERT(allocatedSpace == 0)
+		}
+
+		/**
+		 * @brief How many bytes are already allocated
+		 * @return Size
+		 */
+		Size allocated() const { return allocatedSpace; }
+
+		/**
+		 * @brief How many more bytes are theoretically left.
+		 *        However an allocation of a large block can still fail, if no
+		 *        sequential space large enough is free!
+		 * @return Size
+		 */
+		Size free() const { return poolSize - allocatedSpace; }
+
+		/**
+		 * @brief Since there's also meta data about each allocation,
+		 *        more space is needed to do an allocation.
+		 * @param size The requested space
+		 * @return constexpr Size How much space the allocation will actually take
+		 */
+		static constexpr Size realAllocation(Size size) {
+			if (size == 0) { return 0; }
 			if (size < sizeof(Size)) {
-				// min block size since the space will be used when it's free
-				// to store the distance to the next block
+				// once the block is freed, we need at least that much space
+				// to indicate where the next memory block starts.
 				size = sizeof(Size);
 			}
+			// then, while the block is allocated, we need to store the
+			//  allocation size before the actual memory starts
+			size += sizeof(Size);
 
-			size += sizeof(Size); // add space for the size
-
-			// This needs to be enough for the Block struct
-			static_assert(sizeof(Block) <= 2 * sizeof(Size), "Not enough space to store spare block!");
-
-			// Make sure the size is aligned
+			// Make sure the size is aligned, we need to comply with the standard library
+			// which always aligns to the width of uintptr_t
 			size += sizeof(uintptr_t) - (size % sizeof(uintptr_t));
+			return size;
+		}
 
-			Lock lock(mPool.mutex);
-			for (Size i = 0; i < mPool.size;) {
-				Block& block = *reinterpret_cast<Block*>(mPool.memory + i);
+		void* allocate(Size size) {
+			if (size == 0) { return nullptr; }
+
+			size = realAllocation(size);
+
+			Lock lock(mutex);
+			for (Size i = 0; i < poolSize;) {
+				Block& block = *reinterpret_cast<Block*>(memory + i);
 				if (block.size == 0) {
 					// block is free
 					if (size <= block.space) {
@@ -57,7 +135,7 @@ namespace tklb { namespace memory {
 							freeBlock.space = oldSize - size;
 						}
 						block.size = size;
-						mPool.allocated += size;
+						allocatedSpace += size;
 						return &block.space; // * Found free spot
 					} else {
 						// Step over the free area which is too small
@@ -82,12 +160,12 @@ namespace tklb { namespace memory {
 			return nullptr; // ! No memory left
 		}
 
-		void deallocate(void* ptr) override {
+		void deallocate(void* ptr) {
 			if (ptr == nullptr) { return; }
 
 			// Check if pointer is in memory range
-			TKLB_ASSERT((uintptr_t) mPool.memory <= (uintptr_t) ptr)
-			TKLB_ASSERT((uintptr_t) ptr < (uintptr_t) mPool.memory + (uintptr_t)mPool.memory)
+			TKLB_ASSERT((uintptr_t) memory <= (uintptr_t) ptr)
+			TKLB_ASSERT((uintptr_t) ptr < (uintptr_t) memory + (uintptr_t) memory)
 
 			Block& block = *reinterpret_cast<Block*>(
 				reinterpret_cast<Byte*>(ptr) - sizeof(Size)
@@ -107,16 +185,16 @@ namespace tklb { namespace memory {
 				data[end - 1] = 666; // end of free block
 			#endif
 
-			Lock lock(mPool.mutex);
+			Lock lock(mutex);
 			// Save how large is the gap in memory will be
 			// TODO tklb check if the next block is free too
 			// These blocks should be merged or fragmentation gets worse
 			block.space = block.size;
-			mPool.allocated -= block.size;
+			allocatedSpace -= block.size;
 			block.size = 0; // Mark the block as unallocated
 		}
 
-		void* reallocate(void* ptr, size_t size) override {
+		void* reallocate(void* ptr, size_t size) {
 			// Act like malloc when ptr is nullptr
 			if (ptr == nullptr) { return allocate(size); }
 

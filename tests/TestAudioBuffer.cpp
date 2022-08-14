@@ -2,10 +2,11 @@
 #include "../src/types/audio/TAudioBuffer.hpp"
 
 
+
 const int length = 1024;
 const int channels = 2;
 
-int deinterleave(AudioBuffer& buffer) {
+int deinterleave(tklb::AudioBuffer& buffer) {
 	buffer.resize(length, channels);
 
 	float noconvInterleaved[length * channels];
@@ -40,12 +41,14 @@ int deinterleave(AudioBuffer& buffer) {
 }
 
 template <typename T>
-int conversion(AudioBuffer& buffer) {
+int conversion(tklb::AudioBuffer& buffer) {
 	buffer.resize(0);
 	buffer.resize(length, channels);
 	buffer.set(0); // important
 	T fsamples[channels * length];
-	std::fill_n(fsamples, channels * length, 1.0); // only set part of it to one
+	for (int i = 0; i < channels * length; i++) {
+		fsamples[i] = 1.0; // only set part of it to one
+	}
 	T* fbuf[channels] = { };
 
 	for (int c = 0; c < channels; c++) {
@@ -54,11 +57,11 @@ int conversion(AudioBuffer& buffer) {
 
 	buffer.set(fbuf, length, channels, 0, length / 2);
 
-	AudioBuffer::Sample* l = buffer[0];
-	AudioBuffer::Sample* r = buffer[1];
+	tklb::AudioBuffer::Sample* l = buffer[0];
+	tklb::AudioBuffer::Sample* r = buffer[1];
 
 	for (int i = 0; i < length; i++) {
-		AudioBuffer::Sample expected = (i >= (length / 2)) ? 1.0 : 0;
+		tklb::AudioBuffer::Sample expected = (i >= (length / 2)) ? 1.0 : 0;
 		if (!close(expected, l[i])) {
 			return 5;
 		}
@@ -71,7 +74,7 @@ int conversion(AudioBuffer& buffer) {
 }
 
 int add() {
-	AudioBuffer buffer1, buffer2, buffer3;
+	tklb::AudioBuffer buffer1, buffer2, buffer3;
 
 	buffer1.resize(length, channels);
 	buffer1.set(1.0, length / 2);
@@ -102,8 +105,8 @@ int add() {
 }
 
 int casts() {
-	AudioBufferDouble d1, d2;
-	AudioBufferFloat f1, f2;
+	tklb::AudioBufferDouble d1, d2;
+	tklb::AudioBufferFloat f1, f2;
 	d1.resize(length, channels);
 	d2.resize(d1);
 	f1.resize(d1);
@@ -126,7 +129,7 @@ int casts() {
 }
 
 int test() {
-	AudioBuffer buffer;
+	tklb::AudioBuffer buffer;
 
 	returnNonZero(deinterleave(buffer))
 	returnNonZero(conversion<float>(buffer))

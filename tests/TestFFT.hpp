@@ -4,8 +4,8 @@
 int test() {
 	const int fftSize = 128;
 	const int bufferLength = fftSize * 100;
-	FFT con = { fftSize };
-	AudioBuffer input, output, result;
+	tklb::FFT con = { fftSize };
+	tklb::AudioBuffer input, output, result;
 	input.resize(bufferLength);
 	output.resize(bufferLength);
 	result.resize(bufferLength, 2);

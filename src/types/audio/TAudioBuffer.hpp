@@ -1,9 +1,8 @@
 #ifndef _TKLB_AUDIOBUFFER
 #define _TKLB_AUDIOBUFFER
 
-#include <algorithm>
+#include <type_traits> // std::is_arithmetic
 #include <limits>
-#include <type_traits>	// std::is_arithmetic
 
 #include "../../memory/TMemory.hpp"
 #include "../../util/TMath.hpp"
@@ -136,7 +135,7 @@ namespace tklb {
 			static_assert(std::is_arithmetic<T2>::value, "Need arithmetic type.");
 			if (mChannels <= channel) { return; }
 			TKLB_ASSERT(size() >= offsetDst)
-			length = std::min(length, size() - offsetDst);
+			length = min(length, size() - offsetDst);
 			T* out = get(channel);
 			if (std::is_same<T2, T>::value) {
 				// Types are identical
@@ -214,9 +213,9 @@ namespace tklb {
 			const Size offsetDst = 0
 		) {
 			TKLB_ASSERT(size() >= offsetDst)
-			length = std::min(size() - offsetDst, length ? length : size());
+			length = min(size() - offsetDst, length ? length : size());
 			for (uchar c = 0; c < channels(); c++) {
-				std::fill_n(get(c) + offsetDst, length, value);
+				memory::set<T>(get(c) + offsetDst, length, value);
 			}
 		}
 
@@ -238,9 +237,9 @@ namespace tklb {
 		) {
 			static_assert(std::is_arithmetic<T2>::value, "Need arithmetic type.");
 			TKLB_ASSERT(size() >= offsetDst)
-			length = std::min(size() - offsetDst, length);
+			length = min(size() - offsetDst, length);
 			offsetSrc *= channels;
-			for (uchar c = 0; c < std::min(channels, mChannels); c++) {
+			for (uchar c = 0; c < min(channels, mChannels); c++) {
 				T* out = get(c);
 				if (!needsScaling<T2>()) {
 					for(Size i = 0, j = c + offsetSrc; i < length; i++, j+= channels) {
@@ -285,7 +284,7 @@ namespace tklb {
 			if (mValidSize == 0) {
 				mValidSize = length;
 			} else {
-				mValidSize = std::min(mValidSize, length);
+				mValidSize = min(mValidSize, length);
 			}
 			return true;
 		}
@@ -296,7 +295,7 @@ namespace tklb {
 		 * @param length The desired length in samples. 0 will deallocate.
 		 */
 		void resize(const Size length) {
-			resize(length, std::max(uchar(1), mChannels));
+			resize(length, max(uchar(1), mChannels));
 		}
 
 		/**
@@ -324,8 +323,8 @@ namespace tklb {
 			TKLB_ASSERT(validSize() >= offsetDst)
 			TKLB_ASSERT(buffer.validSize() >= offsetSrc)
 			length = length == 0 ? buffer.validSize() - offsetSrc : length;
-			length = std::min(buffer.validSize() - offsetSrc, validSize() - offsetDst);
-			const uchar channelCount = std::min(buffer.channels(), channels());
+			length = min(buffer.validSize() - offsetSrc, validSize() - offsetDst);
+			const uchar channelCount = min(buffer.channels(), channels());
 
 			#ifndef TKLB_NO_SIMD
 				if (std::is_same<T2, T>::value) {
@@ -373,8 +372,8 @@ namespace tklb {
 			TKLB_ASSERT(validSize() >= offsetDst)
 			TKLB_ASSERT(buffer.validSize() >= offsetSrc)
 			length = length == 0 ? buffer.validSize() - offsetSrc : length;
-			length = std::min(buffer.validSize() - offsetSrc, validSize() - offsetDst);
-			const uchar channelsCount = std::min(buffer.channels(), channels());
+			length = min(buffer.validSize() - offsetSrc, validSize() - offsetDst);
+			const uchar channelsCount = min(buffer.channels(), channels());
 
 			#ifndef TKLB_NO_SIMD
 				if (std::is_same<T2, T>::value) {
@@ -523,7 +522,7 @@ namespace tklb {
 		 */
 		void setValidSize(const Size v) {
 			TKLB_ASSERT(v <= size());
-			mValidSize = std::min(size(), v);
+			mValidSize = min(size(), v);
 		}
 
 		inline T* get(const uchar channel) {
@@ -582,7 +581,7 @@ namespace tklb {
 			const Size valid = validSize();
 			TKLB_ASSERT(offset <= valid)
 			length = length == 0 ? valid : length;
-			length = std::min(length, valid - offset);
+			length = min(length, valid - offset);
 			const T2* source = get(channel) + offset;
 			if (std::is_same<T2, T>::value) {
 				memory::copy(target, source, sizeof(T) * length);
@@ -641,9 +640,9 @@ namespace tklb {
 			static_assert(std::is_arithmetic<T2>::value, "Need arithmetic type.");
 			const Size valid = validSize();
 			TKLB_ASSERT(offset <= valid)
-			chan = (chan == 0) ? channels() : std::min(chan, channels());
+			chan = (chan == 0) ? channels() : min(chan, channels());
 			length = (length == 0) ? valid : length;
-			length = std::min(valid - offset, length);
+			length = min(valid - offset, length);
 			Size out = 0;
 			for (uchar c = 0; c < chan; c++) {
 				Size j = c;

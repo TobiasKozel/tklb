@@ -7,7 +7,7 @@
 #define TKLBZ_AUDIOFILE_IMPL
 #include "../src/types/audio/TWaveFile.hpp"
 
-using Resampler = ResamplerLinear;
+using Resampler = tklb::ResamplerLinear;
 
 int test() {
 	{
@@ -16,9 +16,9 @@ int test() {
 		#endif
 		const int blockSize = 256;
 		const int rate2 = 50001;
-		AudioBuffer sample;
-		AudioBuffer resampled;
-		wave::load<AudioBuffer::Sample, AudioBuffer>(
+		tklb::AudioBuffer sample;
+		tklb::AudioBuffer resampled;
+		tklb::wave::load<tklb::AudioBuffer::Sample, tklb::AudioBuffer>(
 			"/home/usr/git/master/VAEG/VAE/external/tklb/tests/test_folder/LRMonoPhase4.wav", sample
 		);
 		Resampler resamplerUp(sample.sampleRate, rate2, blockSize);
@@ -45,7 +45,7 @@ int test() {
 		// 		sample[c][i] = sin(i * 0.1);
 		// 	}
 		// }
-		wave::write<AudioBuffer::Sample, AudioBuffer>(
+		tklb::wave::write<tklb::AudioBuffer::Sample, tklb::AudioBuffer>(
 			sample, "/home/usr/git/master/VAEG/VAE/external/tklb/tests/test_folder/test.wav"
 		);
 	}

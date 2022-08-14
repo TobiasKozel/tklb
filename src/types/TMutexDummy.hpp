@@ -1,5 +1,6 @@
 #ifndef _TKLB_MUTEX_DUMMY
 #define _TKLB_MUTEX_DUMMY
+
 #include "./TLockGuard.hpp"
 
 namespace tklb {

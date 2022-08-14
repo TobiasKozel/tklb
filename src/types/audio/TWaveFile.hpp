@@ -1,10 +1,9 @@
 #ifndef _TKLB_WAVE_FILE
 #define _TKLB_WAVE_FILE
 
-#include "../../memory/TMemory.hpp"
 #include "./TAudioBuffer.hpp"
 
-#ifdef TKLB_NO_STDIO
+#ifdef TKLB_NO_STDLIB
 	#define DR_WAV_NO_STDIO
 #endif
 
@@ -48,7 +47,7 @@ namespace tklb {
 
 			drwav wav;
 			if (length == 0) {
-			#ifndef TKLB_NO_STDIO
+			#ifndef TKLB_NO_STDLIB
 				if (!drwav_init_file(&wav, path, &drwaveCallbacks)) {
 					return false;
 				}
@@ -144,7 +143,7 @@ namespace tklb {
 			size_t outSize = 0;
 			void* memory = nullptr;
 			if (out == nullptr) { // write to file
-			#ifndef TKLB_NO_STDIO
+			#ifndef TKLB_NO_STDLIB
 				if (!drwav_init_file_write(&wav, path, &droptions, &drwaveCallbacks)) {
 					return false;
 				}

@@ -21,7 +21,7 @@
 
 static inline void* speex_alloc (int size) {
 	void* ptr = TKLB_MALLOC(size);
-	::tklb::memory::set(ptr, 0, size);
+	::tklb::memory::zero(ptr, size);
 	return ptr;
 }
 

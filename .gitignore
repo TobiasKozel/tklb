@@ -23,6 +23,7 @@ rtaudio/tests
 */*.yml
 
 tracy/capture
+tracy/examples
 tracy/extra
 tracy/getopt
 tracy/icon
