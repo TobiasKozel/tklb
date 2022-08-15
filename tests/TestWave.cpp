@@ -4,7 +4,7 @@
 #include "../src/types/audio/resampler/TResamplerHold.hpp"
 #include "../src/types/audio/resampler/TResamplerLinear.hpp"
 
-#define TKLBZ_AUDIOFILE_IMPL
+#define TKLB_WAVE_FILE_IMPL
 #include "../src/types/audio/TWaveFile.hpp"
 
 using Resampler = tklb::ResamplerLinear;
@@ -12,7 +12,7 @@ using Resampler = tklb::ResamplerLinear;
 int test() {
 	{
 		#ifdef TKLB_TEST
-			return 0; // don't run the test in ci
+			return 0; // TODO don't run the test in ci, all broken
 		#endif
 		const int blockSize = 256;
 		const int rate2 = 50001;

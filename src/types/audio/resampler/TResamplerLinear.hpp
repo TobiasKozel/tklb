@@ -1,7 +1,9 @@
 #ifndef _TKLB_RESAMPLER_LINEAR
 #define _TKLB_RESAMPLER_LINEAR
 
+#include <cmath>
 #include "../TAudioBuffer.hpp"
+
 
 namespace tklb {
 	template <typename T, class Buffer = AudioBufferTpl<T>>

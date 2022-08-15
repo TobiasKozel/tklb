@@ -20,17 +20,18 @@
 #define RANDOM_PREFIX tklb
 
 static inline void* speex_alloc (int size) {
-	void* ptr = TKLB_MALLOC(size);
+	void* ptr = tklb_malloc(size);
 	::tklb::memory::zero(ptr, size);
 	return ptr;
 }
 
 static inline void speex_free (void* ptr) {
-	TKLB_FREE(ptr);
+	tklb_free(ptr);
 }
 
 static inline void* speex_realloc (void* ptr, int size) {
-	return TKLB_REALLOC(ptr, size);
+	tklb_free(ptr);
+	return tklb_malloc(size);
 }
 
 #include "../../../../external/speex_resampler/speex_resampler.h"

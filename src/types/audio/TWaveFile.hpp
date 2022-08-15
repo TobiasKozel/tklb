@@ -1,3 +1,14 @@
+/**
+ * @file TWaveFile.hpp
+ * @author Tobias Kozel
+ * @brief TODO broken, don't use
+ * @version 0.1
+ * @date 2022-08-15
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
+
 #ifndef _TKLB_WAVE_FILE
 #define _TKLB_WAVE_FILE
 

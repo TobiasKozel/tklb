@@ -1,6 +1,7 @@
 #ifndef _TKLB_RESAMPLER_HOLD
 #define _TKLB_RESAMPLER_HOLD
 
+#include <cmath>
 #include "../TAudioBuffer.hpp"
 
 namespace tklb {
