@@ -2,131 +2,105 @@
 #define _TKLB_HANDLE_BUFFER
 
 #include "./THeapBuffer.hpp"
-namespace tklb {
 
+namespace tklb {
 	/**
-	 * @brief TODO broken don't use. A buffer to access contents via a Handle with validity checks
-	 * @details Type stored in here needs to store it's own id in a Handle member.
+	 * @brief A handle buffer to store elements in.
+	 *        Each space in the buffer has a generation counter which is increased each time a element
+	 *        is removed from that spot, so the old handle becomes invalid and access is portected.
 	 * @tparam T type to store
 	 * @tparam Handle type to index elements
-	 * @tparam MaskSplit At what bit to split the Handle for validation
+	 * @tparam GenerationBits At what bit to split the Handle for validation, defaults to 1/4 of the size.
+	 *         Higher values mean more bits are used for the generation counter to ensure valid access.
 	 */
-	template <class T, typename Handle = unsigned int, int MaskSplit = sizeof(Handle) * 4>
-	class HandleBuffer : public HeapBuffer<T, true> {
+	template <class T, typename Handle = unsigned int, int GenerationBits = 8>
+	class HandleBuffer {
+		static constexpr Handle MaskBits = sizeof(Handle) * 8 - GenerationBits;
+		static constexpr Handle MaskIndex		= (1 << MaskBits) - 1;
+		static constexpr Handle MaskGeneration	= ~MaskIndex;
 
-		using Base = HeapBuffer<T, true>;
-		using Size = typename Base::Size;
+		struct Element {
+			Handle next;				///< Linked list next element
+			Handle handle;				///< the handle the element has
+			char value[sizeof(T)];  	///< Space for the element
+		};
 
-		static constexpr Handle MaskId = (1 << (MaskSplit)) - 1;
-		static constexpr Handle MaskIndex = ~MaskId;
-
-		Size mLastFree = 0;
-		/**
-		 * Offset to the member variable which is used to identify an object. in bytes
-		 * Should get optimized away since it depends on template arguments.
-		 */
-		Size mOffset;
+		HeapBuffer<Element> mElements;
+		Handle mStart = 0;
+		Handle mFree = 0;
 
 	public:
-
-		/**
-		 * @brief Since 0 is a valid handle, this is used to indicate a invalid one
-		 */
 		static constexpr Handle InvalidHandle = ~0;
 
-		/**
-		 * @brief Construct a new Handle Buffer object
-		 * @param member Pointer to the member variable used for validation
-		 */
-		HandleBuffer(Handle T::*member) {
-			// nice
-			mOffset = Size(((char*) &(((T*)nullptr)->*member)) - ((char*)nullptr));
-		}
+		Handle size() const { return mElements.size(); }
 
-		template <class Func>
-		void forEach(const Func&& func) {
-			for (Size i = 0; i < Base::size(); i++) {
-				// if (*(Base::data() + i))
+		Handle free() const { return mFree; }
+
+		HandleBuffer(Handle size) {
+			TKLB_ASSERT(size < MaskIndex) // Needs to be smaller than MaskIndex!
+
+			mElements.resize(size);
+
+			for (Handle i = 0; i < size; i++) {
+				mElements[i].handle = i;
+				mElements[i].next = i + 1;
 			}
+			mElements.last().next = MaskIndex; // last has no next
+			mFree = size;
 		}
 
-		T* at(const Handle& handle) {
-			const Handle index = (handle & MaskIndex) >> MaskSplit;
-			if (index == mLastFree) { return nullptr; }	// element deleted
-			if (Base::size() <= index) { return nullptr; }	// out of range
-			T* element = Base::data() + index;
-			const Handle refernceId = handle & MaskId;
-			const Handle id = (*((Handle*)(((char*) element) + mOffset))) & MaskId;
-			if (id != refernceId) { return nullptr; }	// Id mismatch, so object was replaced
-			return element;
+		T* at(const Handle& handle) const {
+			if (handle == InvalidHandle) { return nullptr; }
+
+			const Handle index = handle & MaskIndex;
+			if (mElements.size() <  index) { return nullptr; }
+
+			const Element& element = mElements[index];
+			if (element.handle != handle) { return nullptr; }
+
+			return (T*) &(element.value);
 		}
 
 		Handle create() {
-			Size index = 0;
-			const Size s = Base::size();
-			if (s <= mLastFree || mLastFree < 0) {
-				index = s;
-				Base::resize(s + 1);
+			// No more space
+			if (mStart == MaskIndex) { return InvalidHandle; }
+
+			auto& element = mElements[mStart];
+			new (&element.value) T();
+
+			// remove element from list
+			mStart = element.next;
+			mFree--;
+			return element.handle;
+		}
+
+		void remove(const Handle& handle) {
+			if (handle == InvalidHandle) { return; }
+
+			const Handle index = handle & MaskIndex;
+
+			TKLB_ASSERT(index != MaskIndex) // can't index this, see constructor
+
+			if (mElements.size() <  index) { return; } // just an invalid handle no assert
+
+			Element& element = mElements[index];
+
+			{
+				// Invalidate the handle by incremening the generation
+				Handle generation = ((element.handle & MaskGeneration) >> MaskBits);
+				generation += 1;
+				generation = (generation << MaskBits);
+				element.handle = generation | index;
 			}
-			Size zero = 0; // should underflow
-			mLastFree = zero - 1; // make sure free slot is not in size any more
-			Handle ret = index << MaskSplit;
-			Handle id = (*((Handle*)(((char*) (Base::data() + index)) + mOffset))) & MaskId;
-			ret = ret | id;
-			return ret;
-		}
 
-		/**
-		 * @brief add element, may trigger resize
-		 */
-		Handle push(const T& object) {
-			Handle ret = 0;
-			if (Base::size() <= mLastFree || mLastFree < 0) {
-				// no free slot
-				ret = Base::size();
-				if (!Base::push(object)) {
-					return InvalidHandle; // something went wrong
-				}
-			} else {
-				// use free slot
-				ret = mLastFree;
-				new (Base::data() + mLastFree) T(object);
+			{
+				// insert the free element back into the list
+				element.next = mStart;
+				mStart = index;
 			}
-			ret = ret << MaskSplit;
-			Handle id = (*((Handle*)(((char*) &object) + mOffset))) & MaskId;
-			ret = ret | id;
-			Size zero = 0; // should underflow
-			mLastFree = zero - 1; // make sure free slot is not in size any more
-			return ret;
-		}
 
-		bool pop(const Handle& handle, T* destination = nullptr) {
-			T* element = at(handle);
-			if (element == nullptr) { return false; }
-			if (destination != nullptr) {
-				memory::copy(destination, element, sizeof(T));
-			}
-			return remove(*element);
+			mFree++;
 		}
-
-		bool remove(const Size index) {
-			if (Base::size() <= index) { return false; }
-			if (index == mLastFree) { return false; }
-			Base::data()[index].~T();
-			mLastFree = index;
-			return true;
-		}
-
-		bool remove(const T& object) {
-			T* arr = Base::data();
-			for (Size i = 0; i < Base::size(); i++) {
-				if ((arr + i) == &object) {
-					return remove(i);
-				}
-			}
-			return false;
-		}
-
 	};
 }
 

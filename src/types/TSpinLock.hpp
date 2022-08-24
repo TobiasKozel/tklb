@@ -1,8 +1,11 @@
 #ifndef _TKLB_SPINLOCK
 #define _TKLB_SPINLOCK
 
-// #include <atomic>
 #include "./TLockGuard.hpp"
+
+#ifndef TKLB_NO_STDLIB
+	#include <atomic>
+#endif
 
 namespace tklb {
 	/**
@@ -10,10 +13,11 @@ namespace tklb {
 	 * ! probably not thread safe
 	 */
 	class SpinLock {
-		// std::atomic<bool> mSpinLock;
-		bool mSpinLock = false;
-		// This should be an atomic or some kind of
-		// proper sync mechanism but performance tanks with atomics
+		#ifndef TKLB_NO_STDLIB
+			std::atomic<bool> mSpinLock;
+		#else
+			bool mSpinLock = false;
+		#endif
 	public:
 		SpinLock(const SpinLock&) = delete;
 		SpinLock(const SpinLock*) = delete;
