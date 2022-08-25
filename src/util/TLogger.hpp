@@ -40,7 +40,7 @@
 	 */
 	void tklb_print(int level, const char* message);
 	#ifdef TKLB_IMPL
-		#if !defined(TKLB_NO_STDLIB) && !defined(TKLB_CUSTOM_PRINT)
+		#if !defined(TKLB_NO_STDLIB) && !defined(TKLB_CUSTOM_PRINT) // this might be better in TKLB_NO_STDIO
 			#include <stdio.h>
 			void tklb_print(int level, const char* message) {
 				printf("%s\n", message);
@@ -121,6 +121,9 @@
 	#if !defined(TKLB_RELEASE) || defined(TKLB_FORCE_LOG)
 		#define TKLB_INFO(msg, ...)  tklb_print_path(1, __FILE__, __LINE__, msg, ## __VA_ARGS__);
 		#define TKLB_DEBUG(msg, ...) tklb_print_path(0, __FILE__, __LINE__, msg, ## __VA_ARGS__);
+	#else
+		#define TKLB_INFO(msg, ...);
+		#define TKLB_DEBUG(msg, ...);
 	#endif
 #endif // TKLB_NO_LOG
 

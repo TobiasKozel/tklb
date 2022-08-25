@@ -92,6 +92,7 @@ namespace tklb {
 		static constexpr char Terminator = '\0';
 		using Size = typename STORAGE::Size;
 	public:
+		static constexpr Size MAX_LENGTH = 1024 * 1024 * 32; // 32 megs
 		String() { }
 		String(const char* str) { set(str); }
 		String(const String* str) { set(*str); };
@@ -134,7 +135,15 @@ namespace tklb {
 
 		void set(const char* str) {
 			if (str == nullptr) { return; }
-			const Size size = Size(strlen(str)) + 1;		// keep the terminator
+
+			Size size = 0;
+			for (; size < MAX_LENGTH; size++) {
+				if (str[size] == '\0') {
+					// TODO check
+					size++; // keep the terminator
+					break;
+				}
+			}
 			mData.resize(size);
 			mData.set(str, size);
 			mData[size - 1] = '\0';

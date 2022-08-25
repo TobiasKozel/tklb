@@ -20,7 +20,7 @@
 
 #include "../../../external/dr_wav.h"
 
-#ifdef TKLB_WAVE_FILE_IMPL
+#ifdef TKLB_IMPL
 	#include "./TWaveFile.cpp"
 #endif
 
