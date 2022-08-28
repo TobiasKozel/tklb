@@ -14,7 +14,6 @@
 	#define TKLB_PROFILER_MESSAGE(msg, size)		///< Send dynamic string message
 	#define TKLB_PROFILER_MALLOC(ptr, size)			///< Track allocation
 	#define TKLB_PROFILER_FREE(ptr)					///< Track free
-	#define TKLB_PROFILER_OVERLOAD_NEW()			///< Overloads new and delete of class to be tracked
 	#define TKLB_PROFILER_MUTEX(type, name, desc) type name;
 	#define TKLB_PROFILER_FREE_L(ptr, name)			///< Track named allocaions
 	#define TKLB_PROFILER_MALLOC_L(ptr, size, name)	///< Track named allocaions

@@ -45,7 +45,10 @@ namespace tklb {
 		}
 
 		bool operator==(const char* str) const {
-			if (N == 0) { return false; }
+			if (empty()) { return str == nullptr || str[0] == '\0'; }
+
+			if (str == nullptr) { return false; }
+
 			for(Size i = 0; i < N; i++) {
 				if (str[i] == Terminator) {
 					return str[i] == mData[i];
