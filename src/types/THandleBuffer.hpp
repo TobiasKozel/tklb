@@ -60,9 +60,13 @@ namespace tklb {
 			if (mElements.size() <  index) { return nullptr; }
 
 			const Element& element = mElements[index];
-			if ((element.next ^ handle) & MaskGeneration) { return nullptr; } // referencing removed element
+			const Handle currentGeneration = element.next & MaskGeneration;
+			if (currentGeneration == MaskGeneration) { return nullptr; } // referencing unitialized element
 
-			return (T*) &(element.value);
+			const Handle accessedGeneration = handle & MaskGeneration;
+			if (accessedGeneration != currentGeneration) { return nullptr; } // referencing removed element
+
+			return (T*) (element.value);
 		}
 
 		Handle create() {
@@ -71,7 +75,7 @@ namespace tklb {
 			TKLB_ASSERT(mFree != 0)
 			const Handle index = mStart;
 			auto& element = mElements[index];
-			new (&element.value) T();
+			new (element.value) T();
 
 			// remove element from list
 			mStart = element.next & MaskIndex;
@@ -93,6 +97,9 @@ namespace tklb {
 			// Invalidate the handle by incremening the generation
 			Handle generation = ((element.next & MaskGeneration) >> MaskBits);
 			generation += 1;
+			if (generation == MaskGeneration) {
+				generation = 0; // last generation is skipped because it signals a uninitialzed element
+			}
 			generation = (generation << MaskBits);
 
 			// insert the free element back into the list
@@ -105,12 +112,13 @@ namespace tklb {
 
 		template <class Func>
 		void const iterate(Func&& func) {
-			// TODO
 			Handle itemsLeft = mElements.size() - mFree;
 			for (Handle i = 0; i < mElements.size(); i++) {
-				const auto& element = mElements[i];
-				if (true) {
+				if (itemsLeft == 0) { return; } // early out
+				const Element& element = mElements[i];
+				if ((element.next & MaskGeneration) != MaskGeneration) {
 					func(*((T*) mElements[i].value), i | (element.next & MaskGeneration));
+					itemsLeft--;
 				}
 			}
 		}

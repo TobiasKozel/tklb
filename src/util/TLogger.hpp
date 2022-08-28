@@ -19,11 +19,11 @@
  */
 
 #ifdef TKLB_NO_LOG
-	#define TKLB_DEBUG		(msg, ...)
-	#define TKLB_INFO		(msg, ...)
-	#define TKLB_WARN		(msg, ...)
-	#define TKLB_ERROR		(msg, ...)
-	#define TKLB_CRITICAL	(msg, ...)
+	#define TKLB_DEBUG(...)
+	#define TKLB_INFO(...)
+	#define TKLB_WARN(...)
+	#define TKLB_ERROR(...)
+	#define TKLB_CRITICAL(...)
 #else // TKLB_NO_LOG
 	#include <stdarg.h>	// Variable argument wrangling
 
@@ -122,8 +122,8 @@
 		#define TKLB_INFO(msg, ...)  tklb_print_path(1, __FILE__, __LINE__, msg, ## __VA_ARGS__);
 		#define TKLB_DEBUG(msg, ...) tklb_print_path(0, __FILE__, __LINE__, msg, ## __VA_ARGS__);
 	#else
-		#define TKLB_INFO(msg, ...);
-		#define TKLB_DEBUG(msg, ...);
+		#define TKLB_INFO(...)
+		#define TKLB_DEBUG(...)
 	#endif
 #endif // TKLB_NO_LOG
 

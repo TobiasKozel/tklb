@@ -25,6 +25,7 @@ namespace tklb {
 		}
 		const char& operator[](const Size index) const {
 			TKLB_ASSERT(index < N)
+			// If asserts are disable, pretend the string is terminated
 			if (N <= index) { return Terminator; }
 			return mData[index];
 		}

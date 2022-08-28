@@ -60,18 +60,18 @@ namespace tklb {
 			T lastMix = 0;
 
 			for (int c = 0; c < in.channels(); c++) {
-				Size output = 0;									// index in output buffer
-				T last = mLastFrame[c];								// last sample
+				Size output = 0;								// index in output buffer
+				T last = mLastFrame[c];							// last sample
 				T mix = 0.0;
 				for (; output < out.size(); output++) {
-					const T position = output * mFactor;	// index in input buffer, somewhere between two samples
-					const T lastPosition = std::floor(position);	// next sample index in the input buffer
+					const T position = output * mFactor;		// index in input buffer, somewhere between two samples
+					const T lastPosition = Size(position);		// next sample index in the input buffer
 					const Size lastIndex = lastPosition;
-					const Size nextIndex = lastPosition + 1;		// next sample index in the input buffer this is the one we need to fetch
+					const Size nextIndex = lastPosition + 1;	// next sample index in the input buffer this is the one we need to fetch
 
 					if (countIn <= nextIndex) { break; }
 
-					mix = position - lastPosition;					// mix factor between first and second sample
+					mix = position - lastPosition;				// mix factor between first and second sample
 					const T next = in[c][lastIndex];
 					out[c][output] = last + mix * (next - last);
 					// out[c][o] = next * mix + last * (T(1.0) - mix);

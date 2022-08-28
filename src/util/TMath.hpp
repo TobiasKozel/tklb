@@ -1,6 +1,11 @@
 #ifndef _TKLB_MATH
 #define _TKLB_MATH
 
+#ifndef KTLB_NO_STDLIB
+	#include <cmath>
+#endif
+
+
 namespace tklb {
 
 	constexpr double PI = 3.14159265358979323846;
@@ -35,6 +40,23 @@ namespace tklb {
 	template <typename T, typename T2>
 	inline T lerp(const T& v1, const T& v2, const T2& t) {
 		return v1 + t * (v2 - v1);
+	}
+
+	inline float sqrt(const float& x) {
+		#ifdef TKLB_NO_STDLIB
+			// https://www.codeproject.com/Articles/69941/Best-Square-Root-Method-Algorithm-Function-Precisi sqrt3
+			// ! absolutely untested
+			union {
+				int i;
+				float x;
+			} u;
+
+			u.x = x;
+			u.i = (1<<29) + (u.i >> 1) - (1<<22);
+			return u.x;
+		#else
+			return std::sqrt(x);
+		#endif
 	}
 } // namespace
 
