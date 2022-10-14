@@ -96,10 +96,10 @@ namespace tklb {
 		 */
 		template <typename T2>
 		static constexpr bool needsScaling() {
-			if (std::is_floating_point<T>::value && std::is_floating_point<T2>::value) {
-				return false;
-			}
-			return std::numeric_limits<T>::max() != std::numeric_limits<T2>::max();
+			return
+				(std::is_floating_point<T>::value && std::is_floating_point<T2>::value) ?
+					false :
+					std::numeric_limits<T>::max() != std::numeric_limits<T2>::max();
 		}
 
 		/**
@@ -111,11 +111,12 @@ namespace tklb {
 		 */
 		template <typename T1, typename T2, typename Ratio = float>
 		static constexpr Ratio getConversionScale() {
-			const Ratio maxt = std::is_floating_point<T2>::value ?
-				Ratio(1.0) : Ratio(std::numeric_limits<T2>::max()) - Ratio(1);
-			const Ratio maxt2 = std::is_floating_point<T1>::value ?
-				Ratio(1.0) : Ratio(std::numeric_limits<T1>::max()) - Ratio(1);
-			return maxt / maxt2;
+			return
+				(std::is_floating_point<T2>::value ?
+					Ratio(1.0) : Ratio(std::numeric_limits<T2>::max()) - Ratio(1))
+				/ // --------------------------------------------------------
+				(std::is_floating_point<T1>::value ?
+					Ratio(1.0) : Ratio(std::numeric_limits<T1>::max()) - Ratio(1));
 		}
 
 		/**
@@ -149,7 +150,7 @@ namespace tklb {
 				} else {
 					// We also need to scale
 					// float -> int, int -> float, short -> int
-					constexpr auto scale = getConversionScale<T2, T>();
+					const auto scale = getConversionScale<T2, T>();
 					for (Size i = 0; i < length; i++) {
 						out[i + offsetDst] = static_cast<T>(samples[i] * scale);
 					}
@@ -246,7 +247,7 @@ namespace tklb {
 						out[i + offsetDst] = static_cast<T>(samples[j]);
 					}
 				} else {
-					constexpr auto scale = getConversionScale<T2, T>();
+					const auto scale = getConversionScale<T2, T>();
 					for(Size i = 0, j = c + offsetSrc; i < length; i++, j+= channels) {
 						out[i + offsetDst] = static_cast<T>(samples[j] * scale);
 					}

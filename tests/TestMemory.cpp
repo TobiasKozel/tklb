@@ -14,7 +14,6 @@ public:
 };
 
 int test() {
-	constexpr int size = sizeof(Test);
 	{
 		std::vector<Test> asd;
 		asd.resize(2);

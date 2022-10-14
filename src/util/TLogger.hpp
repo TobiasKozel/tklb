@@ -71,11 +71,9 @@
 			{
 				// Strip away the path and only keep the file name
 				int lastDelimiter = 0;
-				int pathLength = bufferSize;
 
 				for (int i = 0; i < bufferSize; i++) {
 					if (path[i] == '\0') {
-						pathLength = i;
 						break;
 					}
 					if (path[i] == '\\' || path[i] == '/') {
@@ -107,6 +105,8 @@
 
 			#ifdef TKLB_PROFILER_MESSAGE
 				TKLB_PROFILER_MESSAGE(buffer2, length)
+			#else
+				(void)(length);
 			#endif
 			locked = false;
 		}

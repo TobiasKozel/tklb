@@ -6,6 +6,7 @@
 #include "../types/TSpinLock.hpp"
 #include "../types/TLockGuard.hpp"
 #include "./TMemory.hpp"
+#include "../util/TMath.hpp"
 
 #ifndef TKLB_ASSERT
 	#define TKLB_ASSERT(cond)
@@ -92,20 +93,15 @@ namespace tklb { namespace memory {
 		 * @return constexpr Size How much space the allocation will actually take
 		 */
 		static constexpr Size realAllocation(Size size) {
-			if (size == 0) { return 0; }
-			if (size < sizeof(Size)) {
+			return size == 0 ? 0 :
 				// once the block is freed, we need at least that much space
 				// to indicate where the next memory block starts.
-				size = sizeof(Size);
-			}
-			// then, while the block is allocated, we need to store the
-			//  allocation size before the actual memory starts
-			size += sizeof(Size);
-
-			// Make sure the size is aligned, we need to comply with the standard library
-			// which always aligns to the width of uintptr_t
-			size += sizeof(uintptr_t) - (size % sizeof(uintptr_t));
-			return size;
+				max((Size) sizeof(Size), size) +
+				// TODO this seems broken
+				// then, while the block is allocated, we need to store the
+				// allocation size before the actual memory starts
+				sizeof(Size);
+				// sizeof(uintptr_t) - (size % sizeof(uintptr_t));
 		}
 
 		void* allocate(Size size) {

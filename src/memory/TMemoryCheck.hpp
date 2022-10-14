@@ -30,11 +30,11 @@ namespace tklb { namespace memory { namespace check {
 			size = _size;
 			start = _start;
 			if (start) {
-				for (int i = 0; i < sizeof(MAGIC_STRING_START); i++) {
+				for (size_t i = 0; i < sizeof(MAGIC_STRING_START); i++) {
 					magic[i] = MAGIC_STRING_START[i];
 				}
 			} else {
-				for (int i = 0; i < sizeof(MAGIC_STRING_END); i++) {
+				for (size_t i = 0; i < sizeof(MAGIC_STRING_END); i++) {
 					magic[i] = MAGIC_STRING_END[i];
 				}
 			}

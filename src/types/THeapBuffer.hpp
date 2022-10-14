@@ -250,7 +250,7 @@ namespace tklb {
 
 			if (mSize < size) { // upsize means construct objects
 				for (Size i = mSize; i < size; i++) {
-					T* test = new (mBuf + i) T();
+					new (mBuf + i) T();
 				}
 			}
 
@@ -403,7 +403,7 @@ namespace tklb {
 				if (Alignment != 0) {
 					// Mask with zeroes at the end to floor the pointer to an aligned block
 					// for these casts to work, the type needs to be as wide as void*
-					const size_t _align = Alignment;
+					// const size_t _align = Alignment;
 					const size_t mask = ~(size_t(Alignment - 1));
 					const size_t pointer = reinterpret_cast<size_t>(newBuf);
 					const size_t floored = pointer & mask;
