@@ -1,7 +1,7 @@
 #ifndef _TKLB_MEMORY_POOL_STACK
 #define _TKLB_MEMORY_POOL_STACK
 
-#include <cstdint>	// uintptr_t
+#include <stddef.h>	// size_t
 
 #include "../types/TSpinLock.hpp"
 #include "../types/TLockGuard.hpp"
@@ -17,14 +17,16 @@ namespace tklb { namespace memory {
 	/**
 	 * @brief This class can manage sub allocations of arbitrary size from a
 	 *        chunk of memory provided beforehand.
+	 *        Prone to fragmentation and mostly for testing.
 	 */
 	class FixedPool {
+		using Pointer = size_t;
 		/**
 		 * @brief Type used to store sizes,
 		 * seems wasteful on 64bit machines but memory needs to be aligned
 		 * so it behaves like gcc malloc
 		 */
-		using Size = uintptr_t;
+		using Size = Pointer;
 		using Byte = unsigned char;
 		using Mutex = SpinLock;
 		using Lock = LockGuard<Mutex>;
@@ -101,7 +103,7 @@ namespace tklb { namespace memory {
 				// then, while the block is allocated, we need to store the
 				// allocation size before the actual memory starts
 				sizeof(Size);
-				// sizeof(uintptr_t) - (size % sizeof(uintptr_t));
+				// sizeof(Pointer) - (size % sizeof(Pointer));
 		}
 
 		void* allocate(Size size) {
@@ -160,8 +162,8 @@ namespace tklb { namespace memory {
 			if (ptr == nullptr) { return; }
 
 			// Check if pointer is in memory range
-			TKLB_ASSERT((uintptr_t) memory <= (uintptr_t) ptr)
-			TKLB_ASSERT((uintptr_t) ptr < (uintptr_t) memory + (uintptr_t) memory)
+			TKLB_ASSERT((Pointer) memory <= (Pointer) ptr)
+			TKLB_ASSERT((Pointer) ptr < (Pointer) memory + (Pointer) memory)
 
 			Block& block = *reinterpret_cast<Block*>(
 				reinterpret_cast<Byte*>(ptr) - sizeof(Size)
@@ -170,7 +172,7 @@ namespace tklb { namespace memory {
 			// blocks can never be less than 2 * sizeof(Size)
 			TKLB_ASSERT(sizeof(Size) < block.size)
 
-			#ifdef TKLB_MEM_TRACE
+			#ifdef TKLB_MEMORY_CHECK
 				Size* data = reinterpret_cast<Size*>(&block);
 				const Size end = block.size /  sizeof(Size);
 				// Set the freed memory to a pattern
@@ -200,7 +202,7 @@ namespace tklb { namespace memory {
 			const Size oldSize = block.size;
 			Size newSize = size + sizeof(Size);
 			// Make sure the size is aligned
-			newSize += sizeof(uintptr_t) - (newSize % sizeof(uintptr_t));
+			newSize += sizeof(Pointer) - (newSize % sizeof(Pointer));
 
 			if (newSize <= oldSize) {
 				// Down size

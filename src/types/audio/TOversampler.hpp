@@ -1,3 +1,14 @@
+/**
+ * @file TOversampler.hpp
+ * @author Tobias Kozel
+ * @brief Wrapped hiir oversampler
+ * @version 0.1
+ * @date 2023-01-04
+ *! TODO broken and has no tests
+ * @copyright Copyright (c) 2023
+ *
+ */
+
 #ifndef _TKLB_OVERSAMPLER
 #define _TKLB_OVERSAMPLER
 
@@ -5,13 +16,9 @@
 #include "../../util/TAssert.h"
 #include "./TAudioBuffer.hpp"
 
-#ifdef TKLB_SAMPLE_FLOAT
-	#define TKLB_OVERSAMPLE_FLOAT
-#endif
-
 #ifndef TKLB_NO_SIMD
 	#ifdef __arm__
-		#ifdef TKLB_OVERSAMPLE_FLOAT
+		#ifdef TKLB_SAMPLE_FLOAT
 			// TODO tklb PERF maybe try Upsampler2x4Neon instead
 			#include "../../../external/hiir/hiir/Upsampler2xNeon.h"
 			#include "../../../external/hiir/hiir/Downsampler2xNeon.h"
@@ -26,7 +33,7 @@
 		#endif
 	#else
 		// TODO tklb PERF maybe try avx
-	#ifdef TKLB_OVERSAMPLE_FLOAT
+	#ifdef TKLB_SAMPLE_FLOAT
 		// #include "../../external/hiir/hiir/Upsampler2x8Avx.h"
 		// #include "../../external/hiir/hiir/Downsampler2x8Avx.h"
 		// #define TKLB_OVERSAMPLER_UP(coeffs) hiir::Upsampler2x8Avx<coeffs>
@@ -61,14 +68,10 @@ namespace tklb {
  * Its type is also bound to the Audiouffers default sample type
  * in order to avoid including all versions of the hiir library
  */
-#ifdef TKLB_MAXCHANNELS
-template <int CHANNELS = TKLB_MAXCHANNELS, int MAX_BLOCK = 512>
-#else
 template <int CHANNELS = 2, int MAX_BLOCK = 512>
-#endif
 class Oversampler {
 public:
-	using T = AudioBuffer::sample;
+	using T = AudioBuffer::Sample;
 
 	using uchar = unsigned char;
 	using uint = unsigned int;

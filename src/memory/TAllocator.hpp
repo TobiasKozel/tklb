@@ -1,10 +1,8 @@
 #ifndef _TKLB_ALLOCATOR
 #define _TKLB_ALLOCATOR
 
-#include <stddef.h>			// size_t
-#include <limits>			// addressable space
-
 #include "./TMemory.hpp"	// tklb_malloc
+#include "../util/TLimits.hpp"
 
 #ifdef TKLB_USE_PROFILER
 	#include "../util/TProfiler.hpp"
@@ -26,7 +24,7 @@ namespace tklb {
 	*/
 	template <class T = unsigned char, class NAME = DefaultAllocatorName>
 	struct DefaultAllocator {
-		static constexpr size_t AddressSpace = std::numeric_limits<size_t>::max() / sizeof(T);
+		static constexpr size_t AddressableElements = limits::max<size_t>::value / sizeof(T);
 		typedef T value_type;
 
 		DefaultAllocator() = default;
@@ -37,7 +35,7 @@ namespace tklb {
 
 		T* allocate(size_t n) noexcept {
 			#ifndef TKLB_RELEASE
-				if (AddressSpace < n) { return nullptr; } // ! allocation too large
+				if (AddressableElements < n) { return nullptr; } // ! allocation too large
 			#endif
 
 			const auto bytes = n * sizeof(T);
@@ -60,19 +58,6 @@ namespace tklb {
 		}
 
 	};
-
-	/**
-	 * @brief I don't even know what this does, but it has to be here for some classes using
-	 */
-	// template <class T, class U, class J>
-	// bool operator==(const DefaultAllocator<T, J>&, const DefaultAllocator<U, J>&) {
-	// 	return true;
-	// }
-
-	// template <class T, class U, class J>
-	// bool operator!=(const DefaultAllocator<T, J>&, const DefaultAllocator<U, J>&) {
-	// 	return false;
-	// }
 }
 
 #endif // _TKLB_ALLOCATOR

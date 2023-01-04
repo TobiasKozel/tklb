@@ -2,7 +2,7 @@
 #define _TKLB_MEMORY_CHECK
 
 #include <stddef.h>		// size_t
-#include <new>			// placement new
+#include "./TNew.hpp"
 
 #ifndef TKLB_ASSERT
 	#define TKLB_ASSERT(statement)

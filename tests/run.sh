@@ -35,10 +35,11 @@ test "g++ -std=c++11 -O3 -march=native -DTKLB_TEST"
 test "g++ -std=c++11 -O3 -march=native -DTKLB_TEST -DTKLB_NO_SIMD"
 test "g++ -std=c++11 -O3 -march=native -DTKLB_TEST -DTKLB_SAMPLE_FLOAT"
 test "g++ -std=c++11 -O3 -march=native -DTKLB_TEST -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD"
+test "g++ -std=c++11 -O3 -march=native -DTKLB_TEST -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD -DTKLB_NO_STDLIB"
 test "clang++ -std=c++11 -march=native -DTKLB_TEST -O3"
 test "clang++ -std=c++11 -march=native -DTKLB_TEST -O3 -DTKLB_NO_SIMD"
 test "clang++ -std=c++11 -march=native -DTKLB_TEST -O3 -DTKLB_SAMPLE_FLOAT"
-test "clang++ -std=c++11 -march=native -DTKLB_TEST -O3 -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD"
+test "clang++ -std=c++11 -march=native -DTKLB_TEST -O3 -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD -DTKLB_NO_STDLIB"
 
 # TODO figure out how to get into dev shell for windows
 #if [ "$executable" == "./a.exe" ]; then

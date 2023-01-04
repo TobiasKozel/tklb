@@ -1,9 +1,6 @@
 #ifndef _TKLB_AUDIOBUFFER
 #define _TKLB_AUDIOBUFFER
 
-#include <type_traits> // std::is_arithmetic
-#include <limits>
-
 #include "../../memory/TMemory.hpp"
 #include "../../util/TMath.hpp"
 
@@ -12,6 +9,8 @@
 #endif
 
 #include "../THeapBuffer.hpp"
+#include "../../util/TTraits.hpp"
+#include "../../util/TLimits.hpp"
 #include "../../util/TAssert.h"
 
 
@@ -28,12 +27,12 @@ namespace tklb {
 	 * TODO check if using a single buffer instead of one for each channel
 	 * improves performance
 	 *
-	 * @tparam T Sample type. Can be anything std::is_arithmetic
+	 * @tparam T Sample type. Can be anything traits::IsArithmetic
 	 * @tparam STORAGE Storage type, tklb::HeapBuffer for now since there are a few things missing in a std::vector
 	 */
 	template <typename T, class STORAGE = HeapBuffer<T, DEFAULT_ALIGNMENT>>
 	class AudioBufferTpl {
-		static_assert(std::is_arithmetic<T>::value, "Need arithmetic type.");
+		static_assert(traits::IsFloat<T>::value, "Need arithmetic type.");
 	public:
 		using Sample = T;
 		using Storage = STORAGE;
@@ -97,9 +96,9 @@ namespace tklb {
 		template <typename T2>
 		static constexpr bool needsScaling() {
 			return
-				(std::is_floating_point<T>::value && std::is_floating_point<T2>::value) ?
+				(traits::IsFloat<T>::value && traits::IsFloat<T2>::value) ?
 					false :
-					std::numeric_limits<T>::max() != std::numeric_limits<T2>::max();
+					limits::max<T>::value != limits::max<T2>::value;
 		}
 
 		/**
@@ -112,11 +111,11 @@ namespace tklb {
 		template <typename T1, typename T2, typename Ratio = float>
 		static constexpr Ratio getConversionScale() {
 			return
-				(std::is_floating_point<T2>::value ?
-					Ratio(1.0) : Ratio(std::numeric_limits<T2>::max()) - Ratio(1))
+				(traits::IsFloat<T2>::value ?
+					Ratio(1.0) : Ratio(limits::max<T2>::value) - Ratio(1))
 				/ // --------------------------------------------------------
-				(std::is_floating_point<T1>::value ?
-					Ratio(1.0) : Ratio(std::numeric_limits<T1>::max()) - Ratio(1));
+				(traits::IsFloat<T1>::value ?
+					Ratio(1.0) : Ratio(limits::max<T1>::value) - Ratio(1));
 		}
 
 		/**
@@ -133,12 +132,12 @@ namespace tklb {
 			const uchar channel = 0,
 			const Size offsetDst = 0
 		) {
-			static_assert(std::is_arithmetic<T2>::value, "Need arithmetic type.");
+			static_assert(traits::IsArithmetic<T2>::value, "Need arithmetic type.");
 			if (mChannels <= channel) { return; }
 			TKLB_ASSERT(size() >= offsetDst)
 			length = min(length, size() - offsetDst);
 			T* out = get(channel);
-			if (std::is_same<T2, T>::value) {
+			if (traits::IsSame<T2, T>::value) {
 				// Types are identical
 				memory::copy(out + offsetDst, samples, sizeof(T) * length);
 			} else {
@@ -174,7 +173,7 @@ namespace tklb {
 			const Size offsetSrc = 0,
 			const Size offsetDst = 0
 		) {
-			static_assert(std::is_arithmetic<T2>::value, "Need arithmetic type.");
+			static_assert(traits::IsArithmetic<T2>::value, "Need arithmetic type.");
 			for (uchar c = 0; c < channels; c++) {
 				set(samples[c] + offsetSrc, length, c, offsetDst);
 			}
@@ -236,7 +235,7 @@ namespace tklb {
 			Size offsetSrc = 0,
 			const Size offsetDst = 0
 		) {
-			static_assert(std::is_arithmetic<T2>::value, "Need arithmetic type.");
+			static_assert(traits::IsArithmetic<T2>::value, "Need arithmetic type.");
 			TKLB_ASSERT(size() >= offsetDst)
 			length = min(size() - offsetDst, length);
 			offsetSrc *= channels;
@@ -328,7 +327,7 @@ namespace tklb {
 			const uchar channelCount = min(buffer.channels(), channels());
 
 			#ifndef TKLB_NO_SIMD
-				if (std::is_same<T2, T>::value) {
+				if (traits::IsSame<T2, T>::value) {
 					const Size vectorize = length - (length % Stride);
 					for (uchar c = 0; c < channelCount; c++) {
 						T* out = get(c) + offsetDst;
@@ -377,7 +376,7 @@ namespace tklb {
 			const uchar channelsCount = min(buffer.channels(), channels());
 
 			#ifndef TKLB_NO_SIMD
-				if (std::is_same<T2, T>::value) {
+				if (traits::IsSame<T2, T>::value) {
 					const Size vectorize = length - (length % Stride);
 					for (uchar c = 0; c < channelsCount; c++) {
 						T* out = get(c) + offsetDst;
@@ -577,14 +576,14 @@ namespace tklb {
 			const uchar channel = 0,
 			const Size offset = 0
 		) const {
-			static_assert(std::is_arithmetic<T2>::value, "Need arithmetic type.");
+			static_assert(traits::IsArithmetic<T2>::value, "Need arithmetic type.");
 			if (mChannels <= channel) { return 0; }
 			const Size valid = validSize();
 			TKLB_ASSERT(offset <= valid)
 			length = length == 0 ? valid : length;
 			length = min(length, valid - offset);
 			const T2* source = get(channel) + offset;
-			if (std::is_same<T2, T>::value) {
+			if (traits::IsSame<T2, T>::value) {
 				memory::copy(target, source, sizeof(T) * length);
 			} else {
 				if (!needsScaling<T2>()) {
@@ -614,7 +613,7 @@ namespace tklb {
 			uchar channels = 0,
 			const Size offset = 0
 		) const {
-			static_assert(std::is_arithmetic<T2>::value, "Need arithmetic type.");
+			static_assert(traits::IsArithmetic<T2>::value, "Need arithmetic type.");
 			Size res = 0;
 			channels = (channels == 0) ? mChannels : channels;
 			for (uchar c = 0; c < channels; c++) {
@@ -638,7 +637,7 @@ namespace tklb {
 			const Size offset = 0,
 			uchar chan = 0
 		) const {
-			static_assert(std::is_arithmetic<T2>::value, "Need arithmetic type.");
+			static_assert(traits::IsArithmetic<T2>::value, "Need arithmetic type.");
 			const Size valid = validSize();
 			TKLB_ASSERT(offset <= valid)
 			chan = (chan == 0) ? channels() : min(chan, channels());

@@ -14,9 +14,7 @@
 
 #include "./TAudioBuffer.hpp"
 
-#ifdef TKLB_NO_STDLIB
-	#define DR_WAV_NO_STDIO
-#endif
+#define DR_WAV_NO_STDIO
 
 #include "../../../external/dr_wav.h"
 
@@ -38,13 +36,13 @@ namespace tklb {
 		}
 
 		/**
-		 * @brief Decode wav from memory or file path
+		 * @brief Decode wav from memory
 		 * @param path The path or the wav file buffer if length is non 0
 		 * @param out The buffer to store the result in
 		 * @param length The length of the wav file buffer if not reading from file
 		 */
 		template <typename T, class Buffer = AudioBufferTpl<T>>
-		bool load(const char* path, Buffer& out, typename Buffer::Size length = 0) {
+		bool load(const char* data, typename Buffer::Size length, Buffer& out) {
 			drwav_allocation_callbacks drwaveCallbacks {
 				nullptr,		// No userdata
 				&_::drwaveMalloc,
@@ -57,18 +55,9 @@ namespace tklb {
 			using ushort = unsigned short;
 
 			drwav wav;
-			if (length == 0) {
-			#ifndef TKLB_NO_STDLIB
-				if (!drwav_init_file(&wav, path, &drwaveCallbacks)) {
-					return false;
-				}
-			#else
+
+			if (!drwav_init_memory(&wav, data, length, &drwaveCallbacks)) {
 				return false;
-			#endif
-			} else {
-				if (!drwav_init_memory(&wav, path, length, &drwaveCallbacks)) {
-					return false;
-				}
 			}
 			constexpr Size chunkSize = 128;
 			Size read = 0;
@@ -120,16 +109,14 @@ namespace tklb {
 		/**
 		 * @brief Write audiobuffer to file or memory
 		 * @param in The audio buffer to write, needs samplerate to be set
-		 * @param path The file path to write to can be nullptr
+		 * @param out Buffer to write the wave file to
 		 * @param option Wave options to pass
-		 * @param out Buffer to write the wave file to if path is nullptr
 		 */
 		template <typename T, class Buffer = AudioBufferTpl<T>>
 		bool write(
 			const Buffer& in,
-			const char* path,
-			const WaveOptions&& options = {},
-			HeapBuffer<char>* out = nullptr
+			HeapBuffer<char>* out,
+			const WaveOptions&& options = {}
 		) {
 			drwav_allocation_callbacks drwaveCallbacks {
 				nullptr,		// No userdata
@@ -153,18 +140,9 @@ namespace tklb {
 
 			size_t outSize = 0;
 			void* memory = nullptr;
-			if (out == nullptr) { // write to file
-			#ifndef TKLB_NO_STDLIB
-				if (!drwav_init_file_write(&wav, path, &droptions, &drwaveCallbacks)) {
-					return false;
-				}
-			#else
+
+			if (!drwav_init_memory_write(&wav, &memory, &outSize, &droptions, &drwaveCallbacks)) {
 				return false;
-			#endif
-			} else {
-				if (!drwav_init_memory_write(&wav, &memory, &outSize, &droptions, &drwaveCallbacks)) {
-					return false;
-				}
 			}
 
 			Size written = 0;

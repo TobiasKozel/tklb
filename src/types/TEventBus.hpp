@@ -62,12 +62,12 @@ namespace tklb {
 			if (mEvents[eventId].size() == 0) { return; } // don't even wait for lock
 			Lock lock(mMutex);
 			for (typename Subscriptions::Size i = 0; i < mEvents[eventId].size(); i++) {
-				#ifdef TKLB_MEM_TRACE
+				#ifdef TKLB_MEMORY_CHECK
 					auto sub = dynamic_cast<Subscription<Parameters...>*>(mEvents[eventId][i]);
 					TKLB_ASSERT(sub != nullptr)
 				#else
 					auto sub = reinterpret_cast<Subscription<Parameters...>*>(mEvents[eventId][i]);
-				#endif // TKLB_MEM_TRACE
+				#endif // TKLB_MEMORY_CHECK
 				sub->mCallback(param...);
 			}
 		}

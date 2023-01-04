@@ -1,7 +1,6 @@
 #ifndef _TKLB_RESAMPLER_LINEAR
 #define _TKLB_RESAMPLER_LINEAR
 
-#include <cmath>
 #include "../TAudioBuffer.hpp"
 
 
@@ -98,11 +97,11 @@ namespace tklb {
 		 * @brief Estimate how many samples need to be put in to get n samples out.
 		 */
 		Size estimateNeed(const Size out) const {
-			return std::round(out * mFactor);
+			return tklb::round(out * mFactor);
 		}
 
 		Size estimateOut(const Size in) const {
-			return std::round(in * (double(mRateOut) / double(mRateIn)));
+			return tklb::round(in * (double(mRateOut) / double(mRateIn)));
 		}
 
 

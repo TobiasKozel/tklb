@@ -28,15 +28,15 @@ function test {
 
 cat /proc/cpuinfo 2>&1 | grep "model name" 2>&1 > "${source_file}.result.txt"
 echo "g++" 2>&1 | tee -a "${source_file}.result.txt"
-test "g++ -std=c++17 -O3 -march=native"
-test "g++ -std=c++17 -O3 -march=native -DTKLB_NO_SIMD"
-test "g++ -std=c++17 -O3 -march=native -DTKLB_SAMPLE_FLOAT"
-test "g++ -std=c++17 -O3 -march=native -DTKLB_NO_SIMD -DTKLB_SAMPLE_FLOAT"
+test "g++ -std=c++11 -O3 -march=native"
+test "g++ -std=c++11 -O3 -march=native -DTKLB_NO_SIMD"
+test "g++ -std=c++11 -O3 -march=native -DTKLB_SAMPLE_FLOAT"
+test "g++ -std=c++11 -O3 -march=native -DTKLB_NO_SIMD -DTKLB_SAMPLE_FLOAT"
 
 # TODO test -ffast-math
 echo "clang++" 2>&1 | tee -a "${source_file}.result.txt"
-test "clang++ -std=c++17 -march=native -O3"
-test "clang++ -std=c++17 -march=native -O3 -DTKLB_NO_SIMD"
-test "clang++ -std=c++17 -march=native -O3 -DTKLB_SAMPLE_FLOAT"
-test "clang++ -std=c++17 -march=native -O3 -DTKLB_NO_SIMD -DTKLB_SAMPLE_FLOAT"
+test "clang++ -std=c++11 -march=native -O3"
+test "clang++ -std=c++11 -march=native -O3 -DTKLB_NO_SIMD"
+test "clang++ -std=c++11 -march=native -O3 -DTKLB_SAMPLE_FLOAT"
+test "clang++ -std=c++11 -march=native -O3 -DTKLB_NO_SIMD -DTKLB_SAMPLE_FLOAT"
 echo ""

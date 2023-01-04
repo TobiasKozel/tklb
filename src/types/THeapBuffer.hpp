@@ -1,7 +1,9 @@
 #ifndef _TKLB_HEAPBUFFER
 #define _TKLB_HEAPBUFFER
 
-#include <new>			// placement new
+#include "../memory/TNew.hpp"
+
+#include <stddef.h>
 
 #include "../util/TMath.hpp"
 #include "../memory/TAllocator.hpp"
@@ -184,14 +186,14 @@ namespace tklb {
 		const T* data() const { return mBuf; }
 
 		inline const T& operator[](const Size index) const {
-			#ifdef TKLB_MEM_TRACE
+			#ifdef TKLB_MEMORY_CHECK
 				TKLB_ASSERT(index < mSize)
 			#endif
 			return mBuf[index];
 		}
 
 		inline T& operator[](const Size index) {
-			#ifdef TKLB_MEM_TRACE
+			#ifdef TKLB_MEMORY_CHECK
 				TKLB_ASSERT(index < mSize)
 			#endif
 			// Don't use non const access when using injected const memory
@@ -297,7 +299,7 @@ namespace tklb {
 			if (mSize <= index) { return false; }
 			mBuf[index].~T(); // Call destructor
 			if (index != mSize - 1) { // fill the gap with the last element
-				memcpy(mBuf + index, mBuf + (mSize - 1), sizeof(T));
+				memory::copy(mBuf + index, mBuf + (mSize - 1), sizeof(T));
 			}
 			mSize--;
 			return true;
@@ -325,22 +327,6 @@ namespace tklb {
 				}
 			}
 			return false;
-		}
-
-		/**
-		 * @brief If T is a pointer type, delete will be called for
-		 * all pointers in buffer and resize(0) is called
-		 */
-		bool destroyPointers() {
-			if (!std::is_pointer<T>::value) {
-				TKLB_ASSERT(false)
-				return false;
-			}
-			for (Size i = 0; i < mSize; i++) {
-				delete mBuf[i];
-			}
-			resize(0);
-			return true;
 		}
 
 		/**

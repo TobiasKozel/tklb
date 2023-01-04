@@ -3,6 +3,7 @@
 
 
 #include "../TAudioBuffer.hpp"
+#include "../../../util/TTraits.hpp"
 #include "../../../../external/Ouura.h"
 
 namespace tklb {
@@ -109,7 +110,7 @@ namespace tklb {
 				ooura::rdft(int(mSize), -1, mBuffer[0], mIp.data(), mW[0]);
 
 				const T volume = 2.0 / T(mSize);
-				if (std::is_same<T, double>::value) {
+				if (traits::IsSame<T, double>::value) {
 					mBuffer.multiply(volume); // scale the output
 					mBuffer.put(reinterpret_cast<double*>(out + processed), mSize);
 				} else {

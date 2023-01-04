@@ -6,19 +6,15 @@
 #include "../src/memory/TMemoryCheck.hpp"
 #include "../src/util/TMath.hpp"
 
-struct FixedPool {
-	static constexpr size_t poolSize = 1024 * 1024 * 128; // 128 mb
-	void* memory;
-	tklb::memory::FixedPool pool;
-	FixedPool() : memory(malloc(poolSize)), pool(memory, poolSize) { }
-	~FixedPool() { free(memory); }
-} poolOwner;
 
+static constexpr size_t poolSize = 1024 * 1024 * 64;
+char* poolMamory = new char[poolSize];
+tklb::memory::FixedPool pool = { poolMamory, poolSize };
 
 void* tklb_malloc(size_t bytes) {
 	using MagicBlock = tklb::memory::check::MagicBlock;
 	return MagicBlock::construct(
-		poolOwner.pool.allocate(bytes + MagicBlock::sizeNeeded()),
+		pool.allocate(bytes + MagicBlock::sizeNeeded()),
 		bytes
 	);
 }
@@ -32,7 +28,7 @@ void tklb_free(void* ptr) {
 	}
 
 	if (!result.underrun) {
-		poolOwner.pool.deallocate(result.ptr);
+		pool.deallocate(result.ptr);
 	}
 }
 
@@ -78,5 +74,8 @@ int test();
 int main() {
 	int ret = test();
 	// TODO some logic handling and maybe pretty test error strings
+	if (pool.allocated() != 0) {
+		return 11111;
+	}
 	return ret;
 }

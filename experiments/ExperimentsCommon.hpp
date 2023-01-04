@@ -1,5 +1,4 @@
-#define TKLB_MEM_TRACE
-#define TKLB_MEM_MONKEY_PATCH
+#define TKLB_MEMORY_CHECK
 #include "../src/memory/TMemory.hpp"
 
 using namespace tklb;

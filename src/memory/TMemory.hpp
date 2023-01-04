@@ -1,13 +1,12 @@
 #ifndef _TKLB_MEMORY
 #define _TKLB_MEMORY
 
-#include <new>			// For placement new with parameters
-#include <utility>		// forward constructor parameters
 #include <stddef.h>		// size_t
 
 #ifndef TKLB_NO_STDLIB
-	#include <stdlib.h>	// malloc & free
-	#include <cstring>	// memcpy & memset
+	#include <stdlib.h>		// malloc & free
+	#include <cstring>		// memcpy & memset
+	#include <algorithm>	// fill_n
 #endif
 
 #ifdef TKLB_USE_PROFILER
@@ -74,7 +73,8 @@ namespace tklb { namespace memory {
 		constexpr auto size = sizeof(T);
 		void* ptr = tklb_malloc(size);
 		if (ptr == nullptr) { return nullptr; }
-		new (ptr) T(std::forward<Args>(args)...);
+		// TODO test if this even works without std::forward
+		new (ptr) T((args)...);
 		return reinterpret_cast<T*>(ptr);
 	}
 
@@ -103,6 +103,14 @@ namespace tklb { namespace memory {
 	#endif // TKLB_MEM_NO_STD
 	}
 
+	/**
+	 * @brief Own (hopefully) safe string copy
+	 *
+	 * @param dst
+	 * @param src
+	 * @param size Size of the dst buffer.
+	 * @param terminate Whether the last character in the destination will be '\0' terminated for safety.
+	 */
 	static inline void stringCopy(char* dst, const char* src, size_t size, bool terminate = true) {
 		for (size_t i = 0; i < size; i++) {
 			dst[i] = src[i];
@@ -123,11 +131,15 @@ namespace tklb { namespace memory {
 	 * @param val
 	 */
 	template <typename T>
-	static inline void set(void* dst, size_t elements, const T val) {
+	static inline void set(void* dst, size_t elements, const T& val) {
 		auto pointer = reinterpret_cast<T*>(dst);
-		for (size_t i = 0; i < elements; i++) {
-			pointer[i] = val;
-		}
+		#ifdef TKLB_NO_STDLIB
+			for (size_t i = 0; i < elements; i++) {
+				pointer[i] = val;
+			}
+		#else
+			std::fill_n(pointer, elements, val);
+		#endif
 	}
 
 	/**
@@ -145,7 +157,7 @@ namespace tklb { namespace memory {
 #ifndef TKLB_MALLOC // TODO TKLB memory tracer should take a detour
 	#define TKLB_MALLOC(size)				tklb_malloc(size);
 	#define TKLB_FREE(ptr)					tklb_free(ptr);
-	#define TKLB_CALLOC(num, size) 			; // TODO TKLB
+	#define TKLB_CALLOC(num, size) 			notImplemented; // TODO TKLB
 	#define TKLB_NEW(T, ...)				tklb::memory::create<T>(__VA_ARGS__);
 	#define TKLB_DELETE(T, ptr)				tklb::memory::dispose<T>(ptr);
 #endif // TKLB_MALLOC

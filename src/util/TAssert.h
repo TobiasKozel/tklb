@@ -1,21 +1,22 @@
 #ifndef TKLB_ASSERT
 
-#ifdef TKLB_NO_ASSERT
+#if defined(TKLB_NO_ASSERT) || defined (TKLB_NO_ASSERT)
 	#define TKLB_ASSERT(condition);
 	#define TKLB_ASSERT_STATE(condition);
 #else
-	#include <cassert>
-	// #define TKLB_ASSERT(condition) assert(condition);
+	#ifdef TKLB_ASSERT_BREAK
+		#ifdef _MSC_VER
+			#include <intrin.h>
+			#define TKLB_ASSERT(condition) if (!(condition)) { __debugbreak(); }
+		#else
+			#include <signal.h>
+			#define TKLB_ASSERT(condition) if (!(condition)) { raise(SIGTRAP); }
+		#endif
+	#else // TKLB_ASSERT_BREAK
+		#include <cassert>
+		#define TKLB_ASSERT(condition) assert(condition);
+	#endif // TKLB_ASSERT_BREAK
 
-	// Below are function to explictly break with an attached debugger, which is useful
-	// to continue after an assert.
-	#ifdef _MSC_VER
-		#include <intrin.h>
-		#define TKLB_ASSERT(condition) if (!(condition)) { __debugbreak(); }
-	#else
-		#include <signal.h>
-		#define TKLB_ASSERT(condition) if (!(condition)) { raise(SIGTRAP); }
-	#endif
 
 #endif // TKLB_NO_ASSERT
 
