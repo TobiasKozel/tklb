@@ -6,6 +6,7 @@
 #include <stddef.h>
 
 #include "../util/TMath.hpp"
+#include "../util/TTraits.hpp"
 #include "../memory/TAllocator.hpp"
 
 #ifndef TKLB_ASSERT
@@ -32,12 +33,28 @@ namespace tklb {
 	class HeapBuffer {
 	public:
 		/**
-		 * everything using the heapbuffer uses this type
-		 * Always needs to be unsigned!
+		 * @brief everything using the heapbuffer uses this type to address elements.
 		 */
 		using Size = SIZE;
+		static_assert(
+			traits::IsUnsigned<Size>::value && !traits::IsFloat<Size>::value,
+			"Size needs to be unsigned and an integer"
+		);
+
+		/**
+		 * @brief Needs to be the width of a pointer in order to allow arithmetic.
+		 */
+		using Pointer = size_t;
+		static_assert(
+			sizeof(Pointer) == sizeof(void*),
+			"Pointer width is not equal to sizeof(void*)"
+		);
 
 		static constexpr size_t Alignment = ALIGNMENT;
+		static_assert(
+			isPowerof2(Alignment) || Alignment == 0,
+			"Alignment needs to be a power of 2 or 0 for the arithmetic to work."
+		);
 
 		/**
 		 * @brief allocations will happens in these chunk sizes
@@ -239,7 +256,7 @@ namespace tklb {
 
 			if (size < mSize && mBuf != nullptr && !injected()) { // downsize means destroy objects
 				for (Size i = size; i < mSize; i++) {
-					mBuf[i].~T(); // Call destructor
+					mBuf[i].~T();
 				}
 			}
 
@@ -356,7 +373,7 @@ namespace tklb {
 
 		static Size closestChunkSize(Size size, Size chunk) {
 			if (size == 0) { return 0; }
-			if (size == chunk) {return chunk; }
+			if (size == chunk) {return size; }
 			chunk = tklb::max(chunk, Size(1));
 			if (size % chunk == 0) {
 				return size;
@@ -389,15 +406,15 @@ namespace tklb {
 				if (Alignment != 0) {
 					// Mask with zeroes at the end to floor the pointer to an aligned block
 					// for these casts to work, the type needs to be as wide as void*
-					// const size_t _align = Alignment;
-					const size_t mask = ~(size_t(Alignment - 1));
+					constexpr size_t mask = ~(size_t(Alignment - 1));
 					const size_t pointer = reinterpret_cast<size_t>(newBuf);
 					const size_t floored = pointer & mask;
 					const size_t aligned = floored + Alignment;
 
 					// Not enough space before aligned memory to store original ptr
 					// This only happens when malloc doesn't align to sizeof(size_t)
-					TKLB_ASSERT(sizeof(size_t) <= (aligned - pointer))
+					const auto misaligned = aligned - pointer;
+					TKLB_ASSERT(sizeof(size_t) <= misaligned)
 
 					newBuf = reinterpret_cast<void*>(aligned);
 					size_t* original = reinterpret_cast<size_t*>(newBuf) - 1;

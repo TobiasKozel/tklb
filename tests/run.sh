@@ -18,28 +18,28 @@ function test {
 		$executable
 		result=$?
 		if [[ $result -eq 0 ]] ; then
-			echo "Passed: ${1} ${source_file}"
+			echo -ne "\r\033[2KPassed: ${1} ${source_file}"
 		else
-			echo -e "\e[31mError: Test failed for ${source_file} ${1}. Returned ${result}\e[0m"
+			echo -e "\n\e[31m${1} ${source_file}\nError: Test failed with result ${result}\e[0m"
 			exit_code=$result
 		fi
 		rm $executable
 	else
-		echo -e "\e[31m${1} Error: Failed to compile ${source_file}\e[0m"
+		echo -e "\n\e[31m${1} ${source_file} \nError: Failed to compile\e[0m"
 		exit 222
 	fi
 }
 
 echo "Test ${source_file}"
-test "g++ -std=c++11 -O3 -march=native -DTKLB_TEST"
-test "g++ -std=c++11 -O3 -march=native -DTKLB_TEST -DTKLB_NO_SIMD"
-test "g++ -std=c++11 -O3 -march=native -DTKLB_TEST -DTKLB_SAMPLE_FLOAT"
-test "g++ -std=c++11 -O3 -march=native -DTKLB_TEST -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD"
-test "g++ -std=c++11 -O3 -march=native -DTKLB_TEST -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD -DTKLB_NO_STDLIB"
-test "clang++ -std=c++11 -march=native -DTKLB_TEST -O3"
-test "clang++ -std=c++11 -march=native -DTKLB_TEST -O3 -DTKLB_NO_SIMD"
-test "clang++ -std=c++11 -march=native -DTKLB_TEST -O3 -DTKLB_SAMPLE_FLOAT"
-test "clang++ -std=c++11 -march=native -DTKLB_TEST -O3 -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD -DTKLB_NO_STDLIB"
+test "g++ -std=c++11 -O3 -march=native"
+test "g++ -std=c++11 -O3 -march=native -DTKLB_NO_SIMD"
+test "g++ -std=c++11 -O3 -march=native -DTKLB_SAMPLE_FLOAT"
+test "g++ -std=c++11 -O3 -march=native -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD"
+test "g++ -std=c++11 -O3 -march=native -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD -DTKLB_NO_STDLIB"
+test "clang++ -std=c++11 -march=native -O3"
+test "clang++ -std=c++11 -march=native -O3 -DTKLB_NO_SIMD"
+test "clang++ -std=c++11 -march=native -O3 -DTKLB_SAMPLE_FLOAT"
+test "clang++ -std=c++11 -march=native -O3 -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD -DTKLB_NO_STDLIB"
 
 # TODO figure out how to get into dev shell for windows
 #if [ "$executable" == "./a.exe" ]; then

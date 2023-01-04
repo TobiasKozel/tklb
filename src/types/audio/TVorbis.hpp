@@ -1,5 +1,5 @@
-#ifndef _TKLB_OGG_FILE
-#define _TKLB_OGG_FILE
+#ifndef _TKLB_VORBIS
+#define _TKLB_VORBIS
 
 #include "../../memory/TMemory.hpp"
 #include "./TAudioBuffer.hpp"
@@ -14,7 +14,7 @@
 #include <type_traits>
 
 namespace tklb {
-	namespace ogg {
+	namespace vorbis {
 
 		/**
 		 * @brief Decode ogg/vorbis from memory or
@@ -80,6 +80,6 @@ namespace tklb {
 			return true;
 		}
 	}
-} // namespace
+} // tklb::vorbis
 
-#endif // _TKLB_OGG_FILE
+#endif // _TKLB_VORBIS

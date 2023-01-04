@@ -1,4 +1,3 @@
-#define TKLB_MAXCHANNELS 16
 #include "../../src/types/audio/TOversampler.hpp"
 
 #include "./BenchmarkCommon.hpp"
@@ -6,7 +5,7 @@
 
 int main() {
 	const int length = 490; // must be less than the max block size
-	const int channels = TKLB_MAXCHANNELS;
+	const int channels = 16;
 	using uchar = unsigned char;
 	using uint = unsigned int;
 

@@ -11,8 +11,8 @@ do
 done
 
 if ($FAILED); then
-	echo -e "\e[31mSome tests failed!\e[0m"
+	echo -e "\n\e[31mSome tests failed!\e[0m"
 	exit 1
 else
-	echo -e "\e[32mAll tests passed!\e[0m"
+	echo -e "\n\e[32mAll tests passed!\e[0m"
 fi

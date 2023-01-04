@@ -1,12 +1,10 @@
-#define TKLB_MAXCHANNELS 16
-#define TKLBZ_RESAMPLER_IMPL
 #include "../../src/types/audio/resampler/TResampler.hpp"
 #include "./BenchmarkCommon.hpp"
 
 int main() {
 	{
 		const int length = 530;
-		const int channels = TKLB_MAXCHANNELS;
+		const int channels = 16;
 		const int rate1 = 44100;
 		const int rate2 = 48000;
 		Resampler up(rate1, rate2, length);

@@ -7,10 +7,8 @@
 #include "../types/TLockGuard.hpp"
 #include "./TMemory.hpp"
 #include "../util/TMath.hpp"
+#include "../util/TAssert.h"
 
-#ifndef TKLB_ASSERT
-	#define TKLB_ASSERT(cond)
-#endif
 
 namespace tklb { namespace memory {
 

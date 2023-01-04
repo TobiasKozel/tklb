@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef _TKLB_WAVE_FILE
-#define _TKLB_WAVE_FILE
+#ifndef _TKLB_WAVE
+#define _TKLB_WAVE
 
 #include "./TAudioBuffer.hpp"
 
@@ -19,7 +19,7 @@
 #include "../../../external/dr_wav.h"
 
 #ifdef TKLB_IMPL
-	#include "./TWaveFile.cpp"
+	#include "./TWave.cpp"
 #endif
 
 
@@ -115,7 +115,7 @@ namespace tklb {
 		template <typename T, class Buffer = AudioBufferTpl<T>>
 		bool write(
 			const Buffer& in,
-			HeapBuffer<char>* out,
+			HeapBuffer<char>& out,
 			const WaveOptions&& options = {}
 		) {
 			drwav_allocation_callbacks drwaveCallbacks {
@@ -178,13 +178,11 @@ namespace tklb {
 
 			drwav_uninit(&wav);
 
-			if (out != nullptr) {
-				out->set(reinterpret_cast<char*>(memory), Size(outSize));
-			}
+			out.set(reinterpret_cast<char*>(memory), Size(outSize));
 
 			return true;
 		}
 	}
 } // namespace
 
-#endif // _TKLB_WAVE_FILE
+#endif // _TKLB_WAVE

@@ -1,4 +1,3 @@
-#define TKLB_MAXCHANNELS 16
 #include "../../src/types/audio/TAudioBuffer.hpp"
 #include <algorithm>
 
@@ -9,7 +8,7 @@ using namespace std;
 template <class T, class T2>
 void doStuff() {
 	const int length = 530;
-	const int channels = TKLB_MAXCHANNELS;
+	const int channels = 16;
 	AudioBufferTpl<T> bufferA[2];
 	AudioBufferTpl<T2> bufferB[2];
 

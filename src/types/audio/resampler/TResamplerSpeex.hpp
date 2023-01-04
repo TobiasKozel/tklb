@@ -2,6 +2,7 @@
 #define _TKLB_RESAMPLER_SPEEX
 
 #include "../../../util/TAssert.h"
+#include "../../../util/TTraits.hpp"
 #include "../../../memory/TMemory.hpp"
 #include "../TAudioBuffer.hpp"
 
@@ -89,7 +90,7 @@ namespace tklb {
 			mRateIn = rateIn;
 			mRateOut = rateOut;
 			// Conversion buffers if not doing float resampling
-			if (!std::is_same<T, float>::value) {
+			if (!traits::IsSame<T, float>::value) {
 				mConvertIn.resize(maxBlock, maxChannels);
 				mConvertOut.resize(calculateBufferSize(maxBlock), maxChannels);
 			}
@@ -106,7 +107,7 @@ namespace tklb {
 			TKLB_ASSERT(in.validSize() > 0)
 			TKLB_ASSERT(estimateOut(in.validSize()) <= out.size())
 			Size samplesOut = 0;
-			if (std::is_same<T, float>::value) {
+			if (traits::IsSame<T, float>::value) {
 				// Input output buffer must not overlap when working directly on them
 				TKLB_ASSERT(&in != &out)
 				for (uchar c = 0; c < in.channels(); c++) {

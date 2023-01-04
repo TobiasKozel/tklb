@@ -1,10 +1,10 @@
+#define TKLB_NO_ASSERT
 #include "../src/memory/TFixedPool.hpp"
-#include <cstdlib>
 
 int main() {
 	constexpr int PoolSize = 1024;
 	constexpr int chunkSize = 7;
-	void* memory = malloc(PoolSize);
+	char* memory = new char[PoolSize];
 	{
 		tklb::memory::FixedPool pool(memory, PoolSize);
 		int allocated = 0;
@@ -12,12 +12,14 @@ int main() {
 			void* mem = pool.allocate(chunkSize);
 			if (mem == nullptr) { break; }
 			allocated += pool.realAllocation(chunkSize);
+			if (PoolSize < allocated ) {
+				return 1;
+			}
 		}
-		free(memory);
-
+		delete[] memory;
 		if (allocated == pool.allocated()) {
 			return 0;
 		}
-		return  1;
+		return  2;
 	}
 }

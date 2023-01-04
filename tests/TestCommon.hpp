@@ -1,15 +1,14 @@
 #define TKLB_IMPL
+
 #define TKLB_CUSTOM_MALLOC
+static constexpr unsigned int poolSize = 1024 * 1024 * 64;
+char* poolMamory = new char[poolSize];
+
+#include "../src/memory/TFixedPool.hpp"
+tklb::memory::FixedPool pool = { poolMamory, poolSize };
 
 #include "../src/util/TAssert.h"
-#include "../src/memory/TFixedPool.hpp"
 #include "../src/memory/TMemoryCheck.hpp"
-#include "../src/util/TMath.hpp"
-
-
-static constexpr size_t poolSize = 1024 * 1024 * 64;
-char* poolMamory = new char[poolSize];
-tklb::memory::FixedPool pool = { poolMamory, poolSize };
 
 void* tklb_malloc(size_t bytes) {
 	using MagicBlock = tklb::memory::check::MagicBlock;
@@ -27,10 +26,12 @@ void tklb_free(void* ptr) {
 		TKLB_ASSERT(false)
 	}
 
-	if (!result.underrun) {
-		pool.deallocate(result.ptr);
-	}
+	pool.deallocate(result.ptr);
 }
+
+#ifdef TKLB_NO_STDLIB
+	void tklb_print(int level, const char* message) { }
+#endif
 
 /**
  * @brief macro to bail on non zero exit codes
@@ -41,6 +42,8 @@ void tklb_free(void* ptr) {
 	int ret = val;								\
 	if(ret != 0) { return ret; }				\
 }
+
+#include "../src/util/TMath.hpp"
 
 /**
  * @brief Check if float values are close
@@ -75,7 +78,7 @@ int main() {
 	int ret = test();
 	// TODO some logic handling and maybe pretty test error strings
 	if (pool.allocated() != 0) {
-		return 11111;
+		return 222; // fail the test for dangling allocations
 	}
 	return ret;
 }

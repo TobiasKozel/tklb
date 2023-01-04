@@ -11,19 +11,19 @@
 namespace tklb { namespace memory { namespace check {
 	/**
 	 * @brief Magic string at the start of each allocation
-	 *        to detect corruption. 8 bytes
+	 *        to detect corruption. 15 bytes so the magic block is 24 bytes total.
 	 */
-	constexpr char MAGIC_STRING_START[] = "tkstart";
+	constexpr char MAGIC_STRING_START[] = "startblockstri";
 
-	constexpr char MAGIC_STRING_END[] = "tklback";
+	constexpr char MAGIC_STRING_END[sizeof(MAGIC_STRING_START)] = "endblockstring";
 
 	/**
 	 * @brief Struct inserted at the end and start of every allocation
 	 */
 	class MagicBlock {
-		bool start;
-		size_t size;							///< Original requested size
-		char magic[sizeof(MAGIC_STRING_START)];
+		size_t size;								///< Original requested size, just to keep track of allocated space
+		char magic[sizeof(MAGIC_STRING_START)];		///< magic block to detect heap corruption.
+		bool start;									///< Whether the block is at the start or end of the allocation.
 
 	public:
 		MagicBlock(size_t _size, bool _start) {
@@ -34,15 +34,16 @@ namespace tklb { namespace memory { namespace check {
 					magic[i] = MAGIC_STRING_START[i];
 				}
 			} else {
-				for (size_t i = 0; i < sizeof(MAGIC_STRING_END); i++) {
+				for (size_t i = 0; i < sizeof(MAGIC_STRING_START); i++) {
 					magic[i] = MAGIC_STRING_END[i];
 				}
 			}
 		}
 
-		static size_t sizeNeeded() {
-			return 2 * sizeof(MagicBlock);
-		}
+		/**
+		 * @brief Just the MagicBlock size times 2 to sandwhich the actual allocation
+		 */
+		static size_t sizeNeeded() { return 2 * sizeof(MagicBlock); }
 
 		/**
 		 * @brief Constructs the surounding magic blocks and offsets the pointer

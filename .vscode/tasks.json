@@ -6,6 +6,8 @@
 			"command": "/usr/bin/g++",
 			"args": [
 				"-std=c++14",
+				"-DTKLB_NO_SIMD",
+				"-DTKLB_NO_STDLIB",
 				"-g",
 				"${file}",
 				"-o",

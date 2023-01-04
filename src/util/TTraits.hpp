@@ -77,6 +77,19 @@ namespace tklb { namespace traits {
 	struct IsArithmetic<const unsigned char> : Value<true> { };
 
 	template<typename T>
+	struct IsUnsigned : Value<false> { };
+	template<>
+	struct IsUnsigned<unsigned long long> : Value<true> { };
+	template<>
+	struct IsUnsigned<unsigned long> : Value<true> { };
+	template<>
+	struct IsUnsigned<unsigned int> : Value<true> { };
+	template<>
+	struct IsUnsigned<unsigned short> : Value<true> { };
+	template<>
+	struct IsUnsigned<unsigned char> : Value<true> { };
+
+	template<typename T>
 	struct IsFloat : Value<false> { };
 	template<>
 	struct IsFloat<double> : Value<true> { };

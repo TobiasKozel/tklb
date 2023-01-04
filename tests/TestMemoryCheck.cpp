@@ -1,11 +1,14 @@
 #define TKLB_MEMORY_CHECK
-#define TKLB_IMPL
-#define TKLB_ASSERT(val) ASSERT_RESULT = val;
+#define TKLB_ASSERT(val) setResult(val);
 bool ASSERT_RESULT;
+void setResult(bool val) {
+	if (!val) {
+		ASSERT_RESULT = false;
+	}
+}
+#include "./TestCommon.hpp"
 
-#include "../src/memory/TMemory.hpp"
-
-int main() {
+int test() {
 	{
 		int* overrun = (int*) tklb_malloc(sizeof(int) * 4);
 		overrun[4] = 1;
@@ -27,6 +30,5 @@ int main() {
 			return 2;
 		}
 	}
-
 	return 0;
 }

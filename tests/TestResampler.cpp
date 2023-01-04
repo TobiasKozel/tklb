@@ -1,5 +1,3 @@
-#define TKLB_MAXCHANNELS 16
-
 #include "./TestCommon.hpp"
 
 #define TKLB_RESAMPLER_SPEEX_IMPL
@@ -17,7 +15,7 @@ int doTest() {
 
 	const int length = 4096;
 	const int blockSize = 256;
-	const int channels = TKLB_MAXCHANNELS;
+	const int channels = 16;
 
 	Resampler resamplerUp(rateLow, rateHigh, blockSize, channels);
 	Resampler resamplerDown(rateHigh, rateLow, blockSize, channels);

@@ -3,6 +3,8 @@
 
 #ifndef TKLB_NO_STDLIB
 	#include <cmath>
+#else
+	#include "./TAssert.h"
 #endif
 
 
@@ -10,7 +12,12 @@ namespace tklb {
 	constexpr double PI = 3.14159265358979323846;
 
 	template <typename T>
-	inline constexpr  T min(const T& v1, const T& v2) {
+	inline constexpr bool isPowerof2(T v) {
+		return v && ((v & (v - 1)) == 0);
+	}
+
+	template <typename T>
+	inline constexpr T min(const T& v1, const T& v2) {
 		return v1 < v2 ? v1 : v2;
 	}
 

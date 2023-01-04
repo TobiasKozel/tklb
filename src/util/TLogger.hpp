@@ -7,7 +7,7 @@
  * @brief Custom logger around stb_sprintf
  * @details
  * Defining TKLB_NO_STDLIB or TKLB_CUSTOM_PRINT allows using custom print outlet
- * Defining TKLB_RELEASE will only log errors
+ * Defining TKLB_RELEASE will only log warnings and above
  * Defining TKLB_FORCE_LOG will override this
  * TODO mention profiler
  *
@@ -40,7 +40,7 @@
 	 */
 	void tklb_print(int level, const char* message);
 	#ifdef TKLB_IMPL
-		#if !defined(TKLB_NO_STDLIB) && !defined(TKLB_CUSTOM_PRINT) // this might be better in TKLB_NO_STDIO
+		#if !defined(TKLB_NO_STDLIB) && !defined(TKLB_CUSTOM_PRINT)
 			#include <stdio.h>
 			void tklb_print(int level, const char* message) {
 				printf("%s\n", message);

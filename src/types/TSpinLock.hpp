@@ -14,7 +14,7 @@ namespace tklb {
 	 */
 	class SpinLock {
 		#ifndef TKLB_NO_STDLIB
-			std::atomic<bool> mSpinLock;
+			std::atomic<bool> mSpinLock = { false };
 		#else
 			bool mSpinLock = false;
 		#endif

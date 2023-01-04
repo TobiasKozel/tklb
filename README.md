@@ -10,7 +10,7 @@
 Define in compilation unit
 
 ### TKLB_RELEASE
-Will disable asserts reduce logging
+Will disable asserts reduce logging to warnings and above.
 
 ### TKLB_USE_PROFILER
 Enables the wrapped tracy profiler
@@ -25,12 +25,13 @@ Will try to signal the attached debugger to break instead of an assert which
 can be convenient at times.
 
 ### TKLB_NO_STDLIB
-Will get rid of all std.
-Own memory function and printing function will have to be defined.
+Will get rid of all standard library includes if
+- `TKLB_NO_SIMD` is also defined to get rid of `xsimd`.
+- `TKLB_NO_LOG` is defined, since the logger pulls in `stdarg.h` and `stddef.h`.
+- `TKLB_USE_PROFILER` is not defined.
+- `TKLB_ASSERT()` is defined to a custom assert function or assertions are disabled with `TKLB_NO_ASSERT` to avoid `<cassert>`.
 
-Enabling the profiler will still pull in all of its dependecies regardless.
-
-`TKLB_NO_SIMD` also needs to be defined to get rid of anything xsimd pull in.
+Also see `TKLB_CUSTOM_MALLOC` and `TKLB_CUSTOM_PRINT`
 
 ### TKLB_CUSTOM_MALLOC
 Allows defining custom `tklb_free` and `tklb_malloc` without fully dropping the std lib.
@@ -48,13 +49,19 @@ ERROR | vae_bank_manager.hpp:81 | Failed to load bank from file ./bank1
  INFO | vae_engine.hpp:879      | Start unloading all banks
  INFO | vae_engine.hpp:217      | Engine destructed
 ```
+
 ### TKLB_CUSTOM_PRINT
 Allows to redirect the formatted logging messages to a custom implementation of `tklb_print`
+### TKLB_CUSTOM_PRINT_FORMAT
+TODO allow custom print formatting to disable `stb_sprintf.h`
 ### TKLB_NO_LOG
 Will disable the tklb logger completly.
 
+### TKLB_FORCE_LOG
+Will force all log message even when `TKLB_RELEASE` is defined.
+
 ### TKLB_NO_SIMD
-Disables SSE or other intrinsics
+Disables SSE or other intrinsics via `xsimd` and attempts to do the same for dependecies.
 
 ### TKLB_MEMORY_CHECK
 Wrap all allocations with magic numbers and validate them (uses std malloc and will define tklb_malloc)
