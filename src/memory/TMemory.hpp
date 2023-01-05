@@ -155,11 +155,12 @@ namespace tklb { namespace memory {
 
 
 #ifndef TKLB_MALLOC // TODO TKLB memory tracer should take a detour
-	#define TKLB_MALLOC(size)				tklb_malloc(size);
-	#define TKLB_FREE(ptr)					tklb_free(ptr);
-	#define TKLB_CALLOC(num, size) 			notImplemented; // TODO TKLB
-	#define TKLB_NEW(T, ...)				tklb::memory::create<T>(__VA_ARGS__);
-	#define TKLB_DELETE(T, ptr)				tklb::memory::dispose<T>(ptr);
+	#define TKLB_MALLOC(size)		tklb_malloc(size);
+	#define TKLB_FREE(ptr)			tklb_free(ptr);
+	#define TKLB_CALLOC(num, size) 	notImplemented; // TODO TKLB
+	#define TKLB_NEW_PARAM(T, ...)	tklb::memory::create<T>(__VA_ARGS__);
+	#define TKLB_NEW(T)				tklb::memory::create<T>();
+	#define TKLB_DELETE(T, ptr)		tklb::memory::dispose<T>(ptr);
 #endif // TKLB_MALLOC
 
 #endif // _TKLB_MEMORY

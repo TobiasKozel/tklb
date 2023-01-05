@@ -7,7 +7,7 @@ int main() {
 	char* memory = new char[PoolSize];
 	{
 		tklb::memory::FixedPool pool(memory, PoolSize);
-		int allocated = 0;
+		auto allocated = pool.allocated();
 		while (true) {
 			void* mem = pool.allocate(chunkSize);
 			if (mem == nullptr) { break; }

@@ -54,13 +54,13 @@ namespace tklb {
 
 			const Size countIn = in.validSize();
 			Size countOut = 0;
-			const T offset = mOffset;
-			T lastMix = 0;
+			// const T offset = mOffset;
+			// T lastMix = 0;
 
 			for (int c = 0; c < in.channels(); c++) {
 				Size output = 0;									// index in output buffer
 				T last = mLastFrame[c];								// last sample
-				T mix = 0.0;
+				// T mix = 0.0;
 				for (; output < out.size(); output++) {
 					const T position = output * mFactor;			// index in input buffer, somewhere between two samples
 					const T lastPosition = std::floor(position);	// next sample index in the input buffer
@@ -75,7 +75,7 @@ namespace tklb {
 					last = next;
 				}
 				mLastFrame[c] = last;
-				lastMix = mix;
+				// lastMix = mix;
 				countOut = output;
 			}
 			// mOffset = lastMix;

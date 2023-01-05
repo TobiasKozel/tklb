@@ -7,7 +7,7 @@ int test() {
 	if (tklb::uuid::isValid(invalid)) {
 		return 1;
 	}
-	if (tklb::uuid::isValid(invalid2)) {
+	if (tklb::uuid::isValid(invalid2, false)) {
 		return 2;
 	}
 

@@ -48,12 +48,12 @@ ${XSIMD_INCLUDE_DIR}/xsimd/arch/xsimd_sse3.hpp
 ${XSIMD_INCLUDE_DIR}/xsimd/arch/xsimd_sse4_1.hpp
 ${XSIMD_INCLUDE_DIR}/xsimd/arch/xsimd_sse4_2.hpp
 ${XSIMD_INCLUDE_DIR}/xsimd/arch/xsimd_ssse3.hpp
+${XSIMD_INCLUDE_DIR}/xsimd/arch/xsimd_sve.hpp
 ${XSIMD_INCLUDE_DIR}/xsimd/config/xsimd_arch.hpp
 ${XSIMD_INCLUDE_DIR}/xsimd/config/xsimd_config.hpp
 ${XSIMD_INCLUDE_DIR}/xsimd/config/xsimd_cpuid.hpp
 ${XSIMD_INCLUDE_DIR}/xsimd/memory/xsimd_aligned_allocator.hpp
 ${XSIMD_INCLUDE_DIR}/xsimd/memory/xsimd_alignment.hpp
-${XSIMD_INCLUDE_DIR}/xsimd/stl/algorithms.hpp
 ${XSIMD_INCLUDE_DIR}/xsimd/types/xsimd_all_registers.hpp
 ${XSIMD_INCLUDE_DIR}/xsimd/types/xsimd_api.hpp
 ${XSIMD_INCLUDE_DIR}/xsimd/types/xsimd_neon_register.hpp
@@ -74,6 +74,7 @@ ${XSIMD_INCLUDE_DIR}/xsimd/types/xsimd_sse3_register.hpp
 ${XSIMD_INCLUDE_DIR}/xsimd/types/xsimd_sse4_1_register.hpp
 ${XSIMD_INCLUDE_DIR}/xsimd/types/xsimd_sse4_2_register.hpp
 ${XSIMD_INCLUDE_DIR}/xsimd/types/xsimd_ssse3_register.hpp
+${XSIMD_INCLUDE_DIR}/xsimd/types/xsimd_sve_register.hpp
 ${XSIMD_INCLUDE_DIR}/xsimd/types/xsimd_traits.hpp
 ${XSIMD_INCLUDE_DIR}/xsimd/types/xsimd_utils.hpp
 ${XSIMD_INCLUDE_DIR}/xsimd/xsimd.hpp
@@ -93,15 +94,10 @@ endif()
 
 OPTION(ENABLE_XTL_COMPLEX "enables support for xcomplex defined in xtl" OFF)
 OPTION(BUILD_TESTS "xsimd test suite" OFF)
-OPTION(DOWNLOAD_GTEST "build gtest from downloaded sources" OFF)
-
-if(DOWNLOAD_GTEST OR GTEST_SRC_DIR)
-    set(BUILD_TESTS ON)
-endif()
 
 if(ENABLE_XTL_COMPLEX)
-    add_definitions(-DXSIMD_ENABLE_XTL_COMPLEX=1)
     find_package(xtl 0.7.0 REQUIRED)
+    target_compile_definitions(xsimd INTERFACE XSIMD_ENABLE_XTL_COMPLEX=1)
     target_link_libraries(xsimd INTERFACE xtl)
 endif()
 

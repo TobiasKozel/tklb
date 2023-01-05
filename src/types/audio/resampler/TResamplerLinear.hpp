@@ -55,8 +55,8 @@ namespace tklb {
 
 			const Size countIn = in.validSize();
 			Size countOut = 0;
-			const T offset = mOffset;
-			T lastMix = 0;
+			// const T offset = mOffset; unused
+			// T lastMix = 0;
 
 			for (int c = 0; c < in.channels(); c++) {
 				Size output = 0;								// index in output buffer
@@ -78,7 +78,7 @@ namespace tklb {
 					// ! fix this mess since this gets carried over after one sample and no interpolation happens ?
 				}
 				mLastFrame[c] = last;
-				lastMix = mix;
+				// lastMix = mix;
 				countOut = output;
 			}
 			// mOffset = lastMix;

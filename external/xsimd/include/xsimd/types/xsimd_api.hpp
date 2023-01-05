@@ -207,7 +207,7 @@ namespace xsimd
      *
      * Perform a static_cast from \c T_in to \c T_out on \c \c x.
      * @param x batch_bool of \c T_in
-     * @return \c x casted to \c T_out
+     * @return \c x cast to \c T_out
      */
     template <class T_out, class T_in, class A>
     inline batch_bool<T_out, A> batch_bool_cast(batch_bool<T_in, A> const& x) noexcept
@@ -223,7 +223,7 @@ namespace xsimd
      *
      * Perform a static_cast from \c T_in to \c T_out on \c \c x.
      * @param x batch of \c T_in
-     * @return \c x casted to \c T_out
+     * @return \c x cast to \c T_out
      */
     template <class T_out, class T_in, class A>
     inline batch<T_out, A> batch_cast(batch<T_in, A> const& x) noexcept
@@ -420,7 +420,7 @@ namespace xsimd
     inline batch<T, A> broadcast(T v) noexcept
     {
         detail::static_check_supported_config<T, A>();
-        return kernel::broadcast<A>(v, A {});
+        return batch<T, A>::broadcast(v);
     }
 
     /**
@@ -432,14 +432,14 @@ namespace xsimd
      * @return a new batch instance
      */
     template <class To, class A = default_arch, class From>
-    inline simd_return_type<From, To> broadcast_as(From v) noexcept
+    inline simd_return_type<From, To, A> broadcast_as(From v) noexcept
     {
         detail::static_check_supported_config<From, A>();
-        using batch_value_type = typename simd_return_type<From, To>::value_type;
+        using batch_value_type = typename simd_return_type<From, To, A>::value_type;
         using value_type = typename std::conditional<std::is_same<From, bool>::value,
                                                      bool,
                                                      batch_value_type>::type;
-        return simd_return_type<From, To>(value_type(v));
+        return simd_return_type<From, To, A>(value_type(v));
     }
 
     /**
@@ -880,6 +880,21 @@ namespace xsimd
     /**
      * @ingroup batch_reducers
      *
+     * Generic reducer using only batch operations
+     * @param f reducing function, accepting `batch ()(batch, batch)`
+     * @param x batch involved in the reduction
+     * @return the result of the reduction, as a scalar.
+     */
+    template <class T, class A, class F>
+    inline T reduce(F&& r, batch<T, A> const& x) noexcept
+    {
+        detail::static_check_supported_config<T, A>();
+        return kernel::detail::reduce(std::forward<F>(r), x, std::integral_constant<unsigned, batch<T, A>::size>());
+    }
+
+    /**
+     * @ingroup batch_reducers
+     *
      * Adds all the scalars of the batch \c x.
      * @param x batch involved in the reduction
      * @return the result of the reduction.
@@ -1083,10 +1098,10 @@ namespace xsimd
     /**
      * @ingroup batch_math_extra
      *
-     * Computes the multiplication of the floating- point number x by 2 raised to the power exp.
+     * Computes the multiplication of the floating point number \c x by 2 raised to the power \c y.
      * @param x batch of floating point values.
-     * @param y batch of floating point values.
-     * @return the natural logarithm of the gamma function of \c x.
+     * @param y batch of integer values.
+     * @return a batch of floating point values.
      */
     template <class T, class A>
     inline batch<T, A> ldexp(const batch<T, A>& x, const batch<as_integer_t<T>, A>& y) noexcept
@@ -1133,32 +1148,32 @@ namespace xsimd
      * @return a new batch instance
      */
     template <class To, class A = default_arch, class From>
-    inline simd_return_type<From, To> load_as(From const* ptr, aligned_mode) noexcept
+    inline simd_return_type<From, To, A> load_as(From const* ptr, aligned_mode) noexcept
     {
-        using batch_value_type = typename simd_return_type<From, To>::value_type;
+        using batch_value_type = typename simd_return_type<From, To, A>::value_type;
         detail::static_check_supported_config<From, A>();
         detail::static_check_supported_config<To, A>();
         return kernel::load_aligned<A>(ptr, kernel::convert<batch_value_type> {}, A {});
     }
 
     template <class To, class A = default_arch>
-    inline simd_return_type<bool, To> load_as(bool const* ptr, aligned_mode) noexcept
+    inline simd_return_type<bool, To, A> load_as(bool const* ptr, aligned_mode) noexcept
     {
         detail::static_check_supported_config<To, A>();
-        return simd_return_type<bool, To>::load_aligned(ptr);
+        return simd_return_type<bool, To, A>::load_aligned(ptr);
     }
 
     template <class To, class A = default_arch, class From>
-    inline simd_return_type<std::complex<From>, To> load_as(std::complex<From> const* ptr, aligned_mode) noexcept
+    inline simd_return_type<std::complex<From>, To, A> load_as(std::complex<From> const* ptr, aligned_mode) noexcept
     {
         detail::static_check_supported_config<To, A>();
-        using batch_value_type = typename simd_return_type<std::complex<From>, To>::value_type;
+        using batch_value_type = typename simd_return_type<std::complex<From>, To, A>::value_type;
         return kernel::load_complex_aligned<A>(ptr, kernel::convert<batch_value_type> {}, A {});
     }
 
 #ifdef XSIMD_ENABLE_XTL_COMPLEX
     template <class To, class A = default_arch, class From, bool i3ec>
-    inline simd_return_type<xtl::xcomplex<From, From, i3ec>, To> load_as(xtl::xcomplex<From, From, i3ec> const* ptr, aligned_mode) noexcept
+    inline simd_return_type<xtl::xcomplex<From, From, i3ec>, To, A> load_as(xtl::xcomplex<From, From, i3ec> const* ptr, aligned_mode) noexcept
     {
         detail::static_check_supported_config<To, A>();
         detail::static_check_supported_config<From, A>();
@@ -1175,32 +1190,32 @@ namespace xsimd
      * @return a new batch instance
      */
     template <class To, class A = default_arch, class From>
-    inline simd_return_type<From, To> load_as(From const* ptr, unaligned_mode) noexcept
+    inline simd_return_type<From, To, A> load_as(From const* ptr, unaligned_mode) noexcept
     {
-        using batch_value_type = typename simd_return_type<From, To>::value_type;
+        using batch_value_type = typename simd_return_type<From, To, A>::value_type;
         detail::static_check_supported_config<To, A>();
         detail::static_check_supported_config<From, A>();
         return kernel::load_unaligned<A>(ptr, kernel::convert<batch_value_type> {}, A {});
     }
 
     template <class To, class A = default_arch>
-    inline simd_return_type<bool, To> load_as(bool const* ptr, unaligned_mode) noexcept
+    inline simd_return_type<bool, To, A> load_as(bool const* ptr, unaligned_mode) noexcept
     {
-        return simd_return_type<bool, To>::load_unaligned(ptr);
+        return simd_return_type<bool, To, A>::load_unaligned(ptr);
     }
 
     template <class To, class A = default_arch, class From>
-    inline simd_return_type<std::complex<From>, To> load_as(std::complex<From> const* ptr, unaligned_mode) noexcept
+    inline simd_return_type<std::complex<From>, To, A> load_as(std::complex<From> const* ptr, unaligned_mode) noexcept
     {
         detail::static_check_supported_config<To, A>();
         detail::static_check_supported_config<From, A>();
-        using batch_value_type = typename simd_return_type<std::complex<From>, To>::value_type;
+        using batch_value_type = typename simd_return_type<std::complex<From>, To, A>::value_type;
         return kernel::load_complex_unaligned<A>(ptr, kernel::convert<batch_value_type> {}, A {});
     }
 
 #ifdef XSIMD_ENABLE_XTL_COMPLEX
     template <class To, class A = default_arch, class From, bool i3ec>
-    inline simd_return_type<xtl::xcomplex<From, From, i3ec>, To> load_as(xtl::xcomplex<From, From, i3ec> const* ptr, unaligned_mode) noexcept
+    inline simd_return_type<xtl::xcomplex<From, From, i3ec>, To, A> load_as(xtl::xcomplex<From, From, i3ec> const* ptr, unaligned_mode) noexcept
     {
         detail::static_check_supported_config<To, A>();
         detail::static_check_supported_config<From, A>();
@@ -1684,7 +1699,7 @@ namespace xsimd
      * @return the result of the saturated addition.
      */
     template <class T, class A>
-    inline auto sadd(batch<T, A> const& x, batch<T, A> const& y) noexcept -> decltype(x + y)
+    inline batch<T, A> sadd(batch<T, A> const& x, batch<T, A> const& y) noexcept
     {
         detail::static_check_supported_config<T, A>();
         return kernel::sadd<A>(x, y, A {});
@@ -1699,7 +1714,7 @@ namespace xsimd
      * for(std::size_t i = 0; i < N; ++i)
      *     res[i] = cond[i] ? true_br[i] : false_br[i];
      * \endcode
-     * @param cond constant batch condition.
+     * @param cond batch condition.
      * @param true_br batch values for truthy condition.
      * @param false_br batch value for falsy condition.
      * @return the result of the selection.
@@ -1720,7 +1735,7 @@ namespace xsimd
      * for(std::size_t i = 0; i < N; ++i)
      *     res[i] = cond[i] ? true_br[i] : false_br[i];
      * \endcode
-     * @param cond constant batch condition.
+     * @param cond batch condition.
      * @param true_br batch values for truthy condition.
      * @param false_br batch value for falsy condition.
      * @return the result of the selection.
@@ -1884,7 +1899,7 @@ namespace xsimd
      * @return the result of the saturated difference.
      */
     template <class T, class A>
-    inline auto ssub(batch<T, A> const& x, batch<T, A> const& y) noexcept -> decltype(x - y)
+    inline batch<T, A> ssub(batch<T, A> const& x, batch<T, A> const& y) noexcept
     {
         detail::static_check_supported_config<T, A>();
         return kernel::ssub<A>(x, y, A {});
@@ -2174,7 +2189,16 @@ namespace xsimd
         return kernel::zip_lo<A>(x, y, A {});
     }
 
-    // bitwise_cast
+    /**
+     * @ingroup batch_conversion
+     *
+     * Cast a \c batch_bool of \c T into a \c batch of the same type using the
+     * following rule: if an element of \c self is true, it maps to -1 in the
+     * returned integral batch, otherwise it maps to 0.
+     *
+     * @param self batch_bool of \c T
+     * @return \c self cast to a \c batch of \c T
+     */
     template <class T, class A, typename std::enable_if<std::is_integral<T>::value, int>::type = 3>
     inline batch<T, A> bitwise_cast(batch_bool<T, A> const& self) noexcept
     {

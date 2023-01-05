@@ -65,7 +65,8 @@ namespace xsimd
                 neon64 = 1;
                 best = neon64::version();
 #elif defined(__ARM_NEON) || defined(_M_ARM)
-#if defined(__linux__)
+
+#if defined(__linux__) && (!defined(__ANDROID_API__) || __ANDROID_API__ >= 18)
                 neon = bool(getauxval(AT_HWCAP) & HWCAP_NEON);
 #else
                 // that's very conservative :-/
@@ -111,7 +112,7 @@ namespace xsimd
 
                 get_cpuid(regs, 0x1);
 
-                sse2 = regs[2] >> 26 & 1;
+                sse2 = regs[3] >> 26 & 1;
                 best = std::max(best, sse2::version() * sse2);
 
                 sse3 = regs[2] >> 0 & 1;

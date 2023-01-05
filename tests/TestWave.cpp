@@ -22,7 +22,7 @@ int test() {
 		}
 		char* fileContent = (char*) tklb_malloc(fileSize);
 		fseek(file, 0, SEEK_SET);
-		const auto read = fread(fileContent, fileSize, 1, file);
+		fread(fileContent, fileSize, 1, file);
 		fclose(file);
 		file = 0;
 

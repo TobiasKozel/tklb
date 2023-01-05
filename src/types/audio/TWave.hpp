@@ -52,7 +52,6 @@ namespace tklb {
 
 			using Size = typename Buffer::Size;
 			using uchar = unsigned char;
-			using ushort = unsigned short;
 
 			drwav wav;
 

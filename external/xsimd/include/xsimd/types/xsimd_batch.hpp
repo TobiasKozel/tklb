@@ -21,6 +21,84 @@
 
 namespace xsimd
 {
+    template <class T, class A = default_arch>
+    class batch;
+
+    namespace types
+    {
+        template <class T, class A>
+        struct integral_only_operators
+        {
+            inline batch<T, A>& operator%=(batch<T, A> const& other) noexcept;
+            inline batch<T, A>& operator>>=(int32_t other) noexcept;
+            inline batch<T, A>& operator>>=(batch<T, A> const& other) noexcept;
+            inline batch<T, A>& operator<<=(int32_t other) noexcept;
+            inline batch<T, A>& operator<<=(batch<T, A> const& other) noexcept;
+
+            /** Shorthand for xsimd::mod() */
+            friend batch<T, A> operator%(batch<T, A> const& self, batch<T, A> const& other) noexcept
+            {
+                return batch<T, A>(self) %= other;
+            }
+
+            /** Shorthand for xsimd::bitwise_rshift() */
+            friend batch<T, A> operator>>(batch<T, A> const& self, batch<T, A> const& other) noexcept
+            {
+                return batch<T, A>(self) >>= other;
+            }
+
+            /** Shorthand for xsimd::bitwise_lshift() */
+            friend batch<T, A> operator<<(batch<T, A> const& self, batch<T, A> const& other) noexcept
+            {
+                return batch<T, A>(self) <<= other;
+            }
+
+            /** Shorthand for xsimd::bitwise_rshift() */
+            friend batch<T, A> operator>>(batch<T, A> const& self, int32_t other) noexcept
+            {
+                return batch<T, A>(self) >>= other;
+            }
+
+            /** Shorthand for xsimd::bitwise_lshift() */
+            friend batch<T, A> operator<<(batch<T, A> const& self, int32_t other) noexcept
+            {
+                return batch<T, A>(self) <<= other;
+            }
+        };
+        template <class A>
+        struct integral_only_operators<float, A>
+        {
+        };
+        template <class A>
+        struct integral_only_operators<double, A>
+        {
+        };
+
+    }
+
+    namespace details
+    {
+        // These functions are forwarded declared here so that they can be used by friend functions
+        // with batch<T, A>. Their implementation must appear only once the
+        // kernel implementations have been included.
+        template <class T, class A>
+        inline batch_bool<T, A> eq(batch<T, A> const& self, batch<T, A> const& other) noexcept;
+
+        template <class T, class A>
+        inline batch_bool<T, A> neq(batch<T, A> const& self, batch<T, A> const& other) noexcept;
+
+        template <class T, class A>
+        inline batch_bool<T, A> ge(batch<T, A> const& self, batch<T, A> const& other) noexcept;
+
+        template <class T, class A>
+        inline batch_bool<T, A> le(batch<T, A> const& self, batch<T, A> const& other) noexcept;
+
+        template <class T, class A>
+        inline batch_bool<T, A> gt(batch<T, A> const& self, batch<T, A> const& other) noexcept;
+
+        template <class T, class A>
+        inline batch_bool<T, A> lt(batch<T, A> const& self, batch<T, A> const& other) noexcept;
+    }
 
     /**
      * @brief batch of integer or floating point values.
@@ -31,8 +109,8 @@ namespace xsimd
      * @tparam T the type of the underlying values.
      * @tparam A the architecture this batch is tied too.
      **/
-    template <class T, class A = default_arch>
-    class batch : public types::simd_register<T, A>
+    template <class T, class A>
+    class batch : public types::simd_register<T, A>, public types::integral_only_operators<T, A>
     {
 
     public:
@@ -80,27 +158,42 @@ namespace xsimd
 
         T get(std::size_t i) const noexcept;
 
-        // comparison operators
-        inline batch_bool_type operator==(batch const& other) const noexcept;
-        inline batch_bool_type operator!=(batch const& other) const noexcept;
-        inline batch_bool_type operator>=(batch const& other) const noexcept;
-        inline batch_bool_type operator<=(batch const& other) const noexcept;
-        inline batch_bool_type operator>(batch const& other) const noexcept;
-        inline batch_bool_type operator<(batch const& other) const noexcept;
+        // comparison operators. Defined as friend to enable automatic
+        // conversion of parameters from scalar to batch, at the cost of using a
+        // proxy implementation from details::.
+        friend batch_bool<T, A> operator==(batch const& self, batch const& other) noexcept
+        {
+            return details::eq<T, A>(self, other);
+        }
+        friend batch_bool<T, A> operator!=(batch const& self, batch const& other) noexcept
+        {
+            return details::neq<T, A>(self, other);
+        }
+        friend batch_bool<T, A> operator>=(batch const& self, batch const& other) noexcept
+        {
+            return details::ge<T, A>(self, other);
+        }
+        friend batch_bool<T, A> operator<=(batch const& self, batch const& other) noexcept
+        {
+            return details::le<T, A>(self, other);
+        }
+        friend batch_bool<T, A> operator>(batch const& self, batch const& other) noexcept
+        {
+            return details::gt<T, A>(self, other);
+        }
+        friend batch_bool<T, A> operator<(batch const& self, batch const& other) noexcept
+        {
+            return details::lt<T, A>(self, other);
+        }
 
         // Update operators
         inline batch& operator+=(batch const& other) noexcept;
         inline batch& operator-=(batch const& other) noexcept;
         inline batch& operator*=(batch const& other) noexcept;
         inline batch& operator/=(batch const& other) noexcept;
-        inline batch& operator%=(batch const& other) noexcept;
         inline batch& operator&=(batch const& other) noexcept;
         inline batch& operator|=(batch const& other) noexcept;
         inline batch& operator^=(batch const& other) noexcept;
-        inline batch& operator>>=(int32_t other) noexcept;
-        inline batch& operator>>=(batch const& other) noexcept;
-        inline batch& operator<<=(int32_t other) noexcept;
-        inline batch& operator<<=(batch const& other) noexcept;
 
         // incr/decr operators
         inline batch& operator++() noexcept;
@@ -142,12 +235,6 @@ namespace xsimd
             return batch(self) /= other;
         }
 
-        /** Shorthand for xsimd::mod() */
-        friend batch operator%(batch const& self, batch const& other) noexcept
-        {
-            return batch(self) %= other;
-        }
-
         /** Shorthand for xsimd::bitwise_and() */
         friend batch operator&(batch const& self, batch const& other) noexcept
         {
@@ -164,30 +251,6 @@ namespace xsimd
         friend batch operator^(batch const& self, batch const& other) noexcept
         {
             return batch(self) ^= other;
-        }
-
-        /** Shorthand for xsimd::bitwise_rshift() */
-        friend batch operator>>(batch const& self, batch const& other) noexcept
-        {
-            return batch(self) >>= other;
-        }
-
-        /** Shorthand for xsimd::bitwise_lshift() */
-        friend batch operator<<(batch const& self, batch const& other) noexcept
-        {
-            return batch(self) <<= other;
-        }
-
-        /** Shorthand for xsimd::bitwise_rshift() */
-        friend batch operator>>(batch const& self, int32_t other) noexcept
-        {
-            return batch(self) >>= other;
-        }
-
-        /** Shorthand for xsimd::bitwise_lshift() */
-        friend batch operator<<(batch const& self, int32_t other) noexcept
-        {
-            return batch(self) <<= other;
         }
 
         /** Shorthand for xsimd::logical_and() */
@@ -312,6 +375,9 @@ namespace xsimd
         template <class... Ts>
         batch(value_type val0, value_type val1, Ts... vals) noexcept;
         explicit batch(batch_bool_type const& b) noexcept;
+
+        template <class U>
+        XSIMD_NO_DISCARD static batch broadcast(U val) noexcept;
 
         // memory operators
         XSIMD_NO_DISCARD static batch load_aligned(const T* real_src, const T* imag_src = nullptr) noexcept;
@@ -498,6 +564,8 @@ namespace xsimd
     inline void batch<T, A>::store_aligned(U* mem) const noexcept
     {
         detail::static_check_supported_config<T, A>();
+        assert(((reinterpret_cast<uintptr_t>(mem) % A::alignment()) == 0)
+               && "store location is not properly aligned");
         kernel::store_aligned<A>(mem, *this, A {});
     }
 
@@ -543,6 +611,8 @@ namespace xsimd
     template <class U>
     inline batch<T, A> batch<T, A>::load_aligned(U const* mem) noexcept
     {
+        assert(((reinterpret_cast<uintptr_t>(mem) % A::alignment()) == 0)
+               && "loaded pointer is not properly aligned");
         detail::static_check_supported_config<T, A>();
         return kernel::load_aligned<A>(mem, kernel::convert<T> {}, A {});
     }
@@ -625,65 +695,67 @@ namespace xsimd
     /******************************
      * batch comparison operators *
      ******************************/
-
-    /**
-     * Shorthand for xsimd::eq()
-     */
-    template <class T, class A>
-    inline batch_bool<T, A> batch<T, A>::operator==(batch<T, A> const& other) const noexcept
+    namespace details
     {
-        detail::static_check_supported_config<T, A>();
-        return kernel::eq<A>(*this, other, A {});
-    }
+        /**
+         * Shorthand for xsimd::eq()
+         */
+        template <class T, class A>
+        inline batch_bool<T, A> eq(batch<T, A> const& self, batch<T, A> const& other) noexcept
+        {
+            detail::static_check_supported_config<T, A>();
+            return kernel::eq<A>(self, other, A {});
+        }
 
-    /**
-     * Shorthand for xsimd::neq()
-     */
-    template <class T, class A>
-    inline batch_bool<T, A> batch<T, A>::operator!=(batch<T, A> const& other) const noexcept
-    {
-        detail::static_check_supported_config<T, A>();
-        return kernel::neq<A>(*this, other, A {});
-    }
+        /**
+         * Shorthand for xsimd::neq()
+         */
+        template <class T, class A>
+        inline batch_bool<T, A> neq(batch<T, A> const& self, batch<T, A> const& other) noexcept
+        {
+            detail::static_check_supported_config<T, A>();
+            return kernel::neq<A>(self, other, A {});
+        }
 
-    /**
-     * Shorthand for xsimd::ge()
-     */
-    template <class T, class A>
-    inline batch_bool<T, A> batch<T, A>::operator>=(batch<T, A> const& other) const noexcept
-    {
-        detail::static_check_supported_config<T, A>();
-        return kernel::ge<A>(*this, other, A {});
-    }
+        /**
+         * Shorthand for xsimd::ge()
+         */
+        template <class T, class A>
+        inline batch_bool<T, A> ge(batch<T, A> const& self, batch<T, A> const& other) noexcept
+        {
+            detail::static_check_supported_config<T, A>();
+            return kernel::ge<A>(self, other, A {});
+        }
 
-    /**
-     * Shorthand for xsimd::le()
-     */
-    template <class T, class A>
-    inline batch_bool<T, A> batch<T, A>::operator<=(batch<T, A> const& other) const noexcept
-    {
-        detail::static_check_supported_config<T, A>();
-        return kernel::le<A>(*this, other, A {});
-    }
+        /**
+         * Shorthand for xsimd::le()
+         */
+        template <class T, class A>
+        inline batch_bool<T, A> le(batch<T, A> const& self, batch<T, A> const& other) noexcept
+        {
+            detail::static_check_supported_config<T, A>();
+            return kernel::le<A>(self, other, A {});
+        }
 
-    /**
-     * Shorthand for xsimd::gt()
-     */
-    template <class T, class A>
-    inline batch_bool<T, A> batch<T, A>::operator>(batch<T, A> const& other) const noexcept
-    {
-        detail::static_check_supported_config<T, A>();
-        return kernel::gt<A>(*this, other, A {});
-    }
+        /**
+         * Shorthand for xsimd::gt()
+         */
+        template <class T, class A>
+        inline batch_bool<T, A> gt(batch<T, A> const& self, batch<T, A> const& other) noexcept
+        {
+            detail::static_check_supported_config<T, A>();
+            return kernel::gt<A>(self, other, A {});
+        }
 
-    /**
-     * Shorthand for xsimd::lt()
-     */
-    template <class T, class A>
-    inline batch_bool<T, A> batch<T, A>::operator<(batch<T, A> const& other) const noexcept
-    {
-        detail::static_check_supported_config<T, A>();
-        return kernel::lt<A>(*this, other, A {});
+        /**
+         * Shorthand for xsimd::lt()
+         */
+        template <class T, class A>
+        inline batch_bool<T, A> lt(batch<T, A> const& self, batch<T, A> const& other) noexcept
+        {
+            detail::static_check_supported_config<T, A>();
+            return kernel::lt<A>(self, other, A {});
+        }
     }
 
     /**************************
@@ -719,10 +791,10 @@ namespace xsimd
     }
 
     template <class T, class A>
-    inline batch<T, A>& batch<T, A>::operator%=(batch<T, A> const& other) noexcept
+    inline batch<T, A>& types::integral_only_operators<T, A>::operator%=(batch<T, A> const& other) noexcept
     {
-        detail::static_check_supported_config<T, A>();
-        return *this = kernel::mod<A>(*this, other, A {});
+        ::xsimd::detail::static_check_supported_config<T, A>();
+        return *static_cast<batch<T, A>*>(this) = kernel::mod<A>(*static_cast<batch<T, A>*>(this), other, A {});
     }
 
     template <class T, class A>
@@ -747,31 +819,31 @@ namespace xsimd
     }
 
     template <class T, class A>
-    inline batch<T, A>& batch<T, A>::operator>>=(batch<T, A> const& other) noexcept
+    inline batch<T, A>& kernel::integral_only_operators<T, A>::operator>>=(batch<T, A> const& other) noexcept
     {
-        detail::static_check_supported_config<T, A>();
-        return *this = kernel::bitwise_rshift<A>(*this, other, A {});
+        ::xsimd::detail::static_check_supported_config<T, A>();
+        return *static_cast<batch<T, A>*>(this) = kernel::bitwise_rshift<A>(*static_cast<batch<T, A>*>(this), other, A {});
     }
 
     template <class T, class A>
-    inline batch<T, A>& batch<T, A>::operator<<=(batch<T, A> const& other) noexcept
+    inline batch<T, A>& kernel::integral_only_operators<T, A>::operator<<=(batch<T, A> const& other) noexcept
     {
-        detail::static_check_supported_config<T, A>();
-        return *this = kernel::bitwise_lshift<A>(*this, other, A {});
+        ::xsimd::detail::static_check_supported_config<T, A>();
+        return *static_cast<batch<T, A>*>(this) = kernel::bitwise_lshift<A>(*static_cast<batch<T, A>*>(this), other, A {});
     }
 
     template <class T, class A>
-    inline batch<T, A>& batch<T, A>::operator>>=(int32_t other) noexcept
+    inline batch<T, A>& kernel::integral_only_operators<T, A>::operator>>=(int32_t other) noexcept
     {
-        detail::static_check_supported_config<T, A>();
-        return *this = kernel::bitwise_rshift<A>(*this, other, A {});
+        ::xsimd::detail::static_check_supported_config<T, A>();
+        return *static_cast<batch<T, A>*>(this) = kernel::bitwise_rshift<A>(*static_cast<batch<T, A>*>(this), other, A {});
     }
 
     template <class T, class A>
-    inline batch<T, A>& batch<T, A>::operator<<=(int32_t other) noexcept
+    inline batch<T, A>& kernel::integral_only_operators<T, A>::operator<<=(int32_t other) noexcept
     {
-        detail::static_check_supported_config<T, A>();
-        return *this = kernel::bitwise_lshift<A>(*this, other, A {});
+        ::xsimd::detail::static_check_supported_config<T, A>();
+        return *static_cast<batch<T, A>*>(this) = kernel::bitwise_lshift<A>(*static_cast<batch<T, A>*>(this), other, A {});
     }
 
     /*****************************
@@ -1069,6 +1141,13 @@ namespace xsimd
     {
     }
 
+    template <class T, class A>
+    template <class U>
+    XSIMD_NO_DISCARD inline batch<std::complex<T>, A> batch<std::complex<T>, A>::broadcast(U val) noexcept
+    {
+        return batch(static_cast<std::complex<T>>(val));
+    }
+
     /***********************************
      * batch<complex> memory operators *
      ***********************************/
@@ -1087,6 +1166,8 @@ namespace xsimd
     template <class T, class A>
     inline batch<std::complex<T>, A> batch<std::complex<T>, A>::load_aligned(const value_type* src) noexcept
     {
+        assert(((reinterpret_cast<uintptr_t>(src) % A::alignment()) == 0)
+               && "loaded pointer is not properly aligned");
         return kernel::load_complex_aligned<A>(src, kernel::convert<value_type> {}, A {});
     }
 
@@ -1099,6 +1180,8 @@ namespace xsimd
     template <class T, class A>
     inline void batch<std::complex<T>, A>::store_aligned(value_type* dst) const noexcept
     {
+        assert(((reinterpret_cast<uintptr_t>(dst) % A::alignment()) == 0)
+               && "store location is not properly aligned");
         return kernel::store_complex_aligned(dst, *this, A {});
     }
 

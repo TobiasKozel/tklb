@@ -8,7 +8,7 @@ struct ClassToStore {
 
 int test()
 {
-	int size = 4;
+	const unsigned int size = 4;
 	tklb::HandleBuffer<ClassToStore> handleBuf(size);
 	auto e0 = handleBuf.create();
 	auto e1 = handleBuf.create();

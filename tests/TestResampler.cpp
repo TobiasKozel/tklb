@@ -40,10 +40,10 @@ int doTest() {
 	bufLow.setValidSize(length); // all samples in the buffer are to be processed
 	bufLowReference.clone(bufLow); // Copy to compare
 
-	const int expectedUp = resamplerUp.estimateOut(bufLow.validSize());
-	const int predictedDown = resamplerUp.estimateNeed(expectedUp);
-	const int expectedDown = resamplerDown.estimateOut(expectedUp);
-	const int predictedUp = resamplerDown.estimateNeed(expectedDown);
+	// const int expectedUp = resamplerUp.estimateOut(bufLow.validSize());
+	// const int predictedDown = resamplerUp.estimateNeed(expectedUp);
+	// const int expectedDown = resamplerDown.estimateOut(expectedUp);
+	// const int predictedUp = resamplerDown.estimateNeed(expectedDown);
 	resamplerUp.process(bufLow, bufHigh);
 	// TKLB_ASSERT(expectedUp == bufHigh.validSize())
 	resamplerDown.process(bufHigh, bufLow);

@@ -12,7 +12,7 @@ namespace tklb {
 		using uchar = unsigned char;
 		using uint = unsigned int;
 
-		uint mSize;
+		uint mSize = 0;
 		// No idea what this is
 		HeapBuffer<int, 16> mIp;
 		// or this, prolly lookup tables
@@ -71,7 +71,8 @@ namespace tklb {
 						*(i++) = (-(*(b++)));
 					}
 				}
-				const SizeT size2 = mSize / 2;
+				// TODO have a closer look at this
+				// const SizeT size2 = mSize / 2;
 				// real[size2] = -imaginary[0]; // this doens't make any sense
 				// imaginary[0] = 0.0;
 				// imaginary[size2] = 0.0; // this doesn't either

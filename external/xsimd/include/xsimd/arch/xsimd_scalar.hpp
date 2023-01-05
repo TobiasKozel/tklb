@@ -385,12 +385,12 @@ namespace xsimd
 
     inline int32_t nearbyint_as_int(float var) noexcept
     {
-        return std::nearbyint(var);
+        return static_cast<int32_t>(std::nearbyint(var));
     }
 
     inline int64_t nearbyint_as_int(double var) noexcept
     {
-        return std::nearbyint(var);
+        return static_cast<int64_t>(std::nearbyint(var));
     }
 
     template <class T, class = typename std::enable_if<std::is_scalar<T>::value>::type>
@@ -441,7 +441,7 @@ namespace xsimd
         return !(x0 == x1);
     }
 
-#ifdef _GNU_SOURCE
+#if defined(_GNU_SOURCE) && !defined(__APPLE__) && !defined(__MINGW32__) && !defined(__ANDROID__)
     inline float exp10(const float& x) noexcept
     {
         return ::exp10f(x);

@@ -76,7 +76,7 @@ namespace tklb {
 		 * @return True on success
 		 */
 		bool init(uint rateIn, uint rateOut, uint maxBlock = 512, uchar maxChannels = 2, uchar quality = 5) {
-			int err;
+			int err = 0;
 			if (rateIn == mRateIn && mRateOut == rateOut && mState != nullptr) {
 				// only clears out old data
 				speex_resampler_reset_mem(mState);

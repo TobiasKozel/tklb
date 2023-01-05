@@ -48,9 +48,9 @@ namespace tklb {
 		class Subscription : public BaseSubscription {
 			friend EventBus;
 			using Callback = Delegate<void(Parameters...)>;
-			Callback mCallback;
+			const Callback mCallback;
 			EventBus* const mBus = nullptr;
-			const EventId mEventId; // only needed for unsubbing, could be omitted
+			const EventId mEventId = 0; // only needed for unsubbing, could be omitted
 		public:
 			Subscription(EventBus*, const EventId, const Callback&&);
 			~Subscription();
@@ -83,7 +83,7 @@ namespace tklb {
 	template<typename... Parameters>
 	EventBus<EVENT_COUNT, EventId, MutexType>::Subscription<Parameters...>::Subscription(
 		EventBus* bus, const EventId eventId, const Callback&& callback
-	) : mBus(bus), mEventId(eventId), mCallback(callback) {
+	) : mCallback(callback), mBus(bus), mEventId(eventId) {
 		TKLB_ASSERT(bus != nullptr)
 		bus->addSubscriber(this, eventId);
 	}

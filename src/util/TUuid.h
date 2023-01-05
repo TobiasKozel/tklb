@@ -47,6 +47,7 @@ namespace tklb { namespace uuid {
 			}
 			return false;
 		};
+
 		// First make sure only valid characters are contained
 		for (int i = 0; i < UUIDLength; i++) {
 			const char c = uuid[i];
@@ -63,7 +64,7 @@ namespace tklb { namespace uuid {
 			}
 		}
 
-		// Check the excape character if needed
+		// Check the escape character if needed
 		if (ensureEscaped && uuid[UUIDLength] != '\0') { return false; }
 		return true;
 	}
