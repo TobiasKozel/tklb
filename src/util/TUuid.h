@@ -18,6 +18,7 @@ namespace tklb { namespace uuid {
 	void generate(char* uuid, bool ensureEscaped = true)
 	#ifdef TKLB_IMPL
 	{
+		// TODO own random
 		std::srand(std::time(nullptr));
 
 		for (int i = 0; i < UUIDLength; i++) {

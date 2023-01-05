@@ -384,9 +384,11 @@ namespace tklb {
 		}
 
 		static constexpr bool isAligned(const void* ptr) {
-			if (ptr == nullptr) { return false; }
-			if (Alignment == 0) { return true; }
-			return (Pointer(ptr) & (Alignment - 1)) == 0;
+			return
+				(ptr == nullptr) ?
+				false :
+				((Alignment == 0) ? true :
+				(Pointer(ptr) & (Alignment - 1)) == 0);
 		}
 
 	private:

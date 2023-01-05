@@ -1,6 +1,12 @@
 #!/bin/bash
 
 FAILED=false
+uname -a
+echo ""
+g++ -v
+echo ""
+clang++ -v
+echo ""
 
 for f in ./*.cpp
 do

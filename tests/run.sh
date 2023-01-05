@@ -14,18 +14,20 @@ source_file=$1
 exit_code=0
 
 function test {
-	if $1 $source_file >> /dev/null 2>&1 ; then
+	if $1 $source_file ; then
 		$executable
 		result=$?
 		if [[ $result -eq 0 ]] ; then
 			echo -ne "\r\033[2KPassed: ${1} ${source_file}"
 		else
-			echo -e "\n\e[31m${1} ${source_file}\nError: Test failed with result ${result}\e[0m"
+			echo -e "\n\e[31m${1} ${source_file}\e[0m"
+			echo -e "\n\e[31mError: Test failed with result ${result}\e[0m"
 			exit_code=$result
 		fi
 		rm $executable
 	else
-		echo -e "\n\e[31m${1} ${source_file} \nError: Failed to compile\e[0m"
+		echo -e "\n\e[31m${1} ${source_file}\e[0m"
+		echo -e "\n\e[31mError: Failed to compile\e[0m"
 		exit 222
 	fi
 }

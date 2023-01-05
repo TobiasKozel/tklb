@@ -12,7 +12,7 @@ int test() {
 	}
 
 	char generate[tklb::uuid::UUIDLength];
-	tklb::uuid::generate(generate);
+	tklb::uuid::generate(generate, false);
 	if (!tklb::uuid::isValid(generate)) {
 		return 3;
 	}
