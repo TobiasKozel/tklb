@@ -1,21 +1,22 @@
 #define TKLB_IMPL
 
+bool heapCorruption = false;
+
 #define TKLB_CUSTOM_MALLOC
 static constexpr unsigned int poolSize = 1024 * 1024 * 64;
-char* poolMamory = new char[poolSize];
+char* poolMemory = new char[poolSize];
 
 #include "../src/memory/TFixedPool.hpp"
-tklb::memory::FixedPool pool = { poolMamory, poolSize };
+tklb::memory::FixedPool pool = { poolMemory, poolSize };
 
 #include "../src/util/TAssert.h"
 #include "../src/memory/TMemoryCheck.hpp"
 
 void* tklb_malloc(size_t bytes) {
 	using MagicBlock = tklb::memory::check::MagicBlock;
-	return MagicBlock::construct(
-		pool.allocate(bytes + MagicBlock::sizeNeeded()),
-		bytes
-	);
+	auto ptr = pool.allocate(bytes + MagicBlock::sizeNeeded());
+	auto ptr2 = MagicBlock::construct(ptr, bytes);
+	return ptr2;
 }
 
 void tklb_free(void* ptr) {
@@ -23,9 +24,8 @@ void tklb_free(void* ptr) {
 	if (ptr == nullptr) { return; }
 	auto result = MagicBlock::check(ptr);
 	if (result.overrun || result.underrun) {
-		TKLB_ASSERT(false)
+		heapCorruption = true;
 	}
-
 	pool.deallocate(result.ptr);
 }
 
@@ -77,8 +77,12 @@ int test();
 int main() {
 	int ret = test();
 	// TODO some logic handling and maybe pretty test error strings
+	if (heapCorruption) {
+		return 202; // fail test in case heap corruptions occured.
+	}
 	if (pool.allocated() != 0) {
 		return 222; // fail the test for dangling allocations
 	}
+	delete[] poolMemory;
 	return ret;
 }

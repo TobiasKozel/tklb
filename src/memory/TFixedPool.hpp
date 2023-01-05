@@ -9,7 +9,6 @@
 #include "../util/TMath.hpp"
 #include "../util/TAssert.h"
 
-
 namespace tklb { namespace memory {
 
 	/**
@@ -89,25 +88,30 @@ namespace tklb { namespace memory {
 		/**
 		 * @brief Since there's also meta data about each allocation,
 		 *        more space is needed to do an allocation.
+		 *        TODO maybe constexpr this, but cpp 11 is a little weird.
 		 * @param size The requested space
-		 * @return constexpr Size How much space the allocation will actually take
+		 * @return Size How much space the allocation will actually take
 		 */
-		static constexpr Size realAllocation(Size size) {
-			return size == 0 ? 0 :
-				// once the block is freed, we need at least that much space
-				// to indicate where the next memory block starts.
-				max((Size) sizeof(Size), size) +
-				// TODO this seems broken
-				// then, while the block is allocated, we need to store the
-				// allocation size before the actual memory starts
-				sizeof(Size);
-				// sizeof(Pointer) - (size % sizeof(Pointer));
+		static inline Size realAllocation(Size size) {
+			if (size == 0) { return 0; }
+
+			// Minimum size to fit the allocation size and the allocation itself
+			const Size minSize = sizeof(Size) + max(sizeof(Size), size);
+
+			// Ensure alignemnt of the size to the width of a pointer
+			const Size mask = sizeof(void*) - 1;
+			if ((minSize & mask) == 0) { return minSize; }
+
+			// so it behaves like malloc and all succeeding allocations
+			// will also be aligned.
+			const Size floored = minSize & (~mask);
+			return floored + sizeof(void*);
 		}
 
-		void* allocate(Size size) {
-			if (size == 0) { return nullptr; }
+		void* allocate(Size requestedSize) {
+			if (requestedSize == 0) { return nullptr; }
 
-			size = realAllocation(size);
+			Size size = realAllocation(requestedSize);
 
 			Lock lock(mutex);
 			for (Size i = 0; i < poolSize;) {
@@ -132,6 +136,7 @@ namespace tklb { namespace memory {
 						}
 						block.size = size;
 						allocatedSpace += size;
+						TKLB_ASSERT((((Pointer)&block.space) & (sizeof(void*) - 1)) == 0)
 						return &block.space; // * Found free spot
 					} else {
 						// Step over the free area which is too small

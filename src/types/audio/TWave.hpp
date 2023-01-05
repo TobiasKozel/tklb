@@ -176,10 +176,9 @@ namespace tklb {
 				TKLB_ASSERT(false) return false;
 			}
 
-			drwav_uninit(&wav);
-
 			out.set(reinterpret_cast<char*>(memory), Size(outSize));
-
+			drwav_uninit(&wav);
+			tklb_free(memory);
 			return true;
 		}
 	}

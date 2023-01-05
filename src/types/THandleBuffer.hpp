@@ -2,6 +2,7 @@
 #define _TKLB_HANDLE_BUFFER
 
 #include "./THeapBuffer.hpp"
+#include <cstddef>
 
 namespace tklb {
 	/**
@@ -74,6 +75,11 @@ namespace tklb {
 
 			return (T*) (element.value);
 		}
+
+		bool has(const Handle& handle) const { return at(handle) != nullptr; }
+
+		inline const T& operator[](const Handle& handle) const { return *at(handle); }
+		inline T& operator[](const Handle& handle) { return *at(handle); }
 
 		/**
 		 * @brief Looks for a free spot and will call the default constructor for T

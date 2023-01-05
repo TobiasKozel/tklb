@@ -95,8 +95,8 @@ namespace tklb {
 		STORAGE mData;
 		static constexpr char Terminator = '\0';
 		using Size = typename STORAGE::Size;
+
 	public:
-		static constexpr Size MAX_LENGTH = 1024 * 1024 * 32; // 32 megs
 		String() { }
 		String(const char* str) { set(str); }
 		String(const String* str) { set(*str); };
@@ -137,20 +137,28 @@ namespace tklb {
 			mData.set(str.c_str(), str.size());
 		}
 
-		void set(const char* str) {
-			if (str == nullptr) { return; }
+		void set(const char* str, Size length) {
+			if (str == nullptr || length == 0) { return; }
+			mData.resize(length);
+			mData.set(str, length);
+			mData[length - 1] = '\0';
+		}
 
-			Size size = 0;
-			for (; size < MAX_LENGTH; size++) {
-				if (str[size] == '\0') {
+		/**
+		 * @brief Set from c string with a max length of 32 mb.
+		 */
+		void set(const char* str) {
+			constexpr Size MAX_LENGTH = 1024 * 1024 * 32; // 32 megs
+			if (str == nullptr) { return; }
+			Size length = 0;
+			for (; length < MAX_LENGTH; length++) {
+				if (str[length] == '\0') {
 					// TODO check
-					size++; // keep the terminator
+					length++; // keep the terminator
 					break;
 				}
 			}
-			mData.resize(size);
-			mData.set(str, size);
-			mData[size - 1] = '\0';
+			set(str, length);
 		}
 
 		void append(const String& str) {

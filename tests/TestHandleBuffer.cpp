@@ -20,17 +20,55 @@ int test()
 		return 1;
 	}
 
+	handleBuf[e1].number = 30;
 
 	handleBuf.remove(e0);
 	auto e6 = handleBuf.create();
 
-	handleBuf.remove(e1);
-	handleBuf.remove(e2);
-	handleBuf.remove(e3);
-	handleBuf.remove(e6);
-
-	if (handleBuf.free() != size) {
+	if (e6 == handleBuf.InvalidHandle) {
 		return 2;
+	}
+
+	handleBuf.remove(e3);
+
+	int count = 0;
+	handleBuf.iterate([&](ClassToStore& element, unsigned int handle) {
+		count++;
+	});
+	if (count != 3) {
+		return 3;
+	}
+
+	count = 0;
+	handleBuf.remove(e2);
+
+	handleBuf.iterate([&](ClassToStore& element, unsigned int handle) {
+		count++;
+	});
+	if (count != 2) {
+		return 4;
+	}
+
+	bool removed = handleBuf.remove(e3);
+	if (removed) {
+		return 6;
+	}
+	removed = handleBuf.remove(e6);
+	if (!removed) {
+		return 7;
+	}
+
+	if (handleBuf[e1].number != 30) {
+		return 8;
+	}
+
+	handleBuf.remove(e1);
+
+	if (handleBuf.has(e1)) {
+		return 9;
+	}
+	if (handleBuf.free() != size) {
+		return 10;
 	}
 	return 0;
 }

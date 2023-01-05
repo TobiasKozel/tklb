@@ -50,7 +50,7 @@ namespace tklb {
 			"Pointer width is not equal to sizeof(void*)"
 		);
 
-		static constexpr size_t Alignment = ALIGNMENT;
+		static constexpr Pointer Alignment = ALIGNMENT;
 		static_assert(
 			isPowerof2(Alignment) || Alignment == 0,
 			"Alignment needs to be a power of 2 or 0 for the arithmetic to work."
@@ -60,7 +60,7 @@ namespace tklb {
 		 * @brief allocations will happens in these chunk sizes
 		 *        TODO maybe expose this.
 		 */
-		static constexpr size_t ChunkSize = 16;
+		static constexpr Size ChunkSize = 16;
 
 	private:
 		ALLOCATOR mAllocator;
@@ -166,6 +166,7 @@ namespace tklb {
 			if (!injected() && mBuf != nullptr) { resize(0); };
 			TKLB_ASSERT_STATE(IS_CONST = false)
 			disown();
+			TKLB_ASSERT(isAligned(mem))
 			mBuf = mem;
 			mSize = size;
 		}
@@ -382,9 +383,10 @@ namespace tklb {
 			return ((size / chunk) + 1) * chunk;
 		}
 
-		static bool isAligned(const void* ptr) {
+		static constexpr bool isAligned(const void* ptr) {
+			if (ptr == nullptr) { return false; }
 			if (Alignment == 0) { return true; }
-			return (size_t(ptr) % Alignment) == 0;
+			return (Pointer(ptr) & (Alignment - 1)) == 0;
 		}
 
 	private:
@@ -402,22 +404,27 @@ namespace tklb {
 					TKLB_ASSERT(false);
 					return false;
 				}
-
 				if (Alignment != 0) {
 					// Mask with zeroes at the end to floor the pointer to an aligned block
-					// for these casts to work, the type needs to be as wide as void*
-					constexpr size_t mask = ~(size_t(Alignment - 1));
-					const size_t pointer = reinterpret_cast<size_t>(newBuf);
-					const size_t floored = pointer & mask;
-					const size_t aligned = floored + Alignment;
+					constexpr Pointer mask = ~(Pointer(Alignment - 1));
+					const Pointer pointer = reinterpret_cast<Pointer>(newBuf);
+					// This is the next smallest aligned address.
+					const Pointer floored = pointer & mask;
 
-					// Not enough space before aligned memory to store original ptr
-					// This only happens when malloc doesn't align to sizeof(size_t)
-					const auto misaligned = aligned - pointer;
-					TKLB_ASSERT(sizeof(size_t) <= misaligned)
+					// the address is below the actual
+					// allocated space and we need to jump to the next aligned address.
+					const Pointer aligned = floored + Alignment;
+
+					// Now there's a gap between the allocation and aligned address.
+					const Pointer misaligned = aligned - pointer;
+					// It needs to be large enough to store a pointer
+					// malloc aligns to sizeof(void*), so this should always be the case.
+					TKLB_ASSERT(sizeof(Pointer) <= misaligned)
 
 					newBuf = reinterpret_cast<void*>(aligned);
-					size_t* original = reinterpret_cast<size_t*>(newBuf) - 1;
+					// Now store the ptr of the original allocation right before
+					// the aligned one, so it can be accessed again for freeing it up.
+					Pointer* original = reinterpret_cast<Pointer*>(newBuf) - 1;
 					*(original) = pointer;
 					TKLB_ASSERT(isAligned(newBuf))
 				}
@@ -434,10 +441,11 @@ namespace tklb {
 			}
 
 			if (oldBuf != nullptr && !injected() && mRealSize > 0) {
-				// Get rif of oldbuffer, object destructors were already called
+				// Get rid of oldbuffer, object destructors were already called
 				if (Alignment == 0) {
 					mAllocator.deallocate(reinterpret_cast<unsigned char*>(oldBuf), mRealSize);
 				} else {
+					// Restore the original unaligned address and use it to free the memory
 					auto original = *(reinterpret_cast<void**>(oldBuf) - 1);
 					mAllocator.deallocate(reinterpret_cast<unsigned char*>(original), mRealSize);
 				}

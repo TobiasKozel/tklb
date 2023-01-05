@@ -62,6 +62,7 @@ namespace tklb { namespace memory { namespace check {
 
 		struct CheckResult {
 			void* ptr;				///< Pointer of the real allocation
+			size_t size = 0;		///< Size of the allocation if recoverable
 			bool underrun = true;	///< start block is corrupt (can't recover end block)
 			bool overrun = true;	///< end block is corrupt
 		};
@@ -75,13 +76,19 @@ namespace tklb { namespace memory { namespace check {
 			MagicBlock* startBlock = ((MagicBlock*) ptr) - 1;
 			result.ptr = startBlock;
 
+
 			if (startBlock->checkMagicString()) {
 				// Only check the end block after it's safe to assume the first one isn't corrupt
 				MagicBlock* endBlock = (MagicBlock*) ((char*) ptr + startBlock->size);
 				result.underrun = false;
 
 				if (endBlock->checkMagicString()) {
+					if (startBlock->size != endBlock->size) {
+						// Could mean overrun or underrun since we don't know which size is correct.
+						return result;
+					}
 					result.overrun = false;
+					result.size = startBlock->size;
 				}
 			}
 
@@ -107,12 +114,10 @@ namespace tklb { namespace memory { namespace check {
 		bool checkMagicString() {
 			if (start) {
 				if (!compare(magic, MAGIC_STRING_START, sizeof(MAGIC_STRING_START))) {
-					TKLB_ASSERT(false) // Magic string is wrong so it was overrun
 					return false;
 				}
 			} else {
 				if (!compare(magic, MAGIC_STRING_END, sizeof(MAGIC_STRING_END))) {
-					TKLB_ASSERT(false) // Magic string is wrong so it was overrun
 					return false;
 				}
 			}

@@ -1,34 +1,28 @@
-#define TKLB_MEMORY_CHECK
-#define TKLB_ASSERT(val) setResult(val);
-bool ASSERT_RESULT;
-void setResult(bool val) {
-	if (!val) {
-		ASSERT_RESULT = false;
-	}
-}
+// #define TKLB_MEMORY_CHECK
+
 #include "./TestCommon.hpp"
 
 int test() {
 	{
 		int* overrun = (int*) tklb_malloc(sizeof(int) * 4);
 		overrun[4] = 1;
-		ASSERT_RESULT = true;
 		tklb_free(overrun);
 
-		if (ASSERT_RESULT != false) {
+		if (!heapCorruption) {
 			return 1;
 		}
+		heapCorruption = false;
 	}
 
 	{
 		int* underrun = (int*) tklb_malloc(sizeof(int) * 4);
 		underrun[-1] = 1;
-		ASSERT_RESULT = true;
 		tklb_free(underrun);
 
-		if (ASSERT_RESULT != false) {
+		if (!heapCorruption) {
 			return 2;
 		}
+		heapCorruption = false;
 	}
 	return 0;
 }
