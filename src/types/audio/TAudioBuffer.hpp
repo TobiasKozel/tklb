@@ -16,9 +16,9 @@
 
 namespace tklb {
 #ifdef TKLB_NO_SIMD
-	constexpr size_t DEFAULT_ALIGNMENT = 16;
+	constexpr SizeT DEFAULT_ALIGNMENT = 16;
 #else
-	constexpr size_t DEFAULT_ALIGNMENT = xsimd::default_arch::alignment();
+	constexpr SizeT DEFAULT_ALIGNMENT = xsimd::default_arch::alignment();
 #endif // TKLB_NO_SIMD
 
 	/**

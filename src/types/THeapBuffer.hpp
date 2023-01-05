@@ -1,10 +1,8 @@
 #ifndef _TKLB_HEAPBUFFER
 #define _TKLB_HEAPBUFFER
 
+#include "./TTypes.hpp"
 #include "../memory/TNew.hpp"
-
-#include <stddef.h>
-
 #include "../util/TMath.hpp"
 #include "../util/TTraits.hpp"
 #include "../memory/TAllocator.hpp"
@@ -26,7 +24,7 @@ namespace tklb {
 	 */
 	template <
 		typename T = unsigned char,
-		size_t ALIGNMENT = 0,
+		SizeT ALIGNMENT = 0,
 		class ALLOCATOR = DefaultAllocator<>,
 		typename SIZE = unsigned int
 	>
@@ -39,15 +37,6 @@ namespace tklb {
 		static_assert(
 			traits::IsUnsigned<Size>::value && !traits::IsFloat<Size>::value,
 			"Size needs to be unsigned and an integer"
-		);
-
-		/**
-		 * @brief Needs to be the width of a pointer in order to allow arithmetic.
-		 */
-		using Pointer = size_t;
-		static_assert(
-			sizeof(Pointer) == sizeof(void*),
-			"Pointer width is not equal to sizeof(void*)"
 		);
 
 		static constexpr Pointer Alignment = ALIGNMENT;

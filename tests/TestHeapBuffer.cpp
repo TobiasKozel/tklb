@@ -89,6 +89,6 @@ int test() {
 	if (res) return res;
 	res = runTest<tklb::HeapBuffer<LifeCycleTest, 16>>();
 	if (res) return res;
-	res = runTest<tklb::HeapBuffer<LifeCycleTest, 32, tklb::DefaultAllocator<unsigned char>, size_t>>();
+	res = runTest<tklb::HeapBuffer<LifeCycleTest, 32, tklb::DefaultAllocator<unsigned char>, tklb::SizeT>>();
 	return res;
 }

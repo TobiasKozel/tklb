@@ -1,7 +1,7 @@
 #ifndef _TKLB_MEMORY
 #define _TKLB_MEMORY
 
-#include <stddef.h>		// size_t
+#include "../types/TTypes.hpp"
 
 #ifndef TKLB_NO_STDLIB
 	#include <stdlib.h>		// malloc & free
@@ -24,7 +24,7 @@
  * @param bytes Bytes to allocate unaligned
  * @return void* Resulting memory
  */
-void* tklb_malloc(size_t bytes);
+void* tklb_malloc(tklb::SizeT bytes);
 
 /**
  * @brief Main free function. Use TKLB_FREE instead which allows tracking
@@ -36,7 +36,7 @@ void tklb_free(void* ptr);
 	#ifdef TKLB_MEMORY_CHECK
 		#include "./TMemoryCheck.hpp"
 
-		void* tklb_malloc(size_t bytes) {
+		void* tklb_malloc(SizeT bytes) {
 			using MagicBlock = tklb::memory::check::MagicBlock;
 			return MagicBlock::construct(malloc(bytes + MagicBlock::sizeNeeded()), bytes);
 		}
@@ -54,7 +54,7 @@ void tklb_free(void* ptr);
 			}
 		}
 	#else // TKLB_MEMORY_CHECK
-		void* tklb_malloc(size_t bytes) {
+		void* tklb_malloc(SizeT bytes) {
 			return malloc(bytes);
 		}
 		void tklb_free(void* ptr) {
@@ -91,11 +91,11 @@ namespace tklb { namespace memory {
 	/**
 	 * @brief memcpy wrapper
 	 */
-	static inline void copy(void* dst, const void* src, const size_t size) {
+	static inline void copy(void* dst, const void* src, const SizeT size) {
 	#ifdef TKLB_NO_STDLIB
 		auto source = reinterpret_cast<const unsigned char*>(src);
 		auto destination = reinterpret_cast<unsigned char*>(dst);
-		for (size_t i = 0; i < size; i++) {
+		for (SizeT i = 0; i < size; i++) {
 			destination[i] = source[i];
 		}
 	#else // TKLB_MEM_NO_STD
@@ -111,8 +111,8 @@ namespace tklb { namespace memory {
 	 * @param size Size of the dst buffer.
 	 * @param terminate Whether the last character in the destination will be '\0' terminated for safety.
 	 */
-	static inline void stringCopy(char* dst, const char* src, size_t size, bool terminate = true) {
-		for (size_t i = 0; i < size; i++) {
+	static inline void stringCopy(char* dst, const char* src, SizeT size, bool terminate = true) {
+		for (SizeT i = 0; i < size; i++) {
 			dst[i] = src[i];
 			if (src[i] == '\0') { return; }
 		}
@@ -131,10 +131,10 @@ namespace tklb { namespace memory {
 	 * @param val
 	 */
 	template <typename T>
-	static inline void set(void* dst, size_t elements, const T& val) {
+	static inline void set(void* dst, SizeT elements, const T& val) {
 		auto pointer = reinterpret_cast<T*>(dst);
 		#ifdef TKLB_NO_STDLIB
-			for (size_t i = 0; i < elements; i++) {
+			for (SizeT i = 0; i < elements; i++) {
 				pointer[i] = val;
 			}
 		#else
@@ -148,7 +148,7 @@ namespace tklb { namespace memory {
 	 * @param dst
 	 * @param bytes
 	 */
-	static inline void zero(void* dst, size_t bytes) {
+	static inline void zero(void* dst, SizeT bytes) {
 		set<unsigned char>(dst, bytes, 0);
 	}
 } } // tklb::memory

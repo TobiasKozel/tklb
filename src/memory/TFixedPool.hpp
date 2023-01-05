@@ -1,8 +1,7 @@
 #ifndef _TKLB_MEMORY_POOL_STACK
 #define _TKLB_MEMORY_POOL_STACK
 
-#include <stddef.h>	// size_t
-
+#include "../types/TTypes.hpp"
 #include "../types/TSpinLock.hpp"
 #include "../types/TLockGuard.hpp"
 #include "./TMemory.hpp"
@@ -17,7 +16,6 @@ namespace tklb { namespace memory {
 	 *        Prone to fragmentation and mostly for testing.
 	 */
 	class FixedPool {
-		using Pointer = size_t;
 		/**
 		 * @brief Type used to store sizes,
 		 * seems wasteful on 64bit machines but memory needs to be aligned
@@ -195,7 +193,7 @@ namespace tklb { namespace memory {
 			block.size = 0; // Mark the block as unallocated
 		}
 
-		void* reallocate(void* ptr, size_t size) {
+		void* reallocate(void* ptr, SizeT size) {
 			// Act like malloc when ptr is nullptr
 			if (ptr == nullptr) { return allocate(size); }
 

@@ -134,8 +134,8 @@ namespace tklb {
 				if (inputBufferWasEmpty) {
 					mPremultipliedBuffer.set(0);
 					for (uint i = 1; i < mSegmentCount; i++) {
-						const size_t indexIr = i;
-						const size_t indexAudio = (mCurrentPosition + i) % mSegmentCount;
+						const SizeT indexIr = i;
+						const SizeT indexAudio = (mCurrentPosition + i) % mSegmentCount;
 						complexMultiply(mPremultipliedBuffer, mSegmentsIR[indexIr], mSegments[indexAudio]);
 					}
 				}

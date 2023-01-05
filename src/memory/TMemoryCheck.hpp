@@ -1,7 +1,7 @@
 #ifndef _TKLB_MEMORY_CHECK
 #define _TKLB_MEMORY_CHECK
 
-#include <stddef.h>		// size_t
+#include "../types/TTypes.hpp"
 #include "./TNew.hpp"
 
 #ifndef TKLB_ASSERT
@@ -21,20 +21,20 @@ namespace tklb { namespace memory { namespace check {
 	 * @brief Struct inserted at the end and start of every allocation
 	 */
 	class MagicBlock {
-		size_t size;								///< Original requested size, just to keep track of allocated space
+		SizeT size;								///< Original requested size, just to keep track of allocated space
 		char magic[sizeof(MAGIC_STRING_START)];		///< magic block to detect heap corruption.
 		bool start;									///< Whether the block is at the start or end of the allocation.
 
 	public:
-		MagicBlock(size_t _size, bool _start) {
+		MagicBlock(SizeT _size, bool _start) {
 			size = _size;
 			start = _start;
 			if (start) {
-				for (size_t i = 0; i < sizeof(MAGIC_STRING_START); i++) {
+				for (SizeT i = 0; i < sizeof(MAGIC_STRING_START); i++) {
 					magic[i] = MAGIC_STRING_START[i];
 				}
 			} else {
-				for (size_t i = 0; i < sizeof(MAGIC_STRING_START); i++) {
+				for (SizeT i = 0; i < sizeof(MAGIC_STRING_START); i++) {
 					magic[i] = MAGIC_STRING_END[i];
 				}
 			}
@@ -43,7 +43,7 @@ namespace tklb { namespace memory { namespace check {
 		/**
 		 * @brief Just the MagicBlock size times 2 to sandwhich the actual allocation
 		 */
-		static size_t sizeNeeded() { return 2 * sizeof(MagicBlock); }
+		static SizeT sizeNeeded() { return 2 * sizeof(MagicBlock); }
 
 		/**
 		 * @brief Constructs the surounding magic blocks and offsets the pointer
@@ -52,7 +52,7 @@ namespace tklb { namespace memory { namespace check {
 		 * @param bytes The actual size of the usable space, not including sizeNeeded()!
 		 * @return void* Offset pointer to useable space
 		 */
-		static void* construct(void* allocation, size_t bytes) {
+		static void* construct(void* allocation, SizeT bytes) {
 			MagicBlock* startBlock = new (allocation) MagicBlock(bytes, true);
 			void* useableSpace = startBlock + 1;
 			void* endBlock = ((char*) useableSpace) + bytes;
@@ -62,7 +62,7 @@ namespace tklb { namespace memory { namespace check {
 
 		struct CheckResult {
 			void* ptr;				///< Pointer of the real allocation
-			size_t size = 0;		///< Size of the allocation if recoverable
+			SizeT size = 0;			///< Size of the allocation if recoverable
 			bool underrun = true;	///< start block is corrupt (can't recover end block)
 			bool overrun = true;	///< end block is corrupt
 		};
@@ -99,8 +99,8 @@ namespace tklb { namespace memory { namespace check {
 		/**
 		 * @brief Compare two strings
 		 */
-		static inline bool compare(const char* a, const char* b, size_t s) {
-			for (size_t i = 0; i < s; i++) {
+		static inline bool compare(const char* a, const char* b, SizeT s) {
+			for (SizeT i = 0; i < s; i++) {
 				if (a[i] != b[i]) {
 					return false;
 				}

@@ -2,7 +2,6 @@
 #define _TKLB_HANDLE_BUFFER
 
 #include "./THeapBuffer.hpp"
-#include <cstddef>
 
 namespace tklb {
 	/**

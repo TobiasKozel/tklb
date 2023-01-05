@@ -31,7 +31,7 @@ namespace tklb {
 		 * anything on the heap
 		 */
 		namespace _ {
-			void* drwaveMalloc(size_t size, void* userData);
+			void* drwaveMalloc(SizeT size, void* userData);
 			void drwaveFree(void* ptr, void* userData);
 		}
 
@@ -128,7 +128,7 @@ namespace tklb {
 
 			// TODO tklb this causes issues somehow
 			// using Size = typename Buffer::Size;
-			using Size = size_t;
+			using Size = SizeT;
 
 			drwav_data_format droptions;
 			TKLB_ASSERT(in.sampleRate != 0) // Set a samplerate
@@ -138,7 +138,7 @@ namespace tklb {
 			droptions.format = options.format;
 			droptions.container = drwav_container(options.container);
 
-			size_t outSize = 0;
+			SizeT outSize = 0;
 			void* memory = nullptr;
 
 			if (!drwav_init_memory_write(&wav, &memory, &outSize, &droptions, &drwaveCallbacks)) {

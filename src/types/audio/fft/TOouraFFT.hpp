@@ -71,7 +71,7 @@ namespace tklb {
 						*(i++) = (-(*(b++)));
 					}
 				}
-				const size_t size2 = mSize / 2;
+				const SizeT size2 = mSize / 2;
 				// real[size2] = -imaginary[0]; // this doens't make any sense
 				// imaginary[0] = 0.0;
 				// imaginary[size2] = 0.0; // this doesn't either

@@ -2,11 +2,12 @@
  * @file TTimer.hpp
  * @author Tobias Kozel
  * @brief Simple wrapper around the std chrono stuff to make measuring easier
+ *        Only intended for internal testing.
  * @version 0.1
  * @date 2022-08-05
- * 
+ *
  * @copyright Copyright (c) 2022
- * 
+ *
  */
 
 #ifndef _TKLB_TIMER

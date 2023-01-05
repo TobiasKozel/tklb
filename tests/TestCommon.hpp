@@ -12,7 +12,7 @@ tklb::memory::FixedPool pool = { poolMemory, poolSize };
 #include "../src/util/TAssert.h"
 #include "../src/memory/TMemoryCheck.hpp"
 
-void* tklb_malloc(size_t bytes) {
+void* tklb_malloc(tklb::SizeT bytes) {
 	using MagicBlock = tklb::memory::check::MagicBlock;
 	auto ptr = pool.allocate(bytes + MagicBlock::sizeNeeded());
 	auto ptr2 = MagicBlock::construct(ptr, bytes);
