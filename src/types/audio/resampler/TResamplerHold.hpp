@@ -47,7 +47,7 @@ namespace tklb {
 			for (int c = 0; c < in.channels(); c++) {
 				Size output = 0;										// index in output buffer
 				for (; output < out.size(); output++) {
-					const Size index = std::round(output * mFactor);	// closest sample
+					const Size index = tklb::round(output * mFactor);	// closest sample
 					if (countIn <= index) { break; }
 					out[c][output] = in[c][index];
 				}
@@ -66,14 +66,14 @@ namespace tklb {
 		 * @brief Estimate how many samples need to be put in to get n samples out.
 		 */
 		Size estimateNeed(const Size out) const {
-			return std::round(out * mFactor);
+			return tklb::round(out * mFactor);
 		}
 
 		/**
 		 * @brief Estimate how many sample will be emitted in the next step
 		 */
 		Size estimateOut(const Size in) const {
-			return std::round(in * (double(mRateOut) / double(mRateIn)));
+			return tklb::round(in * (double(mRateOut) / double(mRateIn)));
 		}
 
 		bool isInitialized() const {

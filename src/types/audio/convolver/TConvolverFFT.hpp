@@ -72,7 +72,7 @@ namespace tklb {
 			// Figure out how many segments a block is
 			mBlockSize = powerOf2(blockSize);
 			mSegmentSize = 2 * mBlockSize;
-			mSegmentCount = uint(std::ceil(irLength / double(mBlockSize)));
+			mSegmentCount = uint(tklb::ceil(irLength / double(mBlockSize)));
 			mFFTComplexSize = mBlockSize + 1;
 
 			// create segment buffers for the input signal
@@ -86,7 +86,7 @@ namespace tklb {
 			mSegmentsIR.construct();
 
 			for (uint i = 0; i < mSegmentCount; i++) {
-				const uint remaining = std::min(irLength - (i * mBlockSize), mBlockSize);
+				const uint remaining = tklb::min(irLength - (i * mBlockSize), mBlockSize);
 				mFFTBuffer.set(0);
 				// Put the segment in the fft buffer, might do type conversion
 				mFFTBuffer.set(ir + (i * mBlockSize), remaining);
@@ -122,7 +122,7 @@ namespace tklb {
 			uint iterations = 0;
 			while (processed < length) {
 				const bool inputBufferWasEmpty = (mInputBufferFill == 0);
-				const uint processing = std::min(length - processed, mBlockSize - mInputBufferFill);
+				const uint processing = tklb::min(length - processed, mBlockSize - mInputBufferFill);
 				const uint inputBufferPos = mInputBufferFill;
 
 				mInputBuffer.set(in + processed, processing, 0, inputBufferPos);

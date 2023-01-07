@@ -64,14 +64,14 @@ namespace tklb {
 				// T mix = 0.0;
 				for (; output < out.size(); output++) {
 					const T position = output * mFactor;			// index in input buffer, somewhere between two samples
-					const T lastPosition = std::floor(position);	// next sample index in the input buffer
+					const T lastPosition = tklb::floor(position);	// next sample index in the input buffer
 					const Size lastIndex = lastPosition;
 					const Size nextIndex = lastPosition + 1;		// next sample index in the input buffer this is the one we need to fetch
 
 					if (countIn <= nextIndex) { break; }
 
 					const T next = in[c][lastIndex];
-					T mix = 0.5 * (1.0 - cos((position - lastPosition) * 3.1416));
+					T mix = 0.5 * (1.0 - tklb::cos((position - lastPosition) * 3.1416));
 					out[c][output] = last + mix * (next - last);
 					last = next;
 				}
@@ -95,11 +95,11 @@ namespace tklb {
 		 * @brief Estimate how many samples need to be put in to get n samples out.
 		 */
 		Size estimateNeed(const Size out) const {
-			return std::round(out * mFactor);
+			return tklb::round(out * mFactor);
 		}
 
 		Size estimateOut(const Size in) const {
-			return std::round(in * (double(mRateOut) / double(mRateIn)));
+			return tklb::round(in * (double(mRateOut) / double(mRateIn)));
 		}
 
 

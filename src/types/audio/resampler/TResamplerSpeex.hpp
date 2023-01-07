@@ -156,7 +156,7 @@ namespace tklb {
 		 * @brief Estimate how many samples need to be put in to get n samples out.
 		 */
 		Size estimateNeed(const Size out) const {
-			return Size(std::floor(out * (double(mRateIn) / double(mRateOut))));
+			return Size(tklb::floor(out * (double(mRateIn) / double(mRateOut))));
 		}
 
 		/**
@@ -164,7 +164,7 @@ namespace tklb {
 		 */
 		Size estimateOut(const Size in) const {
 			TKLB_ASSERT(0 < mRateOut && 0 < mRateIn)
-			return (Size) std::round(in * (double(mRateOut) / double(mRateIn)));
+			return (Size) tklb::round(in * (double(mRateOut) / double(mRateIn)));
 		}
 
 		bool isInitialized() const { return mState != nullptr; }

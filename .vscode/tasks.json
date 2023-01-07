@@ -5,7 +5,7 @@
 			"label": "linuxg++",
 			"command": "/usr/bin/g++",
 			"args": [
-				"-std=c++11",
+				"-std=c++14",
 				"-DTKLB_NO_SIMD",
 				"-DTKLB_NO_STDLIB",
 				"-g",
@@ -26,7 +26,7 @@
 			"label": "windowsg++",
 			"command": "C:\\dev\\tools\\Strawberry\\c\\bin\\g++.exe",
 			"args": [
-				"-std=c++11",
+				"-std=c++14",
 				"-g",
 				"${file}",
 				"-o",

@@ -1,3 +1,14 @@
+/**
+ * @file TMath.hpp
+ * @author Tobias Kozel
+ * @brief Wraps all math functions
+ * @version 0.1
+ * @date 2023-01-07
+ *
+ * @copyright Copyright (c) 2023
+ *
+ */
+
 #ifndef _TKLB_MATH
 #define _TKLB_MATH
 
@@ -7,12 +18,16 @@
 	#include "./TAssert.h"
 #endif
 
+#include "./TTraits.hpp"
+
 
 namespace tklb {
-	constexpr double PI = 3.14159265358979323846;
+	template <typename T>
+	constexpr T PI = 3.14159265358979323846;
 
 	template <typename T>
 	constexpr bool isPowerof2(T v) {
+		static_assert(!traits::IsFloat<T>::value, "isPowerof2 only works with integers");
 		return v && ((v & (v - 1)) == 0);
 	}
 
@@ -42,26 +57,74 @@ namespace tklb {
 	}
 
 	template <typename T>
-	constexpr T round(T v) { return v; }
-	template <>
-	constexpr float round(float v) {
-		return (long) (v + float(0.5));
-	}
-	template <>
-	constexpr double round(double v) {
-		return (long) (v + double(0.5));
+	constexpr T floor(const T& v) {
+		#ifdef TKLB_NO_STDLIB
+			const auto trucated = (long) v;
+			if (trucated == v) { return v; }
+			return T(0) < v ? (long) v : ((long) v) - T(1);
+		#else
+			return std::floor(v);
+		#endif
 	}
 
 	template <typename T>
-	constexpr T pow(T x, T y) {
+	constexpr T ceil(const T& v) {
 		#ifdef TKLB_NO_STDLIB
-			// ! absolutely untested
+			const auto trucated = (long) v;
+			if (trucated == v) { return v; }
+			return T(0) < v ? ((long) v) + T(1) : (long) v;
+		#else
+			return std::ceil(v);
+		#endif
+	}
+
+	template <typename T>
+	constexpr T round(const T& v) {
+		#ifdef TKLB_NO_STDLIB
+			const auto trucated = (long) v;
+			if (trucated == v) { return v; }
+			return (long) ((T(0) < v) ? (v + T(0.5)) : (v - T(0.5)));
+		#else
+			return std::round(v);
+		#endif
+	}
+
+	template <typename T>
+	constexpr T cos(const T& v) {
+		static_assert(traits::IsFloat<T>::value, "cos only works with float");
+		#ifdef TKLB_NO_STDLIB
+			// https://stackoverflow.com/a/28050328
+			constexpr T tp = T(1) / (T(2) * PI<T>);
+			T x = v * tp;
+			x -= T(0.25) + floor(x + T(0.25));
+			x *= T(16) * (abs(x) - T(0.5));
+			x += T(0.225) * x * (abs(x) - T(1)); // Optional
+			return x;
+		#else
+			return std::cos(v);
+		#endif
+	}
+
+	template <typename T>
+	constexpr T sin(const T& v) {
+		static_assert(traits::IsFloat<T>::value, "sin only works with float");
+		#ifdef TKLB_NO_STDLIB
+			return cos(v - T(0.5) * PI<T>);
+		#else
+			return std::sin(v);
+		#endif
+	}
+
+	template <typename T>
+	constexpr T pow(const T& x, const T& y) {
+		#ifdef TKLB_NO_STDLIB
 			// https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
+			// this isn't really up to spec
 			union {
 				double d;
 				int x[2];
-			} u = { x };
-			u.x[1] = (int)(y * (u.x[1] - 1072632447) + 1072632447);
+			} u = { (double) x };
+			u.x[1] = (int(y) * (u.x[1] - 1072632447) + 1072632447);
 			u.x[0] = 0;
 			return u.d;
 		#else
@@ -78,14 +141,11 @@ namespace tklb {
 	template <typename T>
 	constexpr T sqrt(const T& x) {
 		#ifdef TKLB_NO_STDLIB
-			// ! absolutely untested
 			// https://www.codeproject.com/Articles/69941/Best-Square-Root-Method-Algorithm-Function-Precisi sqrt3
-			union
-			{
+			union {
 				float x;
 				int i;
-			} u = { x };
-
+			} u = { (float) x };
 			u.x = x;
 			u.i = (1<<29) + (u.i >> 1) - (1<<22);
 			return u.x;

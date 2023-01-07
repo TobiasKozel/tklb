@@ -86,14 +86,14 @@ namespace tklb {
 			Size samplesLeft = n;
 
 			for (Size i = 0; i < length; i += mBlockSize) {
-				const Size remaining = std::min(mBlockSize, samplesLeft);
+				const Size remaining = tklb::min(mBlockSize, samplesLeft);
 				for (uchar c = 0; c < out.channels(); c++) {
 					// eg the input is mono, but the IR stereo
 					// the result will still be stereo
 					const uchar inChannel = c % in.channels();
 					// TODO tklb the convolver channels can't be crossed
 					// so each output needds its own convolver
-					if (std::is_same<T2, fftconvolver::Sample>::value) {
+					if (tklb::traits::IsSame<T2, fftconvolver::Sample>::value) {
 						auto inBuf = reinterpret_cast<const fftconvolver::Sample*>(in[inChannel] + i);
 						auto outBuf = reinterpret_cast<fftconvolver::Sample*>(out[c] + i);
 						mConvolvers[c].process(inBuf, outBuf, remaining);
