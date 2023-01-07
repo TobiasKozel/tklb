@@ -14,8 +14,6 @@
 
 #ifndef TKLB_NO_STDLIB
 	#include <cmath>
-#else
-	#include "./TAssert.h"
 #endif
 
 #include "./TTraits.hpp"

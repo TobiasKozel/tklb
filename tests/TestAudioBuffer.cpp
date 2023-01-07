@@ -1,8 +1,6 @@
 #include "./TestCommon.hpp"
 #include "../src/types/audio/TAudioBuffer.hpp"
 
-
-
 const int length = 1024;
 const int channels = 2;
 

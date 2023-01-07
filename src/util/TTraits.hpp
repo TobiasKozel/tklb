@@ -99,6 +99,20 @@ namespace tklb { namespace traits {
 	struct IsFloat<float> : Value<true> { };
 	template<>
 	struct IsFloat<const float> : Value<true> { };
-} }
+
+	template<typename T>
+	struct removeReference { typedef T type; };
+
+	template<typename T>
+	struct removeReference<T&> { typedef T type; };
+
+	template<typename T>
+	struct removeReference<T&&> { typedef T type; };
+
+	template <class T>
+	constexpr typename removeReference<T>::type&& move(T&& v) {
+		return static_cast<typename removeReference<T>::type&&>(v);
+	}
+} } // tklb::tratis
 
 #endif // _TKLB_TRAITS

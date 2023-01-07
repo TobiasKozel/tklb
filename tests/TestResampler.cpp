@@ -1,6 +1,5 @@
 #include "./TestCommon.hpp"
 
-#define TKLB_RESAMPLER_SPEEX_IMPL
 #include "../src/types/audio/resampler/TResamplerLinear.hpp"
 #include "../src/types/audio/resampler/TResamplerHold.hpp"
 #include "../src/types/audio/resampler/TResamplerSpeex.hpp"

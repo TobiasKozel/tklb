@@ -52,7 +52,6 @@ namespace tklb {
 		static constexpr Size ChunkSize = 16;
 
 	private:
-		ALLOCATOR mAllocator;
 		T* mBuf = nullptr;		// Underlying buffer
 		Size mSize = 0;			// elements in buffer
 
@@ -64,6 +63,8 @@ namespace tklb {
 		 */
 		Size mRealSize = 0;
 
+		// TODO this could be static constexpr but that only works in cpp17, needs some investigation
+		ALLOCATOR mAllocator = { };
 		// True when the foreign memory is const, only cheked in debug mode
 		TKLB_ASSERT_STATE(bool IS_CONST = false)
 
@@ -98,6 +99,9 @@ namespace tklb {
 			source.disown();
 		}
 
+		/**
+		 * @brief Move operator (to existing instance)
+		 */
 		HeapBuffer& operator= (HeapBuffer&& source) {
 			TKLB_ASSERT_STATE(IS_CONST = source.IS_CONST)
 			mBuf = source.mBuf;
@@ -352,7 +356,7 @@ namespace tklb {
 		/**
 		 * @brief Returns the real allocated size in elements
 		 */
-		Size reserved() const { return mRealSize; }
+		Size reserved() const { return mRealSize == 0 ? mSize : mRealSize; }
 
 		/**
 		 * @brief Returns the size of the allocated space.
