@@ -42,9 +42,7 @@ namespace tklb {
 	}
 
 	template <typename T>
-	constexpr T round(T v) {
-		return v;
-	}
+	constexpr T round(T v) { return v; }
 	template <>
 	constexpr float round(float v) {
 		return (long) (v + float(0.5));
@@ -57,8 +55,15 @@ namespace tklb {
 	template <typename T>
 	constexpr T pow(T x, T y) {
 		#ifdef TKLB_NO_STDLIB
-			TKLB_ASSERT(false) // TODO
-			return 0;
+			// ! absolutely untested
+			// https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
+			union {
+				double d;
+				int x[2];
+			} u = { x };
+			u.x[1] = (int)(y * (u.x[1] - 1072632447) + 1072632447);
+			u.x[0] = 0;
+			return u.d;
 		#else
 			return std::pow(x, y);
 		#endif
@@ -68,16 +73,22 @@ namespace tklb {
 	 * @brief This beeing constexpr allows the SPCAP to be prepared at compile time
 	 *        for the predefined speaker setups.
 	 * @param x
-	 * @return constexpr float
+	 * @return constexpr T
 	 */
-	constexpr float sqrt(const float& x) {
+	template <typename T>
+	constexpr T sqrt(const T& x) {
 		#ifdef TKLB_NO_STDLIB
 			// ! absolutely untested
 			// https://www.codeproject.com/Articles/69941/Best-Square-Root-Method-Algorithm-Function-Precisi sqrt3
-			float working = x;
-			auto& i = *reinterpret_cast<int*>(&working);
-			i = (1<<29) + (i >> 1) - (1<<22);
-			return working;
+			union
+			{
+				float x;
+				int i;
+			} u = { x };
+
+			u.x = x;
+			u.i = (1<<29) + (u.i >> 1) - (1<<22);
+			return u.x;
 		#else
 			// TODO apparently not all std versions have constexpr sqrt
 			return std::sqrt(x);

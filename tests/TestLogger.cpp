@@ -2,7 +2,7 @@
 #include "../src/util/TLogger.hpp"
 
 #ifdef TKLB_NO_STDLIB
-	void tklb_print(int level, const char* message) { }
+	void tklb_print(int level, const char* message) { (void) level; (void) message; }
 #endif
 
 int main() {

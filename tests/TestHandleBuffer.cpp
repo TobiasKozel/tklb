@@ -33,6 +33,8 @@ int test()
 
 	int count = 0;
 	handleBuf.iterate([&](ClassToStore& element, unsigned int handle) {
+		(void) element;
+		(void) handle;
 		count++;
 	});
 	if (count != 3) {
@@ -43,6 +45,8 @@ int test()
 	handleBuf.remove(e2);
 
 	handleBuf.iterate([&](ClassToStore& element, unsigned int handle) {
+		(void) element;
+		(void) handle;
 		count++;
 	});
 	if (count != 2) {

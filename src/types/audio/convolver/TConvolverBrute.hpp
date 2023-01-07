@@ -26,10 +26,11 @@ namespace tklb {
 		 * @brief Load a impulse response and prepare the convolution
 		 * @param buffer The ir buffer.
 		 * @param channel Which channel to use from the AudioBuffer
-		 * @param blockSize Size of blocks ir will be divided in
+		 * @param blockSize Unused, blocks aren't divided for bruteforce
 		 */
 		template <typename T2>
 		void load(const AudioBufferTpl<T2>& ir, const uint blockSize) {
+			(void) blockSize;
 			// trim silence, since longer IRs increase CPU usage considerably
 			Size irLength = ir.size();
 			if (irLength == 0) { return; }

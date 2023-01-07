@@ -23,13 +23,13 @@ namespace tklb {
 		 * @brief setup the resampler
 		 * @param rateIn Input sample rate
 		 * @param rateOut Desired output samplerate
-		 * @param maxBlock The maximum blocksize beeing passed into process().
-		 * Only relevant when doing non float resampling to allocate space for the
-		 * conversion buffers
-		 * @param quality Quality factor from 1-10. Higher results in better quality and higher CPU usage. Depending on implementataion may not do anything.
+		 * @param maxBlock Not used/needed for simple algorithms.
+		 * @param quality Not used
 		 * @return True on success
 		 */
 		bool init(uint rateIn, uint rateOut, uint maxBlock = 512, uchar quality = 5) {
+			(void) maxBlock;
+			(void) quality;
 			mRateIn = rateIn;
 			mRateOut = rateOut;
 			mFactor = double(mRateIn) / double(mRateOut);
