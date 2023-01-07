@@ -70,25 +70,19 @@ namespace tklb {
 	 * @param x
 	 * @return constexpr float
 	 */
-	#ifdef TKLB_NO_STDLIB
-	// TODO get a constexpr version going
-	float sqrt(const float& x) {
-		// ! absolutely untested
-		// https://www.codeproject.com/Articles/69941/Best-Square-Root-Method-Algorithm-Function-Precisi sqrt3
-		union {
-			int i;
-			float x;
-		} u;
-		u.x = x;
-		u.i = (1<<29) + (u.i >> 1) - (1<<22);
-		return u.x;
-	}
-	#else
 	constexpr float sqrt(const float& x) {
-		// TODO apparently not all std versions have constexpr sqrt
-		return std::sqrt(x);
+		#ifdef TKLB_NO_STDLIB
+			// ! absolutely untested
+			// https://www.codeproject.com/Articles/69941/Best-Square-Root-Method-Algorithm-Function-Precisi sqrt3
+			float working = x;
+			auto& i = *reinterpret_cast<int*>(&working);
+			i = (1<<29) + (i >> 1) - (1<<22);
+			return working;
+		#else
+			// TODO apparently not all std versions have constexpr sqrt
+			return std::sqrt(x);
+		#endif
 	}
-	#endif
 } // namespace
 
 #endif // _TKLB_MATH
