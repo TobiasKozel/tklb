@@ -35,15 +35,15 @@ function test {
 echo "Test ${source_file}"
 test "g++ -std=c++14 -O3 -Wall -march=native"
 # xsimd causes a few warnings, so predantic os only enabledwithout simd
-test "g++ -std=c++14 -O3 -Wall -pedantic -march=native -DTKLB_NO_SIMD"
+test "g++ -std=c++14 -O3 -Wall -pedantic -Wextra -march=native -DTKLB_NO_SIMD"
 test "g++ -std=c++14 -O3 -Wall -march=native -DTKLB_SAMPLE_FLOAT"
-test "g++ -std=c++14 -O3 -Wall -pedantic -march=native -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD"
-test "g++ -std=c++14 -O3 -Wall -pedantic -march=native -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD -DTKLB_NO_STDLIB"
+test "g++ -std=c++14 -O3 -Wall -pedantic -Wextra -march=native -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD"
+test "g++ -std=c++14 -O3 -Wall -pedantic -Wextra -march=native -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD -DTKLB_NO_STDLIB"
 test "clang++ -std=c++14 -O3 -Wall -march=native"
-test "clang++ -std=c++14 -O3 -Wall -pedantic -march=native -DTKLB_NO_SIMD"
+test "clang++ -std=c++14 -O3 -Wall -pedantic -Wextra -march=native -DTKLB_NO_SIMD"
 test "clang++ -std=c++14 -O3 -Wall -march=native -DTKLB_SAMPLE_FLOAT"
-test "clang++ -std=c++14 -O3 -Wall -pedantic -march=native -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD"
-test "clang++ -std=c++14 -O3 -Wall -pedantic -march=native -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD -DTKLB_NO_STDLIB"
+test "clang++ -std=c++14 -O3 -Wall -pedantic -Wextra -march=native -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD"
+test "clang++ -std=c++14 -O3 -Wall -pedantic -Wextra -march=native -DTKLB_SAMPLE_FLOAT -DTKLB_NO_SIMD -DTKLB_NO_STDLIB"
 
 # TODO figure out how to get into dev shell for windows
 #if [ "$executable" == "./a.exe" ]; then

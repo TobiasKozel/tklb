@@ -136,7 +136,7 @@ namespace tklb {
 		 * @param func Func A lambda called for each valid element
 		 */
 		template <class Func>
-		void const iterate(Func&& func) {
+		constexpr void iterate(Func&& func) {
 			Handle itemsLeft = mElements.size() - mFree;
 			for (Handle i = 0; i < mElements.size(); i++) {
 				if (itemsLeft == 0) { return; } // early out

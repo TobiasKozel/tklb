@@ -665,7 +665,11 @@ namespace tklb {
 		}
 
 	private:
-		void assertOnConstMem() { T* data = mBuffer.data(); }
+		void assertOnConstMem() {
+			// Force non const access to trigger assertion.
+			T* data = mBuffer.data();
+			(void) data;
+		}
 	};
 
 

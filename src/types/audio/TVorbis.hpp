@@ -24,8 +24,6 @@ namespace tklb { namespace vorbis {
 	template <typename T, class Buffer = AudioBufferTpl<T>>
 	bool load(const char* data, typename Buffer::Size length, Buffer& out) {
 		using Size = typename Buffer::Size;
-		using uchar = unsigned char;
-		using ushort = unsigned short;
 
 		stb_vorbis* vorbis;
 		int error = 0;

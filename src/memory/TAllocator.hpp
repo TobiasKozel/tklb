@@ -53,6 +53,7 @@ namespace tklb {
 		* @param n Element count to be freed, not really needed for anything besides stats
 		*/
 		void deallocate(T* ptr, SizeT n) noexcept {
+			(void) n;
 			TKLB_PROFILER_FREE_L(ptr, NAME::Name)
 			tklb_free(ptr);
 		}

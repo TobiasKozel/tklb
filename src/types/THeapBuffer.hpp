@@ -149,9 +149,8 @@ namespace tklb {
 		 * @brief Provide foreign memory to borrow
 		 * @param mem Modifyable memory to use
 		 * @param size Size of the memory in elements
-		 * @param realSize The actual size if it's chunk allocated
 		 */
-		void inject(T* mem, const Size size, const Size realSize = 0) {
+		void inject(T* mem, const Size size) {
 			if (!injected() && mBuf != nullptr) { resize(0); };
 			TKLB_ASSERT_STATE(IS_CONST = false)
 			disown();
@@ -165,10 +164,9 @@ namespace tklb {
 		 * Using non const accessors will cause assertions in debug mode
 		 * @param mem Non modifyable memory to use
 		 * @param size Size of the memory in elements
-		 * @param realSize The actual size if it's chunk allocated
 		 */
-		void inject(const T* mem, const Size size, const Size realSize = 0) {
-			inject(const_cast<T*>(mem), size, realSize);
+		void inject(const T* mem, const Size size) {
+			inject(const_cast<T*>(mem), size);
 			TKLB_ASSERT_STATE(IS_CONST = true)
 		}
 

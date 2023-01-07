@@ -43,6 +43,7 @@
 		#if !defined(TKLB_NO_STDLIB) && !defined(TKLB_CUSTOM_PRINT)
 			#include <stdio.h>
 			void tklb_print(int level, const char* message) {
+				(void) level;
 				printf("%s\n", message);
 			}
 		#endif
