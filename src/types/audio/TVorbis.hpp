@@ -6,7 +6,7 @@
 
 #define STB_VORBIS_NO_PUSHDATA_API // Don't need this
 #define STB_VORBIS_NO_INTEGER_CONVERSION // don't need either
-#define STB_VORBIS_NO_CRT
+// #define STB_VORBIS_NO_CRT // TODO hook the allocations
 #define STB_VORBIS_NO_STDIO
 #ifndef TKLB_IMPL
 	// Works inverted

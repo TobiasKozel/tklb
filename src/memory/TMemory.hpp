@@ -131,14 +131,13 @@ namespace tklb { namespace memory {
 	 * @param val
 	 */
 	template <typename T>
-	static inline void set(void* dst, SizeT elements, const T& val) {
-		auto pointer = reinterpret_cast<T*>(dst);
+	static inline void set(T* dst, SizeT elements, const T& val) {
 		#ifdef TKLB_NO_STDLIB
 			for (SizeT i = 0; i < elements; i++) {
-				pointer[i] = val;
+				dst[i] = val;
 			}
 		#else
-			std::fill_n(pointer, elements, val);
+			std::fill_n(dst, elements, val);
 		#endif
 	}
 
@@ -149,7 +148,8 @@ namespace tklb { namespace memory {
 	 * @param bytes
 	 */
 	static inline void zero(void* dst, SizeT bytes) {
-		set<unsigned char>(dst, bytes, 0);
+		const auto ptr = reinterpret_cast<char*>(dst);
+		set<char>(ptr, bytes, 0);
 	}
 } } // tklb::memory
 
