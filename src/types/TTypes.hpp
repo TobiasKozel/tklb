@@ -12,7 +12,6 @@ namespace tklb {
 namespace tklb {
 	using SizeT = unsigned long;
 	using Pointer = SizeT;
-
 } // tklb
 #endif
 

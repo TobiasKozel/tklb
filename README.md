@@ -1,8 +1,10 @@
 # TKLB Readme
+Cross Platform C++14 library.
 
 ## TODOs
 - FFT convolution
 - Resamplers
+- Vector math
 
 ## General
 

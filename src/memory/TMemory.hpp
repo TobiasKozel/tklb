@@ -54,7 +54,7 @@ void tklb_free(void* ptr);
 			}
 		}
 	#else // TKLB_MEMORY_CHECK
-		void* tklb_malloc(SizeT bytes) {
+		void* tklb_malloc(tklb::SizeT bytes) {
 			return malloc(bytes);
 		}
 		void tklb_free(void* ptr) {

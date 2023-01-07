@@ -407,10 +407,9 @@ namespace tklb {
 					const Pointer aligned = floored + Alignment;
 
 					// Now there's a gap between the allocation and aligned address.
-					const Pointer misaligned = aligned - pointer;
 					// It needs to be large enough to store a pointer
 					// malloc aligns to sizeof(void*), so this should always be the case.
-					TKLB_ASSERT(sizeof(Pointer) <= misaligned)
+					TKLB_ASSERT(sizeof(Pointer) <= (aligned - pointer))
 
 					newBuf = reinterpret_cast<void*>(aligned);
 					// Now store the ptr of the original allocation right before

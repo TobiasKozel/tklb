@@ -595,9 +595,9 @@ enum STBVorbisError
    #ifndef NULL
       #define NULL 0
    #endif
-   #define malloc(s)   0
+   #define malloc(s)   (NULL)
    #define free(s)     ((void) 0)
-   #define realloc(s)  0
+   #define realloc(s)  (NULL)
 #endif // STB_VORBIS_NO_CRT
 
 #include <limits.h>
@@ -959,7 +959,11 @@ static void *setup_malloc(vorb *f, int sz)
       f->setup_offset += sz;
       return p;
    }
-   return sz ? malloc(sz) : NULL;
+   #ifdef STB_VORBIS_NO_CRT
+      return 0;
+   #else
+      return sz ? malloc(sz) : NULL;
+   #endif
 }
 
 static void setup_free(vorb *f, void *p)

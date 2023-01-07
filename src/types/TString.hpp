@@ -98,9 +98,9 @@ namespace tklb {
 
 	public:
 		String() { }
-		String(const char* str) { set(str); }
-		String(const String* str) { set(*str); };
-		String(const String& str) { set(str); };
+		String(const char* str, bool inject = false) { set(str, inject); }
+		String(const String* str, bool inject = false) { set(*str, inject); };
+		String(const String& str, bool inject = false) { set(str, inject); };
 		String& operator=(const char* str) { set(str); return *this; }
 		String& operator=(const String& str) { set(str); return *this; };
 
@@ -125,6 +125,30 @@ namespace tklb {
 		bool operator!=(const char* b) const { return !((*this) == b); }
 
 		/**
+		 * @brief Searches for occurence of string
+		 */
+		bool contains(const String& b) const {
+			const auto& a = *(this);
+			for (Size i = 0; i < a.size(); i++) {
+				if (a.size() < i + b.size()) {
+					return false; // ! no more space to match
+				}
+				Size j = 0;
+				for (; j < b.size(); j++) {
+					if (a[i + j] != b[j]) { break; }
+				}
+				if (j == b.size() - 1) {
+					return true; // * matched
+				}
+			}
+			return false;
+		}
+
+		bool contains(const char* str) const {
+			return contains(String(str, true));
+		}
+
+		/**
 		 * @brief length of string INCLUDING null terminator
 		 *
 		 * @return Size
@@ -133,21 +157,28 @@ namespace tklb {
 		bool empty() const { return mData.empty(); }
 		char* data() { return mData.data(); }
 
-		void set(const String& str) {
-			mData.set(str.c_str(), str.size());
+		void set(const String& str, bool inject = false) {
+			if (inject) {
+				mData.inject(str.c_str(), str.size());
+			} else {
+				mData.set(str.c_str(), str.size());
+			}
 		}
 
-		void set(const char* str, Size length) {
+		void set(const char* str, Size length, bool inject = false) {
 			if (str == nullptr || length == 0) { return; }
-			mData.resize(length);
-			mData.set(str, length);
-			mData[length - 1] = '\0';
+			if (inject) {
+				mData.inject(str, length);
+			} else {
+				mData.set(str, length);
+				mData[length - 1] = '\0';
+			}
 		}
 
 		/**
 		 * @brief Set from c string with a max length of 32 mb.
 		 */
-		void set(const char* str) {
+		void set(const char* str, bool inject = false) {
 			constexpr Size MAX_LENGTH = 1024 * 1024 * 32; // 32 megs
 			if (str == nullptr) { return; }
 			Size length = 0;
@@ -158,7 +189,7 @@ namespace tklb {
 					break;
 				}
 			}
-			set(str, length);
+			set(str, length, inject);
 		}
 
 		void append(const String& str) {
