@@ -27,13 +27,13 @@ namespace tklb {
 		static constexpr SizeT AddressableElements = limits::max<SizeT>::value / sizeof(T);
 		typedef T value_type;
 
-		DefaultAllocator() = default;
-		DefaultAllocator(const DefaultAllocator&) = default;
+		constexpr DefaultAllocator() = default;
+		constexpr DefaultAllocator(const DefaultAllocator&) = default;
 
 		template <class U, class NAME2>
-		DefaultAllocator(const DefaultAllocator<U, NAME2>&) { }
+		constexpr DefaultAllocator(const DefaultAllocator<U, NAME2>&) { }
 
-		constexpr T* allocate(SizeT n) const noexcept {
+		T* allocate(SizeT n) const noexcept {
 			#ifndef TKLB_RELEASE
 				if (AddressableElements < n) { return nullptr; } // ! allocation too large
 			#endif
@@ -52,7 +52,7 @@ namespace tklb {
 		* @param ptr pointer
 		* @param n Element count to be freed, not really needed for anything besides stats
 		*/
-		constexpr void deallocate(T* ptr, SizeT n) const noexcept {
+		void deallocate(T* ptr, SizeT n) const noexcept {
 			(void) n;
 			TKLB_PROFILER_FREE_L(ptr, NAME::Name)
 			tklb_free(ptr);

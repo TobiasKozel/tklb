@@ -41,7 +41,6 @@ namespace tklb { namespace limits {
 	struct max<unsigned int> { static constexpr unsigned int value = ~0; };
 
 	template<>
-	//(~((unsigned short) 0)) / 2
 	struct max<short> { static constexpr short value = ((unsigned short) ~0) >> 1; };
 	template<>
 	struct max<unsigned short> { static constexpr unsigned short value = ~0; };

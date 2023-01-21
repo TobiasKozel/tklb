@@ -16,7 +16,7 @@ namespace tklb {
 	 */
 	template <class T, typename Handle = unsigned int, int GenerationBits = 8, class ALLOCATOR = DefaultAllocator<>>
 	class HandleBuffer {
-		static constexpr Handle MaskBits = sizeof(Handle) * 8 - GenerationBits;
+		static constexpr Handle MaskBits 		= sizeof(Handle) * 8 - GenerationBits;
 		static constexpr Handle MaskIndex		= (1 << MaskBits) - 1;
 		static constexpr Handle MaskGeneration	= ~MaskIndex;
 
@@ -85,6 +85,7 @@ namespace tklb {
 		 * @return Handle A valid handle if there was space left, InvalidHandle otherwise.
 		 */
 		Handle create() {
+			// TODO resize would be in order
 			if (mStart == MaskIndex) { return InvalidHandle; } // No more space
 			TKLB_ASSERT(mFree != 0) // Means there's a logic error
 			const Handle index = mStart;

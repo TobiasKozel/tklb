@@ -63,8 +63,6 @@ namespace tklb {
 		 */
 		Size mRealSize = 0;
 
-		// TODO this could be static constexpr but that only works in cpp17, needs some investigation
-		ALLOCATOR mAllocator = { };
 		// True when the foreign memory is const, only cheked in debug mode
 		TKLB_ASSERT_STATE(bool IS_CONST = false)
 
@@ -392,7 +390,7 @@ namespace tklb {
 			if (0 < chunk) {
 				const Size bytes = chunk * sizeof(T);
 				// TODO tklb Consider using realloc
-				void* newBuf = mAllocator.allocate(bytes + Alignment);
+				void* newBuf = ALLOCATOR().allocate(bytes + Alignment);
 				if (newBuf == nullptr) {
 					TKLB_ASSERT(false);
 					return false;
@@ -435,11 +433,11 @@ namespace tklb {
 			if (oldBuf != nullptr && !injected() && mRealSize > 0) {
 				// Get rid of oldbuffer, object destructors were already called
 				if (Alignment == 0) {
-					mAllocator.deallocate(reinterpret_cast<unsigned char*>(oldBuf), mRealSize);
+					ALLOCATOR().deallocate(reinterpret_cast<unsigned char*>(oldBuf), mRealSize);
 				} else {
 					// Restore the original unaligned address and use it to free the memory
 					auto original = *(reinterpret_cast<void**>(oldBuf) - 1);
-					mAllocator.deallocate(reinterpret_cast<unsigned char*>(original), mRealSize);
+					ALLOCATOR().deallocate(reinterpret_cast<unsigned char*>(original), mRealSize);
 				}
 			}
 			TKLB_ASSERT_STATE(IS_CONST = false)
