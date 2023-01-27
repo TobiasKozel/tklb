@@ -1,7 +1,8 @@
 /**
  * @file TMath.hpp
  * @author Tobias Kozel
- * @brief Wraps all math functions
+ * @brief Wraps all cmath functions needed in tklb.
+ *        Also provides more or less sane fallbacks without the std.
  * @version 0.1
  * @date 2023-01-07
  *
@@ -89,7 +90,7 @@ namespace tklb {
 
 	template <typename T>
 	constexpr T cos(const T& v) {
-		static_assert(traits::IsFloat<T>::value, "cos only works with float");
+		static_assert(traits::IsFloat<T>::value, "cos only works with float/double");
 		#ifdef TKLB_NO_STDLIB
 			// https://stackoverflow.com/a/28050328
 			constexpr T tp = T(1) / (T(2) * PI<T>);
@@ -105,11 +106,26 @@ namespace tklb {
 
 	template <typename T>
 	constexpr T sin(const T& v) {
-		static_assert(traits::IsFloat<T>::value, "sin only works with float");
+		static_assert(traits::IsFloat<T>::value, "sin only works with float/double");
 		#ifdef TKLB_NO_STDLIB
 			return cos(v - T(0.5) * PI<T>);
 		#else
 			return std::sin(v);
+		#endif
+	}
+
+	template <typename T>
+	constexpr T atan(const T& v) {
+		static_assert(traits::IsFloat<T>::value, "atan only works with float/double");
+		#ifdef TKLB_NO_STDLIB
+			// https://stackoverflow.com/a/42542593
+			constexpr T A =  0.0776509570923569;
+			constexpr T B = -0.287434475393028;
+			constexpr T C =  ((PI<T> / T(4)) - A - B);
+			const T v2 = v * v;
+  			return ((A * v2 + B)* v2 + C) * v;
+		#else
+			return std::atan(v);
 		#endif
 	}
 

@@ -46,7 +46,7 @@ namespace tklb { namespace vorbis {
 			HeapBuffer<T*> buffer;
 			buffer.resize(info.channels);
 			out.getRaw(buffer.data());
-			// seems evil but where only here if it's alredy a float**
+			// seems evil but we're only here if it's alredy a float**
 			float** fbuf = reinterpret_cast<float**>(buffer.data());
 			Size got = stb_vorbis_get_samples_float(
 				vorbis, info.channels, fbuf, streamLength

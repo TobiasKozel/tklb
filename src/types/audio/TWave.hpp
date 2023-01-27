@@ -1,7 +1,7 @@
 /**
  * @file TWaveFile.hpp
  * @author Tobias Kozel
- * @brief TODO broken, don't use
+ * @brief Wrapper around dr_wav
  * @version 0.1
  * @date 2022-08-15
  *
@@ -25,11 +25,7 @@
 
 namespace tklb {
 	namespace wave {
-		/**
-		 * redirects malloc for drwav, not really needed since
-		 * loading and saving wavs doesn't seem to allocate
-		 * anything on the heap
-		 */
+		// TODO move this in a class or something
 		namespace _ {
 			void* drwaveMalloc(SizeT size, void* userData);
 			void drwaveFree(void* ptr, void* userData);
@@ -55,7 +51,10 @@ namespace tklb {
 
 			drwav wav;
 
-			if (!drwav_init_memory(&wav, data, length, &drwaveCallbacks)) {
+			if (!drwav_init_memory(
+				&wav, data, length,
+				&drwaveCallbacks
+			)) {
 				return false;
 			}
 			constexpr Size chunkSize = 128;
@@ -67,7 +66,9 @@ namespace tklb {
 			out.resize(Size(wav.totalPCMFrameCount), Size(wav.channels));
 
 			while (read < wav.totalPCMFrameCount) {
-				auto got = Size(drwav_read_pcm_frames_f32(&wav, chunkSize, chunkBuffer.data()));
+				auto got = (Size) drwav_read_pcm_frames_f32(
+					&wav, chunkSize, chunkBuffer.data()
+				);
 				out.setFromInterleaved(chunkBuffer.data(), got, uchar(wav.channels), 0, read);
 				read += got;
 			}
@@ -140,7 +141,10 @@ namespace tklb {
 			SizeT outSize = 0;
 			void* memory = nullptr;
 
-			if (!drwav_init_memory_write(&wav, &memory, &outSize, &droptions, &drwaveCallbacks)) {
+			if (!drwav_init_memory_write(
+				&wav, &memory, &outSize,
+				&droptions, &drwaveCallbacks)
+			) {
 				return false;
 			}
 
@@ -155,7 +159,9 @@ namespace tklb {
 					auto interleaved = new float[chunkSize * in.channels()];
 					while (written < frames) {
 						auto remaining = in.putInterleaved(interleaved, chunkSize, written);
-						written += Size(drwav_write_pcm_frames(&wav, remaining, interleaved));
+						written += (Size) drwav_write_pcm_frames(
+							&wav, remaining, interleaved
+						);
 					}
 					delete[] interleaved;
 				}
@@ -163,12 +169,16 @@ namespace tklb {
 			case WaveOptions::Format::PCM:
 				{
 					// TODO benchmark against aligned heapbuffer
-					auto interleaved = new short[chunkSize * in.channels()];
+					short* interleaved = (short*) TKLB_MALLOC(
+						chunkSize * in.channels() * sizeof(short)
+					);
 					while (written < frames) {
 						auto read = in.putInterleaved(interleaved, chunkSize, written);
-						written += Size(drwav_write_pcm_frames(&wav, read, interleaved));
+						written += Size(drwav_write_pcm_frames(
+							&wav, read, interleaved)
+						);
 					}
-					delete[] interleaved;
+					TKLB_FREE(interleaved);
 				}
 				break;
 			default:

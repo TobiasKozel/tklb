@@ -13,9 +13,15 @@
 #define _TKLB_TRAITS
 
 namespace tklb { namespace traits {
+	/**
+	 * @brief Value container type used to store result oll operation below.
+	 */
 	template<bool v>
 	struct Value { static constexpr bool value = v; };
 
+	/**
+	 * @brief True if both types are exaclty the same, does not remove references etc/
+	 */
 	template<typename A, typename B>
 	struct IsSame : Value<false> { };
 	template<typename T>
@@ -76,6 +82,9 @@ namespace tklb { namespace traits {
 	template<>
 	struct IsArithmetic<const unsigned char> : Value<true> { };
 
+	/**
+	 * @brief True if T is an unsigned non floating point interger type
+	 */
 	template<typename T>
 	struct IsUnsigned : Value<false> { };
 	template<>
@@ -89,6 +98,10 @@ namespace tklb { namespace traits {
 	template<>
 	struct IsUnsigned<unsigned char> : Value<true> { };
 
+	/**
+	 * @brief True if T is double or float
+	 * @tparam T
+	 */
 	template<typename T>
 	struct IsFloat : Value<false> { };
 	template<>
@@ -100,6 +113,11 @@ namespace tklb { namespace traits {
 	template<>
 	struct IsFloat<const float> : Value<true> { };
 
+	/**
+	 * @brief Removes reference from type
+	 *
+	 * @tparam T
+	 */
 	template<typename T>
 	struct removeReference { typedef T type; };
 
@@ -109,6 +127,9 @@ namespace tklb { namespace traits {
 	template<typename T>
 	struct removeReference<T&&> { typedef T type; };
 
+	/**
+	 * @brief Reimplementation od the std::move
+	 */
 	template <class T>
 	constexpr typename removeReference<T>::type&& move(T&& v) {
 		return static_cast<typename removeReference<T>::type&&>(v);

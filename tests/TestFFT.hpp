@@ -2,16 +2,17 @@
 #include "../src/types/audio/fft/TFFT.hpp"
 
 int test() {
+	const int blocks = 100;
 	const int fftSize = 128;
-	const int bufferLength = fftSize * 100;
+	const int bufferLength = fftSize * blocks;
 	tklb::FFT con = { fftSize };
 	tklb::AudioBuffer input, output, result;
 	input.resize(bufferLength);
+	result.resize(con.resultSize(bufferLength), 2);
 	output.resize(bufferLength);
-	result.resize(bufferLength, 2);
 
 	for (int i = 0; i < bufferLength; i++) {
-		input[0][i] = sin(i * 0.1);
+		input[0][i] = tklb::sin(i * 0.1);
 	}
 
 	con.forward(input, result);

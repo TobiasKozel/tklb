@@ -133,7 +133,7 @@ namespace tklb {
 			const Size offsetDst = 0
 		) {
 			static_assert(traits::IsArithmetic<T2>::value, "Need arithmetic type.");
-			if (mChannels <= channel) { return; }
+			if (channels() <= channel) { return; }
 			TKLB_ASSERT(size() >= offsetDst)
 			length = min(length, size() - offsetDst);
 			T* out = get(channel);
@@ -221,33 +221,34 @@ namespace tklb {
 
 		/**
 		 * @brief Set multiple channels from an interleaved array
-		 * @param samples A 1D Array containing the interleaved audio samples (float or double)
-		 * @param length The length of a single channel
-		 * @param channels Channel count
-		 * @param offsetSrc Start offset in the source buffer
+		 * @param samples A 1D Array containing the interleaved audio samples
+		 * @param length The length of a single channel.
+		 *               This means samples is (length * chan) long
+		 * @param chan Channel count
+		 * @param offsetSrc Start offset in the source buffer (from 0 to length)
 		 * @param offsetDst Start offset in the target buffer
 		 */
 		template <typename T2>
 		void setFromInterleaved(
 			const T2* samples,
 			Size length,
-			const uchar channels,
+			const uchar chan,
 			Size offsetSrc = 0,
 			const Size offsetDst = 0
 		) {
 			static_assert(traits::IsArithmetic<T2>::value, "Need arithmetic type.");
 			TKLB_ASSERT(size() >= offsetDst)
 			length = min(size() - offsetDst, length);
-			offsetSrc *= channels;
-			for (uchar c = 0; c < min(channels, mChannels); c++) {
+			offsetSrc *= chan;
+			for (uchar c = 0; c < min(chan, channels()); c++) {
 				T* out = get(c);
 				if (!needsScaling<T2>()) {
-					for(Size i = 0, j = c + offsetSrc; i < length; i++, j+= channels) {
+					for(Size i = 0, j = c + offsetSrc; i < length; i++, j+= chan) {
 						out[i + offsetDst] = static_cast<T>(samples[j]);
 					}
 				} else {
 					const auto scale = getConversionScale<T2, T>();
-					for(Size i = 0, j = c + offsetSrc; i < length; i++, j+= channels) {
+					for(Size i = 0, j = c + offsetSrc; i < length; i++, j+= chan) {
 						out[i + offsetDst] = static_cast<T>(samples[j] * scale);
 					}
 				}
@@ -266,20 +267,25 @@ namespace tklb {
 		}
 
 		/**
-		 * @brief ! Will not keep the contents! Resizes the buffer to the desired length and channel count.
-		 * @details If the validSize = 0 it will be set to the new size for convenience.
-		 * The size reported back when calling size is can be larger if the data is aligned
+		 * @brief ! Will not keep the contents! Resizes the buffer to the
+		 *        desired length and channel count.
+		 * @details If the validSize = 0 it will be set to the new size
+		 *          for convenience. The size reported back when calling
+		 *          size is can be larger if the data is aligned.
 		 * @param length The desired length in Samples. 0 will deallocate.
 		 * @param channels Desired channel count. 0 will deallocate.
 		 */
-		bool resize(const Size length, uchar channels) {
-			if (channels == mChannels && size() == length) { return true; }
-			// We need to ensure each channel is aligned so we add some padding after each channel
-			const auto elementAlign = mBuffer.closestChunkSize(length, mBuffer.Alignment / sizeof(T));
+		bool resize(const Size length, uchar chan) {
+			if (chan == channels() && size() == length) { return true; }
+			// We need to ensure each channel is aligned so
+			// we add some padding after each channel
+			const auto elementAlign = mBuffer.closestChunkSize(
+				length, mBuffer.Alignment / sizeof(T)
+			);
 			mBuffer.resize(0); // deallocate so we don't copy old misaligned signal over
-			mBuffer.resize(channels * elementAlign);
+			mBuffer.resize(chan * elementAlign);
 
-			mChannels = channels;
+			mChannels = chan;
 
 			if (mValidSize == 0) {
 				mValidSize = length;
@@ -291,11 +297,11 @@ namespace tklb {
 
 		/**
 		 * @brief Resize to the provided length and keep the channelcount.
-		 * If the channel count was 0 it will assume 1 channel instead.
+		 *        If the channel count was 0 it will assume 1 channel instead.
 		 * @param length The desired length in samples. 0 will deallocate.
 		 */
 		void resize(const Size length) {
-			resize(length, max(uchar(1), mChannels));
+			resize(length, max(uchar(1), channels()));
 		}
 
 		/**
@@ -464,38 +470,49 @@ namespace tklb {
 
 		/**
 		 * @brief Inject forgeign memory to be used by the buffer.
-		 * Potentially dangerous but useful when splitting up channels for processing
-		 * @param mem Modifiable memory (No type conversions here)
+		 *        Potentially dangerous but useful when splitting up channels
+		 *        for processing
+		 * @param mem Const memory (No type conversions here)
+		 *            All channels are stored sequentally (not interleaved)
+		 *            and without padding in between.
 		 * @param size Size of the entire buffer
-		 * @param channels How many channels are contained in mem
+		 * @param chan How many channels are contained in mem
 		 */
-		bool inject(T* mem, const Size size, const uchar channels) {
+		bool inject(T* mem, const Size size, const uchar chan) {
 			if (!mBuffer.isAligned(mem)) {
 				TKLB_ASSERT(false)
 				return false;
 			}
-			TKLB_ASSERT(size % channels == 0)
+			TKLB_ASSERT(size % chan == 0)
 			mBuffer.inject(mem, size);
-			mValidSize = size / channels;
-			mChannels = channels;
+			mValidSize = size / chan;
+			mChannels = chan;
 		}
 
 		/**
 		 * @brief Inject const forgeign memory to be used by the buffer.
-		 * Potentially dangerous but useful when splitting up channels for processing
+		 *        Potentially dangerous but useful when splitting up channels
+		 *        for processing
 		 * @param mem Const memory (No type conversions here)
+		 *            All channels are stored sequentally (not interleaved)
+		 *            and without padding in between.
 		 * @param size Size of the entire buffer
-		 * @param channels How many channels are contained in mem
+		 * @param chan How many channels are contained in mem
 		 */
-		bool inject(const T* mem, const Size size, const uchar channels) {
+		bool inject(const T* mem, const Size size, const uchar chan) {
 			if (!mBuffer.isAligned(mem)) {
+				// injected memory needs to match the alignment
 				TKLB_ASSERT(false)
 				return false;
 			}
-			TKLB_ASSERT(size % channels == 0)
+
+			// We don't deal with padding between channels yet
+			// see get() to find out why padding matters.
+			TKLB_ASSERT(size % chan == 0)
+
 			mBuffer.inject(mem, size);
-			mValidSize = size / channels;
-			mChannels = channels;
+			mValidSize = size / chan;
+			mChannels = chan;
 		}
 
 		/**
@@ -507,12 +524,11 @@ namespace tklb {
 		 * @brief Returns the allocated length of the buffer
 		 */
 		inline Size size() const {
-			return mBuffer.empty() ? 0 : mBuffer.size() / mChannels;
+			return mBuffer.empty() ? 0 : mBuffer.size() / channels();
 		}
 
 		/**
 		 * @brief Returns the length of actually valid audio in the buffer.
-		 * TODO tklb make sure this is used consistently
 		 */
 		Size validSize() const { return mValidSize; }
 
@@ -525,30 +541,64 @@ namespace tklb {
 			mValidSize = min(size(), v);
 		}
 
+	#if defined(TKLB_MEMORY_CHECK) && false
+		// TODO This isn't tested at all
+		/**
+		 * @brief Bound checking class
+		 */
+		struct AudioChannel {
+			const T* start;
+			const Size sampleCount;
+			inline const T& operator[](const Size index) const {
+				TKLB_ASSERT(index < sampleCount)
+				return start[index];
+			}
+			inline T& operator[](const Size index) {
+				TKLB_ASSERT(index < sampleCount)
+				return start[index];
+			}
+		};
+
+		inline AudioChannel get(const uchar channel) {
+			TKLB_ASSERT(channel < channels())
+			// We use the size of the buffer itself
+			// since this will result in aligned addresses
+			return mBuffer.data() + (channel * (mBuffer.size() / channels()));
+		};
+
+		inline const AudioChannel get(const uchar channel) const {
+			TKLB_ASSERT(channel < channels())
+			return mBuffer.data() + (channel * (mBuffer.size() / channels()));
+		};
+
+		inline const AudioChannel operator[](const uchar channel) const { return get(channel); }
+		inline AudioChannel operator[](const uchar channel) { return get(channel); }
+
+	#else // TKLB_MEMORY_CHECK
 		inline T* get(const uchar channel) {
-			TKLB_ASSERT(channel < mChannels)
-			// We use the size of the buffer itself since this will result in aligned addresses
-			return mBuffer.data() + (channel * (mBuffer.size() / mChannels));
+			TKLB_ASSERT(channel < channels())
+			// We use the size of the buffer itself
+			// since this will result in aligned addresses
+			return mBuffer.data() + (channel * (mBuffer.size() / channels()));
 		};
 
 		inline const T* get(const uchar channel) const {
-			TKLB_ASSERT(channel < mChannels)
-			return mBuffer.data() + (channel * (mBuffer.size() / mChannels));
+			TKLB_ASSERT(channel < channels())
+			return mBuffer.data() + (channel * (mBuffer.size() / channels()));
 		};
 
 		inline const T* operator[](const uchar channel) const { return get(channel); }
-
 		inline T* operator[](const uchar channel) { return get(channel); }
+	#endif // TKLB_MEMORY_CHECK
+
+
 
 		/**
 		 * @brief Fills an 2d array of size maxChannels() with pointers to each channel
 		 * @param put Pointers go here
 		 */
 		void getRaw(T** put) {
-			TKLB_ASSERT_STATE(assertOnConstMem())
-			for (uchar c = 0; c < mChannels; c++) {
-				put[c] = get(c);
-			}
+			for (uchar c = 0; c < channels(); c++) { put[c] = get(c); }
 		}
 
 		/**
@@ -556,9 +606,7 @@ namespace tklb {
 		 * @param put Pointers go here
 		 */
 		void getRaw(const T** put) const {
-			for (uchar c = 0; c < mChannels; c++) {
-				put[c] = get(c);
-			}
+			for (uchar c = 0; c < channels(); c++) { put[c] = get(c); }
 		}
 
 		/**
@@ -577,11 +625,12 @@ namespace tklb {
 			const Size offset = 0
 		) const {
 			static_assert(traits::IsArithmetic<T2>::value, "Need arithmetic type.");
-			if (mChannels <= channel) { return 0; }
+			if (channels() <= channel) { return 0; }
 			const Size valid = validSize();
 			TKLB_ASSERT(offset <= valid)
 			length = length == 0 ? valid : length;
 			length = min(length, valid - offset);
+
 			const T2* source = get(channel) + offset;
 			if (traits::IsSame<T2, T>::value) {
 				memory::copy(target, source, sizeof(T) * length);
@@ -603,31 +652,37 @@ namespace tklb {
 		/**
 		 * @brief Fill the provided 2D array with the contents of this buffer
 		 * @param target The array to fill
-		 * @param channels How many channels there are in the target buffer
-		 * @param length The length of the output
+		 * @param length The length of the output.
+		 *               0 uses the validSize() of this buffer.
+		 * @param chan How many channels there are in the target buffer.
+		 *             0 uses channels() of this buffer.
 		 * @return The amount of samples written, might be less than requested
 		 */
 		template <typename T2>
-		Size put(T2** target,
+		Size put(
+			T2** target,
 			const Size length = 0,
-			uchar channels = 0,
+			uchar chan = 0, // TODO make parameter order consistent
 			const Size offset = 0
 		) const {
 			static_assert(traits::IsArithmetic<T2>::value, "Need arithmetic type.");
 			Size res = 0;
-			channels = (channels == 0) ? mChannels : channels;
-			for (uchar c = 0; c < channels; c++) {
+			chan = (chan == 0) ? channels() : chan;
+			for (uchar c = 0; c < chan; c++) {
 				res = put(target[c], length, c, offset);
 			}
 			return res;
 		}
 
 		/**
-		 * @brief Puts the interleaved contents in the target buffer
+		 * @brief Puts the contents interleaved in the target buffer
 		 * @param buffer The array to fill with interleaved audio
 		 * @param length Number of frames to interleave (not the length of the interleaved buffer)
+		 *               0 uses the validSize() of this buffer.
 		 * @param offset Offset for the sourcebuffer (this)
-		 * @param chan maximum channels the output buffer can hold
+		 * TODO srcOffet and targetOffset maybe?
+		 * @param chan maximum channels the output buffer can hold.
+		 *             0 uses channels() of this buffer.
 		 * @return Number of frames emitted
 		 */
 		template <typename T2>
@@ -664,12 +719,6 @@ namespace tklb {
 			return out / Size(channels());
 		}
 
-	private:
-		void assertOnConstMem() {
-			// Force non const access to trigger assertion.
-			T* data = mBuffer.data();
-			(void) data;
-		}
 	};
 
 

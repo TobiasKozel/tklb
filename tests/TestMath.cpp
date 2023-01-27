@@ -112,6 +112,11 @@ int main() {
 		TEST(tklb::cos, std::cos, double, 13)
 	}
 
+	for (const auto& i : Tests2) {
+		TEST(tklb::atan, std::atan, float, 14)
+		TEST(tklb::atan, std::atan, double, 15)
+	}
+
 	for (const auto& i : { -10.0, 10.3, 1.0, 4.0, 10.1}) {
 		for (const auto& j : { -1.0, 1.0, 3.0 }) {
 			// this one is a little rough
