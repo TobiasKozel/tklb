@@ -1,15 +1,15 @@
 #ifndef _TKLB_RESAMPLER_COSINE
 #define _TKLB_RESAMPLER_COSINE
 
+#include "./TIResampler.hpp"
 #include "../TAudioBuffer.hpp"
 
 namespace tklb {
 	template <typename T>
-	class ResamplerCosineTpl {
-		using uchar = unsigned char;
-		using uint = unsigned int;
+	class ResamplerCosineTpl : IResamplerTpl<T> {
 		using Buffer = AudioBufferTpl<T>;
 		using Size = typename Buffer::Size;
+		using Channel = typename Buffer::Channel;
 
 		uint mRateIn, mRateOut;
 		double mFactor = 1.0;
@@ -17,12 +17,13 @@ namespace tklb {
 		static constexpr Size MAX_CHANNELS = 32;
 		T mLastFrame[MAX_CHANNELS];
 	public:
+		ResamplerCosineTpl() = default;
+
 		ResamplerCosineTpl(uint rateIn, uint rateOut, uint maxBlock = 512, uchar channels = 2, uchar quality = 5) {
 			for (auto& i : mLastFrame) { i = 0.0; }
 			init(rateIn, rateOut, maxBlock, channels, quality);
 		}
 
-		ResamplerCosineTpl() = default;
 
 		/**
 		 * @brief setup the resampler

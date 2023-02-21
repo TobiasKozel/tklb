@@ -2,9 +2,15 @@
 Cross Platform C++14 library.
 
 ## TODOs
+- remove TKLB_SAMPLE_FLOAT
 - FFT convolution
+- Codecs
+- Streaming codecs
+- File abstraction from vae
 - Resamplers
-- Vector math
+- FFT Interface
+- Vector math from vae
+- Serializer
 
 ## General
 

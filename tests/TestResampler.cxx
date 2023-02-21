@@ -1,8 +1,10 @@
 
 #include "./TestCommon.hpp"
 
-#include "../src/types/audio/resampler/TResamplerHold.hpp"
 #include "../src/types/audio/resampler/TResamplerLinear.hpp"
+#include "../src/types/audio/resampler/TResamplerHold.hpp"
+#include "../src/types/audio/resampler/TResamplerSpeex.hpp"
+#include "../src/types/audio/resampler/TResamplerCosine.hpp"
 
 
 
@@ -15,10 +17,8 @@ int doTest() {
 	const int blockSize = 256;
 	const int channels = 16;
 
-	Resampler resamplerUp;
-	resamplerUp.init(rateLow, rateHigh, blockSize, channels);
-	Resampler resamplerDown;
-	resamplerDown.init(rateHigh, rateLow, blockSize, channels);
+	Resampler resamplerUp(rateLow, rateHigh, blockSize, channels);
+	Resampler resamplerDown(rateHigh, rateLow, blockSize, channels);
 
 	// TODO this isn't realy accurate since the delay is in the current samplerate or the resampler
 	int latency = resamplerDown.getLatency();
@@ -34,7 +34,7 @@ int doTest() {
 	// generate sine test signal
 	for (int c = 0; c < channels; c++) {
 		for (int i = 0; i < length; i++) {
-			bufLow[c][i] = tklb::sin(i * c * 0.001); // Fairly low frequency
+			bufLow[c][i] = sin(i * c * 0.001); // Fairly low frequency
 		}
 	}
 	bufLow.setValidSize(length); // all samples in the buffer are to be processed
@@ -66,6 +66,12 @@ int test() {
 	}
 	if (doTest<tklb::ResamplerLinear>() != 0) {
 		return 2;
+	}
+	if (doTest<tklb::ResamplerCosine>() != 0) {
+		return 3;
+	}
+	if (doTest<tklb::ResamplerSpeex>() != 0) {
+		return 4;
 	}
 	return 0;
 }

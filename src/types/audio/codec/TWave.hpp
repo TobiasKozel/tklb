@@ -16,20 +16,37 @@
 
 #define DR_WAV_NO_STDIO
 
-#include "../../../external/dr_wav.h"
-
 #ifdef TKLB_IMPL
-	#include "./TWave.cpp"
+	#define DR_WAV_IMPLEMENTATION
 #endif
+#include "../../../external/dr_wav.h"
 
 
 namespace tklb {
-	namespace wave {
-		// TODO move this in a class or something
-		namespace _ {
-			void* drwaveMalloc(SizeT size, void* userData);
-			void drwaveFree(void* ptr, void* userData);
+
+	/**
+	 * @brief Wave decoder/encoder using dr_wav
+	 *
+	 */
+	class Wave {
+		static void* drWavMalloc(SizeT size, void* userData) {
+			(void) userData;
+			return TKLB_MALLOC(size);
 		}
+
+		static void drWavFree(void* ptr, void* userData) {
+			(void) userData;
+			TKLB_FREE(ptr);
+		}
+
+		drwav_allocation_callbacks mDrwaveCallbacks {
+			nullptr,		// No userdata
+			&drWavMalloc,
+			nullptr,		// TODO tklb test and add the realloc
+			&drWavFree
+		};
+
+	public:
 
 		/**
 		 * @brief Decode wav from memory
@@ -39,12 +56,7 @@ namespace tklb {
 		 */
 		template <typename T, class Buffer = AudioBufferTpl<T>>
 		bool load(const char* data, typename Buffer::Size length, Buffer& out) {
-			drwav_allocation_callbacks drwaveCallbacks {
-				nullptr,		// No userdata
-				&_::drwaveMalloc,
-				nullptr,		// TODO tklb test and add the realloc
-				&_::drwaveFree
-			};
+
 
 			using Size = typename Buffer::Size;
 			using uchar = unsigned char;
@@ -53,7 +65,7 @@ namespace tklb {
 
 			if (!drwav_init_memory(
 				&wav, data, length,
-				&drwaveCallbacks
+				&mDrwaveCallbacks
 			)) {
 				return false;
 			}
@@ -118,12 +130,6 @@ namespace tklb {
 			HeapBuffer<char>& out,
 			const WaveOptions&& options = {}
 		) {
-			drwav_allocation_callbacks drwaveCallbacks {
-				nullptr,		// No userdata
-				&_::drwaveMalloc,
-				nullptr,		// TODO tklb test and add the realloc
-				&_::drwaveFree
-			};
 			drwav wav;
 
 			// TODO tklb this causes issues somehow
@@ -143,7 +149,7 @@ namespace tklb {
 
 			if (!drwav_init_memory_write(
 				&wav, &memory, &outSize,
-				&droptions, &drwaveCallbacks)
+				&droptions, &mDrwaveCallbacks)
 			) {
 				return false;
 			}
@@ -191,6 +197,6 @@ namespace tklb {
 			return true;
 		}
 	}
-} // namespace
+};
 
 #endif // _TKLB_WAVE

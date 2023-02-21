@@ -36,9 +36,8 @@ namespace tklb {
 	public:
 		using Sample = T;
 		using Storage = STORAGE;
-		using uchar = unsigned char;
-		using ushort = unsigned short;
-		using uint = unsigned int;
+		using Channel = unsigned char;
+		using SampleRate = unsigned short;
 		using Size = typename Storage::Size;
 
 	#ifndef TKLB_NO_SIMD
@@ -48,14 +47,14 @@ namespace tklb {
 	private:
 		Storage mBuffer;
 		Size mValidSize = 0;
-		uchar mChannels = 0;
+		Channel mChannels = 0;
 
 	public:
 		/**
 		 * @brief Only relevant for resampling and oversampling.
 		 * TODO higher sample rates wont work, maybe use enum
 		 */
-		ushort sampleRate = 0;
+		 SampleRate sampleRate = 0;
 
 		/**
 		 * @brief Empty buffer with no memory allocated yet
@@ -65,7 +64,7 @@ namespace tklb {
 		/**
 		 * @brief Buffer with memory allocated
 		 */
-		AudioBufferTpl(const Size length, const uchar channels) {
+		AudioBufferTpl(const Size length, const Channel channels) {
 			resize(length, channels);
 		}
 
@@ -129,7 +128,7 @@ namespace tklb {
 		void set(
 			const T2* samples,
 			Size length,
-			const uchar channel = 0,
+			const Channel channel = 0,
 			const Size offsetDst = 0
 		) {
 			static_assert(traits::IsArithmetic<T2>::value, "Need arithmetic type.");
@@ -169,12 +168,12 @@ namespace tklb {
 		void set(
 			T2** const samples,
 			const Size length,
-			const uchar channels,
+			const Channel channels,
 			const Size offsetSrc = 0,
 			const Size offsetDst = 0
 		) {
 			static_assert(traits::IsArithmetic<T2>::value, "Need arithmetic type.");
-			for (uchar c = 0; c < channels; c++) {
+			for (Channel c = 0; c < channels; c++) {
 				set(samples[c] + offsetSrc, length, c, offsetDst);
 			}
 		}
@@ -196,7 +195,7 @@ namespace tklb {
 			const Size offsetDst = 0
 		) {
 			length = length == 0 ? buffer.validSize() : length;
-			for (uchar c = 0; c < buffer.channels(); c++) {
+			for (Channel c = 0; c < buffer.channels(); c++) {
 				set(buffer[c] + offsetSrc, length, c, offsetDst);
 			}
 		}
@@ -214,7 +213,7 @@ namespace tklb {
 		) {
 			TKLB_ASSERT(size() >= offsetDst)
 			length = min(size() - offsetDst, length ? length : size());
-			for (uchar c = 0; c < channels(); c++) {
+			for (Channel c = 0; c < channels(); c++) {
 				memory::set<T>(get(c) + offsetDst, length, value);
 			}
 		}
@@ -232,7 +231,7 @@ namespace tklb {
 		void setFromInterleaved(
 			const T2* samples,
 			Size length,
-			const uchar chan,
+			const Channel chan,
 			Size offsetSrc = 0,
 			const Size offsetDst = 0
 		) {
@@ -240,7 +239,7 @@ namespace tklb {
 			TKLB_ASSERT(size() >= offsetDst)
 			length = min(size() - offsetDst, length);
 			offsetSrc *= chan;
-			for (uchar c = 0; c < min(chan, channels()); c++) {
+			for (Channel c = 0; c < min(chan, channels()); c++) {
 				T* out = get(c);
 				if (!needsScaling<T2>()) {
 					for(Size i = 0, j = c + offsetSrc; i < length; i++, j+= chan) {
@@ -273,9 +272,9 @@ namespace tklb {
 		 *          for convenience. The size reported back when calling
 		 *          size is can be larger if the data is aligned.
 		 * @param length The desired length in Samples. 0 will deallocate.
-		 * @param channels Desired channel count. 0 will deallocate.
+		 * @param chan Desired channel count. 0 will deallocate.
 		 */
-		bool resize(const Size length, uchar chan) {
+		bool resize(const Size length, Channel chan) {
 			if (chan == channels() && size() == length) { return true; }
 			// We need to ensure each channel is aligned so
 			// we add some padding after each channel
@@ -301,7 +300,7 @@ namespace tklb {
 		 * @param length The desired length in samples. 0 will deallocate.
 		 */
 		void resize(const Size length) {
-			resize(length, max(uchar(1), channels()));
+			resize(length, max(Channel(1), channels()));
 		}
 
 		/**
@@ -330,12 +329,12 @@ namespace tklb {
 			TKLB_ASSERT(buffer.validSize() >= offsetSrc)
 			length = length == 0 ? buffer.validSize() - offsetSrc : length;
 			length = min(buffer.validSize() - offsetSrc, validSize() - offsetDst);
-			const uchar channelCount = min(buffer.channels(), channels());
+			const Channel channelCount = min(buffer.channels(), channels());
 
 			#ifndef TKLB_NO_SIMD
 				if (traits::IsSame<T2, T>::value) {
 					const Size vectorize = length - (length % Stride);
-					for (uchar c = 0; c < channelCount; c++) {
+					for (Channel c = 0; c < channelCount; c++) {
 						T* out = get(c) + offsetDst;
 						const T* in = reinterpret_cast<const T*>(buffer[c]) + offsetSrc;
 						for(Size i = 0; i < vectorize; i += Stride) {
@@ -352,7 +351,7 @@ namespace tklb {
 			#endif
 
 			// If the type doen't match or simd is diabled
-			for (uchar c = 0; c < channelCount; c++) {
+			for (Channel c = 0; c < channelCount; c++) {
 				T* out = get(c) + offsetDst;
 				const T2* in = buffer[c] + offsetSrc;
 				for(Size i = 0; i < length; i++) {
@@ -379,12 +378,12 @@ namespace tklb {
 			TKLB_ASSERT(buffer.validSize() >= offsetSrc)
 			length = length == 0 ? buffer.validSize() - offsetSrc : length;
 			length = min(buffer.validSize() - offsetSrc, validSize() - offsetDst);
-			const uchar channelsCount = min(buffer.channels(), channels());
+			const Channel channelsCount = min(buffer.channels(), channels());
 
 			#ifndef TKLB_NO_SIMD
 				if (traits::IsSame<T2, T>::value) {
 					const Size vectorize = length - (length % Stride);
-					for (uchar c = 0; c < channelsCount; c++) {
+					for (Channel c = 0; c < channelsCount; c++) {
 						T* out = get(c) + offsetDst;
 						const T* in = reinterpret_cast<const T*>(buffer[c]) + offsetSrc;
 						for(Size i = 0; i < vectorize; i += Stride) {
@@ -401,7 +400,7 @@ namespace tklb {
 			#endif
 
 			// If the type doen't match or simd is diabled
-			for (uchar c = 0; c < channelsCount; c++) {
+			for (Channel c = 0; c < channelsCount; c++) {
 				T* out = get(c) + offsetDst;
 				const T2* in = buffer[c] + offsetSrc;
 				for(Size i = 0; i < length; i++) {
@@ -419,7 +418,7 @@ namespace tklb {
 
 			#ifndef TKLB_NO_SIMD
 				const Size vectorize = length - (length % Stride);
-				for (uchar c = 0; c < channels(); c++) {
+				for (Channel c = 0; c < channels(); c++) {
 					T* out = get(c);
 					for(Size i = 0; i < vectorize; i += Stride) {
 						xsimd::simd_type<T> b = xsimd::load_aligned(out + i);
@@ -430,7 +429,7 @@ namespace tklb {
 					}
 				}
 			#else
-				for (uchar c = 0; c < channels(); c++) {
+				for (Channel c = 0; c < channels(); c++) {
 					T* out = get(c);
 					for(Size i = 0; i < length; i++) {
 						out[i] *= value;
@@ -448,7 +447,7 @@ namespace tklb {
 
 			#ifndef TKLB_NO_SIMD
 				const Size vectorize = length - (length % Stride);
-				for (uchar c = 0; c < channels(); c++) {
+				for (Channel c = 0; c < channels(); c++) {
 					T* out = get(c);
 					for(Size i = 0; i < vectorize; i += Stride) {
 						xsimd::simd_type<T> b = xsimd::load_aligned(out + i);
@@ -459,7 +458,7 @@ namespace tklb {
 					}
 				}
 			#else
-				for (uchar c = 0; c < channels(); c++) {
+				for (Channel c = 0; c < channels(); c++) {
 					T* out = get(c);
 					for(Size i = 0; i < length; i++) {
 						out[i] += value;
@@ -478,7 +477,7 @@ namespace tklb {
 		 * @param size Size of the entire buffer
 		 * @param chan How many channels are contained in mem
 		 */
-		bool inject(T* mem, const Size size, const uchar chan) {
+		bool inject(T* mem, const Size size, const Channel chan) {
 			if (!mBuffer.isAligned(mem)) {
 				TKLB_ASSERT(false)
 				return false;
@@ -499,7 +498,7 @@ namespace tklb {
 		 * @param size Size of the entire buffer
 		 * @param chan How many channels are contained in mem
 		 */
-		bool inject(const T* mem, const Size size, const uchar chan) {
+		bool inject(const T* mem, const Size size, const Channel chan) {
 			if (!mBuffer.isAligned(mem)) {
 				// injected memory needs to match the alignment
 				TKLB_ASSERT(false)
@@ -518,7 +517,7 @@ namespace tklb {
 		/**
 		 * @brief Returns the amount of channels
 		 */
-		uchar channels() const { return mChannels; }
+		Channel channels() const { return mChannels; }
 
 		/**
 		 * @brief Returns the allocated length of the buffer
@@ -559,36 +558,36 @@ namespace tklb {
 			}
 		};
 
-		inline AudioChannel get(const uchar channel) {
+		inline AudioChannel get(const Channel channel) {
 			TKLB_ASSERT(channel < channels())
 			// We use the size of the buffer itself
 			// since this will result in aligned addresses
 			return mBuffer.data() + (channel * (mBuffer.size() / channels()));
 		};
 
-		inline const AudioChannel get(const uchar channel) const {
+		inline const AudioChannel get(const Channel channel) const {
 			TKLB_ASSERT(channel < channels())
 			return mBuffer.data() + (channel * (mBuffer.size() / channels()));
 		};
 
-		inline const AudioChannel operator[](const uchar channel) const { return get(channel); }
-		inline AudioChannel operator[](const uchar channel) { return get(channel); }
+		inline const AudioChannel operator[](const Channel channel) const { return get(channel); }
+		inline AudioChannel operator[](const Channel channel) { return get(channel); }
 
 	#else // TKLB_MEMORY_CHECK
-		inline T* get(const uchar channel) {
+		inline T* get(const Channel channel) {
 			TKLB_ASSERT(channel < channels())
 			// We use the size of the buffer itself
 			// since this will result in aligned addresses
 			return mBuffer.data() + (channel * (mBuffer.size() / channels()));
 		};
 
-		inline const T* get(const uchar channel) const {
+		inline const T* get(const Channel channel) const {
 			TKLB_ASSERT(channel < channels())
 			return mBuffer.data() + (channel * (mBuffer.size() / channels()));
 		};
 
-		inline const T* operator[](const uchar channel) const { return get(channel); }
-		inline T* operator[](const uchar channel) { return get(channel); }
+		inline const T* operator[](const Channel channel) const { return get(channel); }
+		inline T* operator[](const Channel channel) { return get(channel); }
 	#endif // TKLB_MEMORY_CHECK
 
 
@@ -598,7 +597,7 @@ namespace tklb {
 		 * @param put Pointers go here
 		 */
 		void getRaw(T** put) {
-			for (uchar c = 0; c < channels(); c++) { put[c] = get(c); }
+			for (Channel c = 0; c < channels(); c++) { put[c] = get(c); }
 		}
 
 		/**
@@ -606,7 +605,7 @@ namespace tklb {
 		 * @param put Pointers go here
 		 */
 		void getRaw(const T** put) const {
-			for (uchar c = 0; c < channels(); c++) { put[c] = get(c); }
+			for (Channel c = 0; c < channels(); c++) { put[c] = get(c); }
 		}
 
 		/**
@@ -621,7 +620,7 @@ namespace tklb {
 		Size put(
 			T2* target,
 			Size length = 0,
-			const uchar channel = 0,
+			const Channel channel = 0,
 			const Size offset = 0
 		) const {
 			static_assert(traits::IsArithmetic<T2>::value, "Need arithmetic type.");
@@ -662,13 +661,13 @@ namespace tklb {
 		Size put(
 			T2** target,
 			const Size length = 0,
-			uchar chan = 0, // TODO make parameter order consistent
+			Channel chan = 0, // TODO make parameter order consistent
 			const Size offset = 0
 		) const {
 			static_assert(traits::IsArithmetic<T2>::value, "Need arithmetic type.");
 			Size res = 0;
 			chan = (chan == 0) ? channels() : chan;
-			for (uchar c = 0; c < chan; c++) {
+			for (Channel c = 0; c < chan; c++) {
 				res = put(target[c], length, c, offset);
 			}
 			return res;
@@ -690,7 +689,7 @@ namespace tklb {
 			T2* buffer,
 			Size length = 0,
 			const Size offset = 0,
-			uchar chan = 0
+			Channel chan = 0
 		) const {
 			static_assert(traits::IsArithmetic<T2>::value, "Need arithmetic type.");
 			const Size valid = validSize();
@@ -699,7 +698,7 @@ namespace tklb {
 			length = (length == 0) ? valid : length;
 			length = min(valid - offset, length);
 			Size out = 0;
-			for (uchar c = 0; c < chan; c++) {
+			for (Channel c = 0; c < chan; c++) {
 				Size j = c;
 				const T* data = get(c);
 				if (!needsScaling<T2>()) {

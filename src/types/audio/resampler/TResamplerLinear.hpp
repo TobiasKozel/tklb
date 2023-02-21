@@ -1,30 +1,41 @@
+/**
+ * @file TResamplerLinear.hpp
+ * @author Tobias Kozel
+ * @brief
+ * @version 0.1
+ * @date 2023-02-20
+ *
+ * @copyright Copyright (c) 2023
+ *
+ */
+
 #ifndef _TKLB_RESAMPLER_LINEAR
 #define _TKLB_RESAMPLER_LINEAR
 
+#include "./TIResampler.hpp"
 #include "../TAudioBuffer.hpp"
 
 
 namespace tklb {
-	template <typename T, class Buffer = AudioBufferTpl<T>>
-	class ResamplerLinearTpl {
-
-		using uchar = unsigned char;
-		using uint = unsigned int;
+	/**
+	 * @brief Linear resampler class
+	 *        TODO do some benchmarking to ensure stack is actually
+	 *        worth the aditional template argument
+	 *
+	 * @tparam T sample type
+	 * @tparam Buffer AudioBuffer
+	 * @tparam MAX_CHANNELS maximum number of channels
+	 */
+	template <typename T, class Buffer = AudioBufferTpl<T>, int MAX_CHANNELS = 32>
+	class ResamplerLinearTpl : IResamplerTpl<T> {
 		using Size = typename Buffer::Size;
+		using Channel = typename Buffer::Channel;
 
-		static constexpr Size MAX_CHANNELS = 32;
-		uint mRateIn, mRateOut;
+		Size mRateIn, mRateOut;
 		double mFactor = 1.0;
 		T mOffset = 0;
 		T mLastFrame[MAX_CHANNELS]; // don't think we'll need more any time soon
 	public:
-		ResamplerLinearTpl(uint rateIn, uint rateOut, uint maxBlock = 512, uchar channels = 2, uchar quality = 5) {
-			for (auto& i : mLastFrame) { i = 0.0; }
-			init(rateIn, rateOut, maxBlock, channels, quality);
-		}
-
-		ResamplerLinearTpl() = default;
-
 		/**
 		 * @brief setup the resampler
 		 * @param rateIn Input sample rate
@@ -33,22 +44,25 @@ namespace tklb {
 		 * @param quality Not used.
 		 * @return True on success
 		 */
-		bool init(uint rateIn, uint rateOut, uint maxBlock = 512, uchar channels = 2, uchar quality = 5) {
+		bool init(
+			Size rateIn, Size rateOut,
+			Size maxBlock = 512, Channel channels = 2,
+			Size quality = 5
+		) override {
 			(void) maxBlock;
 			(void) channels;
 			(void) quality;
 			TKLB_ASSERT(channels <= MAX_CHANNELS)
+
+			for (auto& i : mLastFrame) { i = 0.0; }
+
 			mRateIn = rateIn;
 			mRateOut = rateOut;
 			mFactor = double(mRateIn) / double(mRateOut);
 			return true;
 		}
 
-		/**
-		 * @brief Resample function
-		 * Make sure the out buffer has enough space
-		 */
-		Size process(const Buffer& in, Buffer& out) {
+		Size process(const Buffer& in, Buffer& out) override {
 			TKLB_ASSERT(in.sampleRate == mRateIn);
 			TKLB_ASSERT(out.sampleRate == mRateOut);
 			TKLB_ASSERT(in.validSize() > 0)
@@ -56,10 +70,8 @@ namespace tklb {
 
 			const Size countIn = in.validSize();
 			Size countOut = 0;
-			// const T offset = mOffset; unused
-			// T lastMix = 0;
 
-			for (int c = 0; c < in.channels(); c++) {
+			for (Channel c = 0; c < in.channels(); c++) {
 				Size output = 0;								// index in output buffer
 				T last = mLastFrame[c];							// last sample
 				T mix = 0.0;
@@ -74,7 +86,6 @@ namespace tklb {
 					mix = position - lastPosition;				// mix factor between first and second sample
 					const T next = in[c][lastIndex];
 					out[c][output] = last + mix * (next - last);
-					// out[c][o] = next * mix + last * (T(1.0) - mix);
 					last = next; // TODO tkbl this seems like bullshit
 					// ! fix this mess since this gets carried over after one sample and no interpolation happens ?
 				}
@@ -87,61 +98,25 @@ namespace tklb {
 			return countOut;
 		}
 
-		/**
-		 * @brief Get the latency in samples
-		 */
-		int getLatency() const {
+		Size getLatency() const override {
 			return 1; // lerp wil be one sample behind
 		};
 
-		/**
-		 * @brief Estimate how many samples need to be put in to get n samples out.
-		 */
-		Size estimateNeed(const Size out) const {
+		Size estimateNeed(const Size out) const override {
 			return tklb::round(out * mFactor);
 		}
 
-		Size estimateOut(const Size in) const {
+		Size estimateOut(const Size in) const override {
 			return tklb::round(in * (double(mRateOut) / double(mRateIn)));
 		}
 
 
-		bool isInitialized() const {
+		bool isInitialized() const override {
 			return true;
 		};
 
-		/**
-		 * @brief Calculate a buffersize fit for the resampled result.
-		 * Also adds a bit of padding.
-		 */
-		Size calculateBufferSize(Size in) {
+		Size calculateBufferSize(Size in) const override {
 			return estimateOut(in) + 10;
-		}
-
-		/**
-		 * @brief Resamples the provided buffer from its sampleRate
-		 * to the target rate
-		 * @param buffer Audiobuffer to resample, set the rate of the buffer object
-		 * @param rateOut Desired output samplerate in Hz
-		 * @param quality Quality from 1-10
-		 */
-		static void resample(Buffer& buffer, const uint rateOut, const uchar quality = 5) {
-			// TODO tklb compensate delay
-			const uint rateIn = buffer.sampleRate;
-			const Size samples = buffer.size();
-			TKLB_ASSERT(rateIn > 0)
-			// Make a copy, this could be skipped when a conversion to float is needed anyways
-			Buffer copy;
-			copy.resize(buffer);
-			copy.set(buffer);
-			copy.sampleRate = rateIn;
-			copy.setValidSize(samples);
-
-			ResamplerLinearTpl<T, Buffer> resampler;
-			resampler.init(rateIn, rateOut, copy.size(), buffer.channels(), quality);
-			buffer.resize(resampler.calculateBufferSize(samples));
-
-			resampler.process(copy, buffer);
 		}
 	};
 
