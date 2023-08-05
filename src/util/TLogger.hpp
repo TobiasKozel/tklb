@@ -1,6 +1,3 @@
-#ifndef _TKLB_LOGGER
-#define _TKLB_LOGGER
-
 /**
  * @file TLogger.hpp
  * @author Tobias Kozel
@@ -10,13 +7,16 @@
  * Defining TKLB_RELEASE will only log warnings and above
  * Defining TKLB_FORCE_LOG will override this
  * TODO mention profiler
- *
+ * TODO TKLB_NO_STDLIB handling
  * @version 0.1
  * @date 2022-08-05
  *
  * @copyright Copyright (c) 2022
  *
  */
+
+#ifndef _TKLB_LOGGER
+#define _TKLB_LOGGER
 
 #ifdef TKLB_NO_LOG
 	#define TKLB_DEBUG(...)

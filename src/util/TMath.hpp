@@ -164,7 +164,7 @@ namespace tklb {
 			u.i = (1<<29) + (u.i >> 1) - (1<<22);
 			return u.x;
 		#else
-			// TODO apparently not all std versions have constexpr sqrt
+			// TODO apparently not all std lib versions have constexpr sqrt
 			return std::sqrt(x);
 		#endif
 	}

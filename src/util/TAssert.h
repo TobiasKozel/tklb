@@ -1,3 +1,14 @@
+/**
+ * @file TAssert.h
+ * @author Tobias Kozel
+ * @brief Macro for assertions to allow different ways of handling them
+ * @version 0.1
+ * @date 2023-05-05
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
+
 #ifndef _TKLB_ASSERT
 #define _TKLB_ASSERT
 

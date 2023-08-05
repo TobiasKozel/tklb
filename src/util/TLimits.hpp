@@ -1,7 +1,7 @@
 /**
  * @file TLimits.hpp
  * @author Tobias Kozel
- * @brief Simple version of limits
+ * @brief Simple version of std limits
  * @version 0.1
  * @date 2023-01-04
  *
