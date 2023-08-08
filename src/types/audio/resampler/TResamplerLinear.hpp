@@ -34,7 +34,7 @@ namespace tklb {
 		Size mRateIn, mRateOut;
 		double mFactor = 1.0;
 		T mOffset = 0;
-		T mLastFrame[MAX_CHANNELS]; // don't think we'll need more any time soon
+		T mLastFrame[MAX_CHANNELS]; ///< should probbaly move this onto the heap
 	public:
 		/**
 		 * @brief setup the resampler
@@ -74,20 +74,19 @@ namespace tklb {
 			for (Channel c = 0; c < in.channels(); c++) {
 				Size output = 0;								// index in output buffer
 				T last = mLastFrame[c];							// last sample
-				T mix = 0.0;
+
 				for (; output < out.size(); output++) {
 					const T position = output * mFactor;		// index in input buffer, somewhere between two samples
 					const T lastPosition = Size(position);		// next sample index in the input buffer
+					T mix = position - lastPosition;			// mix factor between first and second sample
+
 					const Size lastIndex = lastPosition;
-					const Size nextIndex = lastPosition + 1;	// next sample index in the input buffer this is the one we need to fetch
 
-					if (countIn <= nextIndex) { break; }
+					if (countIn < lastPosition) { break; }
 
-					mix = position - lastPosition;				// mix factor between first and second sample
 					const T next = in[c][lastIndex];
 					out[c][output] = last + mix * (next - last);
-					last = next; // TODO tkbl this seems like bullshit
-					// ! fix this mess since this gets carried over after one sample and no interpolation happens ?
+					last = next;
 				}
 				mLastFrame[c] = last;
 				// lastMix = mix;

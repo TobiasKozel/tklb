@@ -2,17 +2,16 @@
 #define _TKLB_TYPES
 
 #ifndef TKLB_NO_STDLIB
-#include <stddef.h>
-namespace tklb {
-	using SizeT = size_t;
-	using Pointer = size_t;
-}
-
+	#include <stddef.h>
+	namespace tklb {
+		using SizeT = size_t;
+		using Pointer = size_t;
+	}
 #else
-namespace tklb {
-	using SizeT = unsigned long;
-	using Pointer = SizeT;
-} // tklb
+	namespace tklb {
+		using SizeT = unsigned long;
+		using Pointer = SizeT;
+	} // tklb
 #endif
 
 static_assert(

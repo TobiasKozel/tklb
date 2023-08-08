@@ -1,3 +1,14 @@
+/**
+ * @file TProfiler.hpp
+ * @author Tobias Kozel
+ * @brief Wrapper for the Tracy cpp profiler
+ * @version 0.1
+ * @date 2023-08-05
+ *
+ * @copyright Copyright (c) 2023
+ *
+ */
+
 #ifndef _TKLB_PROFILER
 #define _TKLB_PROFILER
 

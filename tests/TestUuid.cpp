@@ -17,7 +17,7 @@ int test() {
 		return 3;
 	}
 
-	char* generate2 = (char*) malloc(tklb::uuid::UUIDLength + 1);
+	char* generate2 = new char[tklb::uuid::UUIDLength + 1];
 	tklb::uuid::generate(generate2);
 	if (!tklb::uuid::isValid(generate2)) {
 		return 3;

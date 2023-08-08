@@ -1,9 +1,7 @@
 #ifndef _TKLB_UUID
 #define _TKLB_UUID
 
-// TODO tklb maybe rand without stdlib
-#include <ctime>
-#include <cstdlib>
+#include "./TRandom.h"
 
 namespace tklb { namespace uuid {
 	static constexpr int DashPos[] = { 9, 14, 19, 24 };
@@ -18,11 +16,9 @@ namespace tklb { namespace uuid {
 	void generate(char* uuid, bool ensureEscaped = true)
 	#ifdef TKLB_IMPL
 	{
-		// TODO own random
-		std::srand(std::time(nullptr));
-
+		static auto generator = random(123);
 		for (int i = 0; i < UUIDLength; i++) {
-			uuid[i] = CharacterSet[std::rand() % (sizeof(CharacterSet) - 1)];
+			uuid[i] = CharacterSet[generator.next() % (sizeof(CharacterSet) - 1)];
 		}
 		for (auto i : DashPos) { uuid[i] = '-'; }
 

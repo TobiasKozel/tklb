@@ -4,9 +4,9 @@
  * @brief Macro for assertions to allow different ways of handling them
  * @version 0.1
  * @date 2023-05-05
- * 
+ *
  * @copyright Copyright (c) 2023
- * 
+ *
  */
 
 #ifndef _TKLB_ASSERT
@@ -14,7 +14,6 @@
 
 // In case there's a user defined assert
 #ifndef TKLB_ASSERT
-
 	#if defined(TKLB_NO_ASSERT) || defined (TKLB_NO_ASSERT)
 		#define TKLB_ASSERT(condition);
 		#define TKLB_ASSERT_STATE(condition);
@@ -31,10 +30,7 @@
 			#include <cassert>
 			#define TKLB_ASSERT(condition) assert(condition);
 		#endif // TKLB_ASSERT_BREAK
-
-
 	#endif // TKLB_NO_ASSERT
-
 #endif // TKLB_ASSERT
 
 #ifndef TKLB_ASSERT_STATE

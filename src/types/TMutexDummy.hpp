@@ -5,7 +5,7 @@
 
 namespace tklb {
 	/**
-	 * Dummy Mutex which doesn't synchronise a all
+	 * Dummy Mutex which doesn't lock a all
 	 */
 	class MutexDummy {
 	public:

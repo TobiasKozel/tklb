@@ -22,9 +22,8 @@ namespace tklb {
 	 *        familiar down sampling effect often heard in bitcrusher effects.
 	 * @tparam T Input/Output sample type
 	 */
-	template <typename T>
+	template <typename T, class Buffer = AudioBufferTpl<T>>
 	class ResamplerHoldTpl : IResamplerTpl<T> {
-		using Buffer = AudioBufferTpl<T>;
 		using Channel = typename Buffer::Channel;
 		using Size = typename Buffer::Size;
 		Size mRateIn, mRateOut;

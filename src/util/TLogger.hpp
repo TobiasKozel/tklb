@@ -67,7 +67,7 @@
 			constexpr int bufferSize = 1024;	// Should be plenty for most purposes, the formating respects this limit.
 			static bool locked = false;			// TODO TKLB properly protect multithread access
 			static char buffer[bufferSize];
-			static char buffer2[bufferSize];	// Need to buffers, could use a little optimization
+			static char buffer2[bufferSize];	// Need two buffers, could use a little optimization
 
 			{
 				// Strip away the path and only keep the file name
