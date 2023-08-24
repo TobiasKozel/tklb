@@ -4,7 +4,6 @@
 #include "../src/types/audio/resampler/TResamplerLinear.hpp"
 #include "../src/types/audio/resampler/TResamplerHold.hpp"
 #include "../src/types/audio/resampler/TResamplerSpeex.hpp"
-#include "../src/types/audio/resampler/TResamplerCosine.hpp"
 
 
 

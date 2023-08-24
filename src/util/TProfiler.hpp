@@ -32,10 +32,10 @@
 #else // TKLB_USE_PROFILER
 
 	#define TRACY_ENABLE
-	#include "../../external/tracy/Tracy.hpp"
+	#include "../../external/tracy/public/tracy/Tracy.hpp"
 
 	#ifdef TKLB_IMPL
-		#include "../../external/tracy/TracyClient.cpp"
+		#include "../../external/tracy/public/TracyClient.cpp"
 	#endif
 
 	#define TKLB_PROFILER_FRAME_MARK()				FrameMark
@@ -53,6 +53,7 @@
 	#define TKLB_PROFILER_FREE_L(ptr, name)			TracyFreeN(ptr, name);
 	#define TKLB_PROFILER_MUTEX(type, name, desc)	TracyLockableN(type, name, desc)
 
+	// TODO this seems shady and it's unused
 	#define TKLB_TRACK_ALLOCATE(ptr, size)		TKLB_PROFILER_MALLOC_L(ptr, size, vae::core::profiler::tklbAllocator)
 	#define TKLB_TRACK_FREE(ptr, size)			TKLB_PROFILER_FREE_L(ptr, vae::core::profiler::tklbAllocator)
 
