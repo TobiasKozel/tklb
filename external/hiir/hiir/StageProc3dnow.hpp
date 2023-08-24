@@ -29,10 +29,6 @@ http://sam.zoy.org/wtfpl/COPYING for more details.
 
 #include "./StageData3dnow.h"
 
-#if defined (_MSC_VER)
-	#pragma inline_depth (255)
-#endif
-
 
 
 namespace hiir
@@ -46,13 +42,13 @@ namespace hiir
 
 #if defined (_MSC_VER)
 #pragma warning (push)
-#pragma warning (4 : 4799)
+#pragma warning (disable : 4799)
 #endif
 
 
 
 template <int CUR>
-void	StageProc3dnow <CUR>::process_sample_pos ()
+void	StageProc3dnow <CUR>::process_sample_pos () noexcept
 {
 	StageProc3dnow <CUR - 1>::process_sample_pos ();
 
@@ -71,7 +67,7 @@ void	StageProc3dnow <CUR>::process_sample_pos ()
 }
 
 template <>
-hiir_FORCEINLINE void	StageProc3dnow <0>::process_sample_pos ()
+hiir_FORCEINLINE void	StageProc3dnow <0>::process_sample_pos () noexcept
 {
 	// Nothing, stops the recursion
 }
@@ -79,7 +75,7 @@ hiir_FORCEINLINE void	StageProc3dnow <0>::process_sample_pos ()
 
 
 template <int CUR>
-void	StageProc3dnow <CUR>::process_sample_neg ()
+void	StageProc3dnow <CUR>::process_sample_neg () noexcept
 {
 	StageProc3dnow <CUR - 1>::process_sample_neg ();
 
@@ -98,7 +94,7 @@ void	StageProc3dnow <CUR>::process_sample_neg ()
 }
 
 template <>
-hiir_FORCEINLINE void	StageProc3dnow <0>::process_sample_neg ()
+hiir_FORCEINLINE void	StageProc3dnow <0>::process_sample_neg () noexcept
 {
 	// Nothing, stops the recursion
 }

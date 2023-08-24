@@ -44,6 +44,15 @@ namespace hiir
 
 
 
+template <int NC>
+constexpr int 	PhaseHalfPiSse <NC>::_nbr_chn;
+template <int NC>
+constexpr int 	PhaseHalfPiSse <NC>::NBR_COEFS;
+template <int NC>
+constexpr double	PhaseHalfPiSse <NC>::_delay;
+
+
+
 /*
 ==============================================================================
 Name: ctor
@@ -52,22 +61,21 @@ Throws: Nothing
 */
 
 template <int NC>
-PhaseHalfPiSse <NC>::PhaseHalfPiSse ()
+PhaseHalfPiSse <NC>::PhaseHalfPiSse () noexcept
 :	_filter ()
 ,	_prev (0)
 ,	_phase (0)
 {
-	for (int phase = 0; phase < NBR_PHASES; ++phase)
+	for (int phase = 0; phase < _nbr_phases; ++phase)
 	{
-		for (int i = 0; i < NBR_STAGES + 1; ++i)
+		for (int i = 0; i < _nbr_stages + 1; ++i)
 		{
 			_mm_store_ps (_filter [phase] [i]._coef, _mm_setzero_ps ());
 		}
-		if ((NBR_COEFS & 1) != 0)
-		{
-			const int      pos = (NBR_COEFS ^ 1) & (STAGE_WIDTH - 1);
-			_filter [phase] [NBR_STAGES]._coef [pos] = 1;
-		}
+	}
+	for (int i = NBR_COEFS; i < _nbr_stages * _stage_width; ++i)
+	{
+		set_single_coef (i, 1);
 	}
 
 	clear_buffers ();
@@ -90,18 +98,13 @@ Throws: Nothing
 */
 
 template <int NC>
-void	PhaseHalfPiSse <NC>::set_coefs (const double coef_arr [])
+void	PhaseHalfPiSse <NC>::set_coefs (const double coef_arr []) noexcept
 {
 	assert (coef_arr != nullptr);
 
-	for (int phase = 0; phase < NBR_PHASES; ++phase)
+	for (int i = 0; i < NBR_COEFS; ++i)
 	{
-		for (int i = 0; i < NBR_COEFS; ++i)
-		{
-			const int      stage = (i / STAGE_WIDTH) + 1;
-			const int      pos = (i ^ 1) & (STAGE_WIDTH - 1);
-			_filter [phase] [stage]._coef [pos] = DataType (coef_arr [i]);
-		}
+		set_single_coef (i, coef_arr [i]);
 	}
 }
 
@@ -122,27 +125,25 @@ Throws: Nothing
 */
 
 template <int NC>
-hiir_FORCEINLINE void	PhaseHalfPiSse <NC>::process_sample (float &out_0, float &out_1, float input)
+hiir_FORCEINLINE void	PhaseHalfPiSse <NC>::process_sample (float &out_0, float &out_1, float input) noexcept
 {
 	StageDataSse * filter_ptr = &_filter [_phase] [0];
 
-	const __m128   spl_in  = _mm_load_ss (&input);
-	const __m128   prev    = _mm_load_ss (&_prev);
-	const __m128   comb    = _mm_unpacklo_ps (prev, spl_in);
-	const __m128   spl_mid = _mm_load_ps (filter_ptr [NBR_STAGES]._mem);
-	__m128         y       = _mm_shuffle_ps (comb, spl_mid, 0x44);
+	const auto     spl_in  = _mm_load_ss (&input);
+	const auto     prev    = _mm_load_ss (&_prev);
+	const auto     comb    = _mm_unpacklo_ps (prev, spl_in);
+	const auto     spl_mid = _mm_load_ps (filter_ptr [_nbr_stages]._mem);
+	constexpr auto shuf    = (2 << 0) | (3 << 2) | (0 << 4) | (1 << 6);
+	auto           y       = _mm_shuffle_ps (spl_mid, comb, shuf);
 
-	__m128         mem     = _mm_load_ps (filter_ptr [0]._mem);
+	auto           mem     = _mm_load_ps (filter_ptr [0]._mem);
 
-	StageProcSseV4 <NBR_STAGES>::process_sample_neg (&filter_ptr [0], y, mem);
+	StageProcSseV4 <_nbr_stages>::process_sample_neg (&filter_ptr [0], y, mem);
 
-	_mm_store_ps (filter_ptr [NBR_STAGES]._mem, y);
+	_mm_store_ps (filter_ptr [_nbr_stages]._mem, y);
 
-	// The latest shufps/movss instruction pairs can be freely inverted
-	y     = _mm_shuffle_ps (y, y, 0xE3);
+	out_1 = _mm_cvtss_f32 (_mm_shuffle_ps (y, y, 1));
 	out_0 = _mm_cvtss_f32 (y);
-	y     = _mm_shuffle_ps (y, y, 0xE2);
-	out_1 = _mm_cvtss_f32 (y);
 
 	_prev  = input;
 	_phase = 1 - _phase;
@@ -168,7 +169,7 @@ Throws: Nothing
 */
 
 template <int NC>
-void	PhaseHalfPiSse <NC>::process_block (float out_0_ptr [], float out_1_ptr [], const float in_ptr [], long nbr_spl)
+void	PhaseHalfPiSse <NC>::process_block (float out_0_ptr [], float out_1_ptr [], const float in_ptr [], long nbr_spl) noexcept
 {
 	assert (out_0_ptr != nullptr);
 	assert (out_1_ptr != nullptr);
@@ -178,13 +179,25 @@ void	PhaseHalfPiSse <NC>::process_block (float out_0_ptr [], float out_1_ptr [],
 	assert (out_0_ptr + nbr_spl <= out_1_ptr || out_1_ptr + nbr_spl <= out_0_ptr);
 	assert (nbr_spl > 0);
 
-	long           pos = 0;
-	do
+	if (_phase != 0)
 	{
-		process_sample (out_0_ptr [pos], out_1_ptr [pos], in_ptr [pos]);
-		++ pos;
+		process_sample (out_0_ptr [0], out_1_ptr [0], in_ptr [0]);
+		++ out_0_ptr;
+		++ out_1_ptr;
+		++ in_ptr;
+		-- nbr_spl;
 	}
-	while (pos < nbr_spl);
+
+	if (nbr_spl > 0)
+	{
+		const long     n4 =
+			process_block_quad (out_0_ptr, out_1_ptr, in_ptr, nbr_spl);
+
+		for (long pos = n4; pos < nbr_spl; ++pos)
+		{
+			process_sample (out_0_ptr [pos], out_1_ptr [pos], in_ptr [pos]);
+		}
+	}
 }
 
 
@@ -200,11 +213,11 @@ Throws: Nothing
 */
 
 template <int NC>
-void	PhaseHalfPiSse <NC>::clear_buffers ()
+void	PhaseHalfPiSse <NC>::clear_buffers () noexcept
 {
-	for (int phase = 0; phase < NBR_PHASES; ++phase)
+	for (int phase = 0; phase < _nbr_phases; ++phase)
 	{
-		for (int i = 0; i < NBR_STAGES + 1; ++i)
+		for (int i = 0; i < _nbr_stages + 1; ++i)
 		{
 			_mm_store_ps (_filter [phase] [i]._mem, _mm_setzero_ps ());
 		}
@@ -218,6 +231,88 @@ void	PhaseHalfPiSse <NC>::clear_buffers ()
 
 
 /*\\\ PRIVATE \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
+
+
+
+template <int NC>
+constexpr int	PhaseHalfPiSse <NC>::_stage_width;
+template <int NC>
+constexpr int	PhaseHalfPiSse <NC>::_nbr_stages;
+template <int NC>
+constexpr int	PhaseHalfPiSse <NC>::_nbr_phases;
+template <int NC>
+constexpr int	PhaseHalfPiSse <NC>::_coef_shift;
+
+
+
+template <int NC>
+void	PhaseHalfPiSse <NC>::set_single_coef (int index, double coef) noexcept
+{
+	assert (index >= 0);
+	assert (index < _nbr_stages * _stage_width);
+
+	const int      stage = (index / _stage_width) + 1;
+	const int      pos   = (index ^ _coef_shift) & (_stage_width - 1);
+	for (int phase = 0; phase < _nbr_phases; ++phase)
+	{
+		_filter [phase] [stage]._coef [pos] = DataType (coef);
+	}
+}
+
+
+
+template <int NC>
+long	PhaseHalfPiSse <NC>::process_block_quad (float out_0_ptr [], float out_1_ptr [], const float in_ptr [], long nbr_spl) noexcept
+{
+	assert (_phase == 0);
+
+	constexpr auto shuf_y = (2 << 0) | (3 << 2);
+	constexpr auto shuf_1 = shuf_y | (0 << 4) | (1 << 6);
+	constexpr auto shuf_2 = shuf_y | (1 << 4) | (2 << 6);
+	constexpr auto shuf_3 = shuf_y | (2 << 4) | (3 << 6);
+
+	const long     n4     = nbr_spl & ~(4-1);
+	auto           prev   = _mm_load_ss (&_prev);
+	auto           y_2    = _mm_load_ps (_filter [0] [_nbr_stages]._mem);
+	auto           y_3    = _mm_load_ps (_filter [1] [_nbr_stages]._mem);
+	for (long pos = 0; pos < n4; pos += 4)
+	{
+		const auto     x      = _mm_loadu_ps (in_ptr + pos);
+
+		const auto     comb_0 = _mm_unpacklo_ps (prev, x);
+		auto           y_0    = _mm_shuffle_ps (y_2, comb_0, shuf_1);
+		auto           mem_0  = _mm_load_ps (_filter [0] [0]._mem);
+		StageProcSseV4 <_nbr_stages>::process_sample_neg (_filter [0].data (), y_0, mem_0);
+		_mm_store_ps (_filter [0] [_nbr_stages]._mem, y_0);
+
+		auto           y_1    = _mm_shuffle_ps (y_3, x, shuf_1);
+		auto           mem_1  = _mm_load_ps (_filter [1] [0]._mem);
+		StageProcSseV4 <_nbr_stages>::process_sample_neg (_filter [1].data (), y_1, mem_1);
+		_mm_store_ps (_filter [1] [_nbr_stages]._mem, y_1);
+
+		               y_2    = _mm_shuffle_ps (y_0, x, shuf_2);
+		auto           mem_2  = _mm_load_ps (_filter [0] [0]._mem);
+		StageProcSseV4 <_nbr_stages>::process_sample_neg (_filter [0].data (), y_2, mem_2);
+		_mm_store_ps (_filter [0] [_nbr_stages]._mem, y_2);
+
+		               y_3    = _mm_shuffle_ps (y_1, x, shuf_3);
+		auto           mem_3  = _mm_load_ps (_filter [1] [0]._mem);
+		StageProcSseV4 <_nbr_stages>::process_sample_neg (_filter [1].data (), y_3, mem_3);
+		_mm_store_ps (_filter [1] [_nbr_stages]._mem, y_3);
+
+		prev = _mm_shuffle_ps (x, x, 3);
+
+		const auto     u_01 = _mm_unpacklo_ps (y_0, y_1); // o0, o1, e0, e1
+		const auto     u_23 = _mm_unpacklo_ps (y_2, y_3); // o2, o3, e2, e3
+		const auto     odd  = _mm_movelh_ps (u_01, u_23);
+		const auto     even = _mm_movehl_ps (u_23, u_01);
+		_mm_storeu_ps (out_0_ptr + pos, even);
+		_mm_storeu_ps (out_1_ptr + pos, odd);
+	}
+	_prev = _mm_cvtss_f32 (prev);
+
+	return n4;
+}
 
 
 

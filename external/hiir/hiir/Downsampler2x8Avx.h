@@ -39,7 +39,7 @@ http://sam.zoy.org/wtfpl/COPYING for more details.
 #include "./def.h"
 #include "./StageDataAvx.h"
 
-#include <xmmintrin.h>
+#include <immintrin.h>
 
 #include <array>
 
@@ -63,8 +63,9 @@ public:
 	typedef float DataType;
 	static constexpr int _nbr_chn  = 8;
 	static constexpr int NBR_COEFS = NC;
+	static constexpr double _delay = -1;
 
-	               Downsampler2x8Avx ();
+	               Downsampler2x8Avx () noexcept;
 	               Downsampler2x8Avx (const Downsampler2x8Avx <NC> &other) = default;
 	               Downsampler2x8Avx (Downsampler2x8Avx <NC> &&other) = default;
 	               ~Downsampler2x8Avx ()                            = default;
@@ -74,21 +75,21 @@ public:
 	Downsampler2x8Avx <NC> &
 	               operator = (Downsampler2x8Avx <NC> &&other)      = default;
 
-	void           set_coefs (const double coef_arr []);
+	void           set_coefs (const double coef_arr []) noexcept;
 
 	hiir_FORCEINLINE __m256
-	               process_sample (const float in_ptr [_nbr_chn * 2]);
+	               process_sample (const float in_ptr [_nbr_chn * 2]) noexcept;
 	hiir_FORCEINLINE __m256
-	               process_sample (__m256 in_0, __m256 in_1);
-	void           process_block (float out_ptr [], const float in_ptr [], long nbr_spl);
+	               process_sample (__m256 in_0, __m256 in_1) noexcept;
+	void           process_block (float out_ptr [], const float in_ptr [], long nbr_spl) noexcept;
 
 	hiir_FORCEINLINE void
-	               process_sample_split (__m256 &low, __m256 &high, const float in_ptr [_nbr_chn * 2]);
+	               process_sample_split (__m256 &low, __m256 &high, const float in_ptr [_nbr_chn * 2]) noexcept;
 	hiir_FORCEINLINE void
-	               process_sample_split (__m256 &low, __m256 &high, __m256 in_0, __m256 in_1);
-	void           process_block_split (float out_l_ptr [], float out_h_ptr [], const float in_ptr [], long nbr_spl);
+	               process_sample_split (__m256 &low, __m256 &high, __m256 in_0, __m256 in_1) noexcept;
+	void           process_block_split (float out_l_ptr [], float out_h_ptr [], const float in_ptr [], long nbr_spl) noexcept;
 
-	void           clear_buffers ();
+	void           clear_buffers () noexcept;
 
 
 

@@ -5,23 +5,23 @@
 #include <string>
 #include <vector>
 
-#include <imgui.h>
-
 #include "tracy_robin_hood.h"
 #include "TracyCharUtil.hpp"
 #include "TracyDecayValue.hpp"
 #include "TracySourceContents.hpp"
 #include "TracySourceTokenizer.hpp"
-#include "../common/TracyForceInline.hpp"
-#include "../common/TracyProtocol.hpp"
+#include "../public/common/TracyForceInline.hpp"
+#include "../public/common/TracyProtocol.hpp"
 
 struct ImFont;
+struct ImVec2;
 
 namespace tracy
 {
 
 class View;
 class Worker;
+struct CallstackFrameData;
 
 class SourceView
 {
@@ -78,6 +78,16 @@ private:
     enum { RegMask  = 0x0FF };
     enum { FlagMask = 0xF00 };
 
+    enum class OpType : uint8_t
+    {
+        None,
+        Jump,
+        Branch,
+        Call,
+        Ret,
+        Privileged
+    };
+
     struct AsmLine
     {
         uint64_t addr;
@@ -86,8 +96,10 @@ private:
         std::string operands;
         uint8_t len;
         LeaData leaData;
+        OpType opType;
         bool jumpConditional;
         std::vector<AsmOpParams> params;
+        std::vector<Tokenizer::AsmToken> opTokens;
         union
         {
             RegsX86 readX86[12];
@@ -142,11 +154,9 @@ private:
     };
 
 public:
-    using GetWindowCallback = void*(*)();
+    SourceView();
 
-    SourceView( GetWindowCallback gwcb );
-
-    void UpdateFont( ImFont* fixed, ImFont* small ) { m_font = fixed; m_smallFont = small; }
+    void UpdateFont( ImFont* fixed, ImFont* small, ImFont* big ) { m_font = fixed; m_smallFont = small; m_bigFont = big; }
     void SetCpuId( uint32_t cpuid );
 
     void OpenSource( const char* fileName, int line, const View& view, const Worker& worker );
@@ -169,7 +179,7 @@ private:
     uint64_t RenderSymbolAsmView( const AddrStatData& as, Worker& worker, View& view );
 
     void RenderLine( const Tokenizer::Line& line, int lineNum, const AddrStat& ipcnt, const AddrStatData& as, Worker* worker, const View* view );
-    void RenderAsmLine( AsmLine& line, const AddrStat& ipcnt, const AddrStatData& as, Worker& worker, uint64_t& jumpOut, int maxAddrLen, View& view );
+    void RenderAsmLine( AsmLine& line, const AddrStat& ipcnt, const AddrStatData& as, Worker& worker, uint64_t& jumpOut, int maxAddrLen, int maxAddrLenRel, View& view );
     void RenderHwLinePart( size_t cycles, size_t retired, size_t branchRetired, size_t branchMiss, size_t cacheRef, size_t cacheMiss, size_t branchRel, size_t branchRelMax, size_t cacheRel, size_t cacheRelMax, const ImVec2& ts );
 
     void SelectLine( uint32_t line, const Worker* worker, bool updateAsmLine = true, uint64_t targetAddr = 0, bool changeAsmLine = true );
@@ -193,6 +203,9 @@ private:
     void CheckWrite( size_t line, RegsX86 reg, size_t limit );
 
     bool IsInContext( const Worker& worker, uint64_t addr ) const;
+    const std::vector<uint64_t>* GetAddressesForLocation( uint32_t fileStringIdx, uint32_t line, const Worker& worker );
+
+    tracy_force_inline float CalcJumpSeparation( float scale );
 
 #ifndef TRACY_NO_FILESELECTOR
     void Save( const Worker& worker, size_t start = 0, size_t stop = std::numeric_limits<size_t>::max() );
@@ -203,6 +216,7 @@ private:
 
     ImFont* m_font;
     ImFont* m_smallFont;
+    ImFont* m_bigFont;
     uint64_t m_symAddr;
     uint64_t m_baseAddr;
     uint64_t m_targetAddr;
@@ -221,11 +235,12 @@ private:
     bool m_asmShowSourceLocation;
     bool m_calcInlineStats;
     uint8_t m_maxAsmBytes;
-    bool m_atnt;
     uint64_t m_jumpPopupAddr;
+    const CallstackFrameData* m_localCallstackPopup;
     bool m_hwSamples, m_hwSamplesRelative;
     bool m_childCalls;
     bool m_childCallList;
+    bool m_propagateInlines;
     CostType m_cost;
 
     SourceContents m_source;
@@ -238,18 +253,21 @@ private:
     size_t m_maxJumpLevel;
     bool m_showJumps;
 
+    unordered_flat_map<uint64_t, std::vector<uint64_t>> m_locationAddress;
+    bool m_locAddrIsProp;
+
     unordered_flat_map<uint32_t, uint32_t> m_sourceFiles;
     unordered_flat_set<uint64_t> m_selectedAddresses;
     unordered_flat_set<uint64_t> m_selectedAddressesHover;
 
     uint32_t m_maxLine;
     int m_maxMnemonicLen;
+    int m_maxOperandLen;
 
     unordered_flat_map<const char*, int, charutil::Hasher, charutil::Comparator> m_microArchOpMap;
     CpuArchitecture m_cpuArch;
     int m_selMicroArch;
     int m_idxMicroArch, m_profileMicroArch;
-    bool m_showLatency;
 
     unordered_flat_set<uint32_t> m_asmSampleSelect;
     unordered_flat_set<uint32_t> m_srcSampleSelect;
@@ -260,7 +278,6 @@ private:
     float m_asmWidth;
     float m_jumpOffset;
 
-    GetWindowCallback m_gwcb;
     Tokenizer m_tokenizer;
 
     struct

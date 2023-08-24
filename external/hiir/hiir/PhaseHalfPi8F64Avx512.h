@@ -58,8 +58,9 @@ public:
 	typedef double DataType;
 	static constexpr int _nbr_chn  = 8;
 	static constexpr int NBR_COEFS = NC;
+	static constexpr double _delay = 0;
 
-	               PhaseHalfPi8F64Avx512 ();
+	               PhaseHalfPi8F64Avx512 () noexcept;
 	               PhaseHalfPi8F64Avx512 (const PhaseHalfPi8F64Avx512 <NC> &other) = default;
 	               PhaseHalfPi8F64Avx512 (PhaseHalfPi8F64Avx512 <NC> &&other)      = default;
 	               ~PhaseHalfPi8F64Avx512 ()                            = default;
@@ -69,13 +70,13 @@ public:
 	PhaseHalfPi8F64Avx512 <NC> &
 	               operator = (PhaseHalfPi8F64Avx512 <NC> &&other)      = default;
 
-	void           set_coefs (const double coef_arr []);
+	void           set_coefs (const double coef_arr []) noexcept;
 
 	hiir_FORCEINLINE void
-	               process_sample (__m512d &out_0, __m512d &out_1, __m512d input);
-	void           process_block (double out_0_ptr [], double out_1_ptr [], const double in_ptr [], long nbr_spl);
+	               process_sample (__m512d &out_0, __m512d &out_1, __m512d input) noexcept;
+	void           process_block (double out_0_ptr [], double out_1_ptr [], const double in_ptr [], long nbr_spl) noexcept;
 
-	void           clear_buffers ();
+	void           clear_buffers () noexcept;
 
 
 
@@ -96,11 +97,8 @@ private:
 	typedef	std::array <Filter, _nbr_phases>	FilterBiPhase;
 
 	FilterBiPhase  _bifilter;
-	union
-	{
-		__m512d        _prev8;     // Just to ensure alignement
-		double         _prev [_nbr_chn];
-	};
+	alignas (64) double
+	               _prev [_nbr_chn];
 	int            _phase;			// 0 or 1
 
 

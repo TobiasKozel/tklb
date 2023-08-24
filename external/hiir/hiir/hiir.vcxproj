@@ -108,6 +108,12 @@
       <!-- EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet -->
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -135,8 +141,8 @@
     <ClInclude Include="Downsampler2xF64Sse2.hpp" />
     <ClInclude Include="Downsampler2xFpu.h" />
     <ClInclude Include="Downsampler2xF64Fpu.h" />
-    <ClInclude Include="Downsampler2xFpuTpl.h" />
-    <ClInclude Include="Downsampler2xFpuTpl.hpp" />
+    <ClInclude Include="Downsampler2xTpl.h" />
+    <ClInclude Include="Downsampler2xTpl.hpp" />
     <ClInclude Include="Downsampler2xNeon.h" />
     <ClInclude Include="Downsampler2xNeon.hpp" />
     <ClInclude Include="Downsampler2xNeonOld.h" />
@@ -149,6 +155,30 @@
     <ClInclude Include="fnc.hpp" />
     <ClInclude Include="fnc_neon.h" />
     <ClInclude Include="fnc_neon.hpp" />
+    <ClInclude Include="HalfBand16Avx512.h" />
+    <ClInclude Include="HalfBand16Avx512.hpp" />
+    <ClInclude Include="HalfBand2F64Sse2.h" />
+    <ClInclude Include="HalfBand2F64Sse2.hpp" />
+    <ClInclude Include="HalfBand4F64Avx.h" />
+    <ClInclude Include="HalfBand4F64Avx.hpp" />
+    <ClInclude Include="HalfBand4Neon.h" />
+    <ClInclude Include="HalfBand4Neon.hpp" />
+    <ClInclude Include="HalfBand4Sse.h" />
+    <ClInclude Include="HalfBand4Sse.hpp" />
+    <ClInclude Include="HalfBand8Avx.h" />
+    <ClInclude Include="HalfBand8Avx.hpp" />
+    <ClInclude Include="HalfBand8F64Avx512.h" />
+    <ClInclude Include="HalfBand8F64Avx512.hpp" />
+    <ClInclude Include="HalfBandF64Fpu.h" />
+    <ClInclude Include="HalfBandF64Sse2.h" />
+    <ClInclude Include="HalfBandF64Sse2.hpp" />
+    <ClInclude Include="HalfBandFpu.h" />
+    <ClInclude Include="HalfBandNeon.h" />
+    <ClInclude Include="HalfBandNeon.hpp" />
+    <ClInclude Include="HalfBandSse.h" />
+    <ClInclude Include="HalfBandSse.hpp" />
+    <ClInclude Include="HalfBandTpl.h" />
+    <ClInclude Include="HalfBandTpl.hpp" />
     <ClInclude Include="PhaseHalfPi16Avx512.h" />
     <ClInclude Include="PhaseHalfPi16Avx512.hpp" />
     <ClInclude Include="PhaseHalfPi2F64Sse2.h" />
@@ -169,19 +199,19 @@
     <ClInclude Include="PhaseHalfPiF64Sse2.hpp" />
     <ClInclude Include="PhaseHalfPiFpu.h" />
     <ClInclude Include="PhaseHalfPiF64Fpu.h" />
-    <ClInclude Include="PhaseHalfPiFpuTpl.h" />
-    <ClInclude Include="PhaseHalfPiFpuTpl.hpp" />
     <ClInclude Include="PhaseHalfPiNeon.h" />
     <ClInclude Include="PhaseHalfPiNeon.hpp" />
     <ClInclude Include="PhaseHalfPiSse.h" />
     <ClInclude Include="PhaseHalfPiSse.hpp" />
+    <ClInclude Include="PhaseHalfPiTpl.h" />
+    <ClInclude Include="PhaseHalfPiTpl.hpp" />
     <ClInclude Include="PolyphaseIir2Designer.h" />
     <ClInclude Include="StageData3dnow.h" />
     <ClInclude Include="StageDataAvx.h" />
     <ClInclude Include="StageDataAvx512.h" />
     <ClInclude Include="StageDataF64Avx.h" />
     <ClInclude Include="StageDataF64Avx512.h" />
-    <ClInclude Include="StageDataFpu.h" />
+    <ClInclude Include="StageDataTpl.h" />
     <ClInclude Include="StageDataNeonV2.h" />
     <ClInclude Include="StageDataNeonV4.h" />
     <ClInclude Include="StageDataSse.h" />
@@ -204,8 +234,8 @@
     <ClInclude Include="StageProc8F64Avx512.hpp" />
     <ClInclude Include="StageProcF64Sse2.h" />
     <ClInclude Include="StageProcF64Sse2.hpp" />
-    <ClInclude Include="StageProcFpu.h" />
-    <ClInclude Include="StageProcFpu.hpp" />
+    <ClInclude Include="StageProcTpl.h" />
+    <ClInclude Include="StageProcTpl.hpp" />
     <ClInclude Include="StageProcNeonV2.h" />
     <ClInclude Include="StageProcNeonV2.hpp" />
     <ClInclude Include="StageProcNeonV4.h" />
@@ -233,8 +263,12 @@
     <ClInclude Include="test\TestAllClassesFnc.hpp" />
     <ClInclude Include="test\TestAllClassesSpeed.h" />
     <ClInclude Include="test\TestAllClassesSpeed.hpp" />
+    <ClInclude Include="test\TestDelay.h" />
+    <ClInclude Include="test\TestDelay.hpp" />
     <ClInclude Include="test\TestDownsampler2x.h" />
     <ClInclude Include="test\TestDownsampler2x.hpp" />
+    <ClInclude Include="test\TestHalfBand.h" />
+    <ClInclude Include="test\TestHalfBand.hpp" />
     <ClInclude Include="test\TestPhaseHalfPi.h" />
     <ClInclude Include="test\TestPhaseHalfPi.hpp" />
     <ClInclude Include="test\TestUpsampler2x.h" />
@@ -261,8 +295,6 @@
     <ClInclude Include="Upsampler2xF64Sse2.hpp" />
     <ClInclude Include="Upsampler2xFpu.h" />
     <ClInclude Include="Upsampler2xF64Fpu.h" />
-    <ClInclude Include="Upsampler2xFpuTpl.h" />
-    <ClInclude Include="Upsampler2xFpuTpl.hpp" />
     <ClInclude Include="Upsampler2xNeon.h" />
     <ClInclude Include="Upsampler2xNeon.hpp" />
     <ClInclude Include="Upsampler2xNeonOld.h" />
@@ -271,14 +303,15 @@
     <ClInclude Include="Upsampler2xSse.hpp" />
     <ClInclude Include="Upsampler2xSseOld.h" />
     <ClInclude Include="Upsampler2xSseOld.hpp" />
+    <ClInclude Include="Upsampler2xTpl.h" />
+    <ClInclude Include="Upsampler2xTpl.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PolyphaseIir2Designer.cpp" />
     <ClCompile Include="test\BlockSplitter.cpp" />
-    <ClCompile Include="test\CpuId.cpp" />
+    <ClCompile Include="test\CpuId_hiir_test.cpp" />
     <ClCompile Include="test\main.cpp" />
-    <ClCompile Include="test\SweepingSine.cpp" />
-    <ClCompile Include="test\TimerAccurate.cpp" />
+    <ClCompile Include="test\SweepingSine_hiir_test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\license.txt" />

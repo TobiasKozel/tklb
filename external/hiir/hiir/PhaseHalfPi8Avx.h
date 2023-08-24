@@ -58,8 +58,9 @@ public:
 	typedef float DataType;
 	static constexpr int _nbr_chn  = 8;
 	static constexpr int NBR_COEFS = NC;
+	static constexpr double _delay = 0;
 
-	               PhaseHalfPi8Avx ();
+	               PhaseHalfPi8Avx () noexcept;
 	               PhaseHalfPi8Avx (const PhaseHalfPi8Avx <NC> &other) = default;
 	               PhaseHalfPi8Avx (PhaseHalfPi8Avx <NC> &&other)      = default;
 	               ~PhaseHalfPi8Avx ()                                 = default;
@@ -69,13 +70,13 @@ public:
 	PhaseHalfPi8Avx <NC> &
 	               operator = (PhaseHalfPi8Avx <NC> &&other)           = default;
 
-	void           set_coefs (const double coef_arr []);
+	void           set_coefs (const double coef_arr []) noexcept;
 
 	hiir_FORCEINLINE void
-	               process_sample (__m256 &out_0, __m256 &out_1, __m256 input);
-	void           process_block (float out_0_ptr [], float out_1_ptr [], const float in_ptr [], long nbr_spl);
+	               process_sample (__m256 &out_0, __m256 &out_1, __m256 input) noexcept;
+	void           process_block (float out_0_ptr [], float out_1_ptr [], const float in_ptr [], long nbr_spl) noexcept;
 
-	void           clear_buffers ();
+	void           clear_buffers () noexcept;
 
 
 
@@ -96,11 +97,8 @@ private:
 	typedef	std::array <Filter, _nbr_phases>	FilterBiPhase;
 
 	FilterBiPhase  _bifilter;
-	union
-	{
-		__m256         _prev8;     // Just to ensure alignement
-		float          _prev [_nbr_chn];
-	};
+	alignas (32) float
+	               _prev [_nbr_chn];
 	int            _phase;			// 0 or 1
 
 

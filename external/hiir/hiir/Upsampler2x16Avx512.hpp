@@ -37,6 +37,13 @@ namespace hiir
 
 
 
+template <int NC>
+constexpr int 	Upsampler2x16Avx512 <NC>::_nbr_chn;
+template <int NC>
+constexpr int 	Upsampler2x16Avx512 <NC>::NBR_COEFS;
+
+
+
 /*
 ==============================================================================
 Name: ctor
@@ -45,7 +52,7 @@ Throws: Nothing
 */
 
 template <int NC>
-Upsampler2x16Avx512 <NC>::Upsampler2x16Avx512 ()
+Upsampler2x16Avx512 <NC>::Upsampler2x16Avx512 () noexcept
 :	_filter ()
 {
 	for (int i = 0; i < NBR_COEFS + 2; ++i)
@@ -73,7 +80,7 @@ Throws: Nothing
 */
 
 template <int NC>
-void	Upsampler2x16Avx512 <NC>::set_coefs (const double coef_arr [NBR_COEFS])
+void	Upsampler2x16Avx512 <NC>::set_coefs (const double coef_arr [NBR_COEFS]) noexcept
 {
 	assert (coef_arr != nullptr);
 
@@ -102,7 +109,7 @@ Throws: Nothing
 */
 
 template <int NC>
-void	Upsampler2x16Avx512 <NC>::process_sample (__m512 &out_0, __m512 &out_1, __m512 input)
+void	Upsampler2x16Avx512 <NC>::process_sample (__m512 &out_0, __m512 &out_1, __m512 input) noexcept
 {
 	__m512         even = input;
 	__m512         odd  = input;
@@ -136,7 +143,7 @@ Throws: Nothing
 */
 
 template <int NC>
-void	Upsampler2x16Avx512 <NC>::process_block (float out_ptr [], const float in_ptr [], long nbr_spl)
+void	Upsampler2x16Avx512 <NC>::process_block (float out_ptr [], const float in_ptr [], long nbr_spl) noexcept
 {
 	assert (out_ptr != nullptr);
 	assert (in_ptr  != nullptr);
@@ -171,7 +178,7 @@ Throws: Nothing
 */
 
 template <int NC>
-void	Upsampler2x16Avx512 <NC>::clear_buffers ()
+void	Upsampler2x16Avx512 <NC>::clear_buffers () noexcept
 {
 	for (int i = 0; i < NBR_COEFS + 2; ++i)
 	{

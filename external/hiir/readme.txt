@@ -19,8 +19,9 @@ Contents:
 3. Using hiir
 4. Compilation
 5. Oversampling to higher ratios
-6. History
-7. Contact
+6. Delay
+7. History
+8. Contact
 
 
 
@@ -49,8 +50,8 @@ frequency response in the passband.
 
 Various implementations are supplied with the library, using special CPU
 instructions to optimise the calculation speed. Currently 3DNow!, SSE, SSE2,
-AVX and NEON instruction sets are supported, as well as the classic and portable
-FPU implementation.
+AVX, AVX512F and NEON instruction sets are supported, as well as the classic
+and portable FPU implementation.
 
 Source code may be downloaded from this webpage:
 http://ldesoras.free.fr/prod.html#src_hiir
@@ -71,7 +72,7 @@ in a “hiir” directory; make sure this location is available from your compil
 
 The filter design class is PolyphaseIir2Designer. It generates coefficients
 for the filters from a specification: stopband attenuation, transition
-bandwidth, number of coefficients and/or group delay.
+bandwidth, number of coefficients and/or phase or group delay.
 
 The main processing classes are Downsampler2x*, Upsampler2x* and PhaseHalfPi*.
 The suffix indicates the implementation. Choose “Fpu” if you are not sure
@@ -88,16 +89,26 @@ The *SseOld filters uses an old SSE implementation which may be sligthly faster
 than the standard SSE filters on ancient hardware.
 
 Similarly, the *NeonOld filters use a different processing scheme and may be
-faster in some cases, mostly with a high numer of coefficients. You will have
+faster in some cases, mostly with a high number of coefficients. You will have
 to check the performances on your target architecture with the test application.
-For some reason, with GCC (not Clang), the NEON versions are slow as hell on
-32-bit ARM. With full optimisation, the FPU versions are faster in almost all
-cases (tested on Cortex A53 and A72 processors).
+
+Generally, the versions processing a full SIMD vector in parallel (named with
+the number of channels between the filter name and the instruction set) are
+always faster than the FPU versions. However, the versions processing single
+scalars with the help of internal 4-way parallel SIMD processing are sometimes
+slower than the FPU versions, especially for the lowest filter orders. The
+cause is a strong dependency between the filter output and the input and lane
+shifting. You’ll have to check which one is the fastest, depending on your
+compiler and target architecture.
 
 Note that all SIMD versions (except 3DNow!) require the processing objects to
 be aligned on a 16-, 32- or 64-byte boundary. Now this should be automatically
 taken care of by the compiler anyway, excepted if you use “placement new” for
 creation. Processed data haven’t to be aligned.
+
+The *Tpl files allow using a custom data type, which can be some kind of
+wrapper for SIMD vectors, like Array from the Eigen library. It should have
+the floating point semantic.
 
 As you can see, almost all classes are templates based on the number of
 coefficients. This means it is not possible to change this number at run-time.
@@ -112,11 +123,11 @@ hiir is intended to be portable, but has some architecture-dependant pieces of
 code. So far, it has been built and tested on:
 
     – MS Windows (x86, x64) / MS Visual C++ 2019 (FPU/SSEx/AVX/3DNow)
-    – MS Windows (x86, x64) / GCC 9.2.0 (FPU/SSEx/AVX only) on MSYS 2
-    – MS Windows (x86, x64) / Clang 10.0.1 (FPU/SSEx/AVX only) on MSYS 2
+    – MS Windows (x86, x64) / GCC 11.2.0 (FPU/SSEx/AVX only) on MSYS 2
+    – MS Windows (x86, x64) / Clang 13.0.0 (FPU/SSEx/AVX only) on MSYS 2
     – MacOS 10.5 (x86, x64) / GCC 4 (FPU/SSE only, old HIIR version)
     – Linux (ARM32, ARM64) / GCC 8.3.0 (FPU/NEON)
-    – Linux (ARM32, ARM64) / Clang 10.0.1 (FPU/NEON)
+    – Linux (ARM32, ARM64) / Clang 13.0.0 (FPU/NEON)
 
 If you happen to have another system and tweak it to make it run successfully,
 pleeeeease send me your modification so I can include it to the main
@@ -173,6 +184,7 @@ Drop the following files into your project or makefile:
 hiir/def.h
 hiir/Downsampler2x*.*
 hiir/fnc*.*
+hiir/HalfBand*.*
 hiir/PhaseHalfPi*.*
 hiir/PolyphaseIir2Designer.*
 hiir/Stage*.*
@@ -188,12 +200,12 @@ mode. For example, the command line to compile the test bench on GCC or
 Clang for an x86 hardware would look like:
 
 Debug mode:
-g++ -std=c++11 -mavx -I. -o ./hiir_debug.exe -g3 -O0 hiir/*.cpp hiir/test/*.cpp
-clang++ -D_X86_ -std=c++11 -mavx512f -I. -o ./hiir_debug.exe -g3 -O0 hiir/*.cpp hiir/test/*.cpp
+g++ -std=c++11 -mavx512f -I. -o ./hiir_debug.exe -g3 -O0 hiir/*.cpp hiir/test/*.cpp
+clang++ -std=c++11 -mavx512f -I. -o ./hiir_debug.exe -g3 -O0 hiir/*.cpp hiir/test/*.cpp
 
 Release mode:
-g++ -std=c++11 -mavx -I. -o ./hiir_release.exe -DNDEBUG -O3 hiir/*.cpp hiir/test/*.cpp
-clang++ -D_X86_ -std=c++11 -mavx512f -I. -o ./hiir_release.exe -DNDEBUG -O3 hiir/*.cpp hiir/test/*.cpp
+g++ -std=c++11 -mavx512f -I. -o ./hiir_release.exe -DNDEBUG -O3 hiir/*.cpp hiir/test/*.cpp
+clang++ -std=c++11 -mavx512f -I. -o ./hiir_release.exe -DNDEBUG -O3 hiir/*.cpp hiir/test/*.cpp
 
 The “-mavx512f” option enables the compilation of the Intel intrinsics. If you
 want to compile for other instruction sets, use “-mavx”, “-msse2”, “-msse” or
@@ -204,12 +216,12 @@ their AVX equivalent. In your own code, make sure each compilation unit uses
 only the flags it requires if you want to support multiple architectures within
 the same executable file.
 
-Another two quirks with AVX versions compiled with GCC on 64-bit MinGW/Cygwin:
+Two other quirks with AVX versions compiled with GCC on 64-bit MinGW/Cygwin:
 
     – With standard AVX, there might be segmentation faults resulting from
-aligned access to unaligned variables on the stack. The issue is known but not
-solved yet. A workaround is to use the always_inline function attribute, but
-there is not guarantee it will always work.
+aligned access to unaligned variables on the stack. The issue is known on the
+GCC side but not solved yet. A workaround is to use the always_inline function
+attribute, but there is not guarantee it will always work.
 Ref: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=54412
 
     – AVX-512 may produce assembler errors. Use the following as a workaround:
@@ -245,14 +257,14 @@ to cascade up- or down-samplers to achieve a power-of-2 ratio. Depending on
 your requirements, you can reduce the filter order as the sampling rate is
 getting bigger by reducing the transition bandwidth (TBW).
 
-For example, let’s suppose one wants 16x downsampling, with 96 dB of stopband
+For example, let’s suppose one wants 16× downsampling, with 96 dB of stopband
 attenuation and a 0.49*Fs passband. You’ll need the following specifications
 for the TBW of each stage:
 
- 2x <-> 1x: TBW = (0.50-0.49)                      = 0.01
- 4x <-> 2x: TBW = (0.50-0.49)/2 + 1/4              = 0.255
- 8x <-> 4x: TBW = (0.50-0.49)/4 + 1/8  + 1/4       = 0.3775
-16x <-> 8x: TBW = (0.50-0.49)/8 + 1/16 + 1/8 + 1/4 = 0.43865
+ 2× <-> 1×: TBW = (0.50-0.49)                      = 0.01
+ 4× <-> 2×: TBW = (0.50-0.49)/2 + 1/4              = 0.255
+ 8× <-> 4×: TBW = (0.50-0.49)/4 + 1/8  + 1/4       = 0.3775
+16× <-> 8×: TBW = (0.50-0.49)/8 + 1/16 + 1/8 + 1/4 = 0.43865
 
 The reason is that you do not need to preserve spectrum parts that will be
 wiped out by subsequent stages. Only the spectrum part present after the
@@ -278,17 +290,40 @@ Note that when cascading filters, the residual aliasing will accumulate in the
 passband, so the global stopband attenuation is probably a bit lower than the
 attenuation of each (or the weakest) stage.
 
-These filters have a quite flat group delay from DC up to about Fs/20, then
-the group delay starts rising faster and faster up to the cutoff frequency.
+
+
+6. Delay
+--------
+
+These filters have a quite flat group and phase delays from DC up to about
+Fs/20, then delays starts rising faster and faster up to the cutoff frequency.
 The oversampling.txt annex file lists a few examples of filter combinations
-for oversampling, with a specific requirement in mind: the total group delay
+for oversampling, with a specific requirement in mind: the total phase delay
 of the upsampling filter combined with the downsampling filter should be
-integer.
+integer, so optimal phase compensation can be achieved with a naive delay
+on the original signal.
+
+Please also note that some implementations may have a delay relative to the
+theoretical formula. The Downsampler2x classes even have a negative delay
+(advance) because the output samples are time-located on each second sample
+of the input stream.
+
+The _delay member indicates the delay (positive) or advance (negative) in
+samples introduced by the implementation, relative to the highest rate if the
+input and output rates are different. This delay must be added to the theore-
+tical filter delay given by the PolyphaseIir2Designer functions.
 
 
 
-6. History
+7. History
 ----------
+
+v1.40 (2021-12-24)
+    – Added HalfBand classes for full-rate half-band filtering
+    – Added processing on user-provided data types
+    – Significant performance improvement for a few filter implementations
+    – Fixed the phase delay estimation
+    – Fixed the coefficients calculated in oversampling.txt
 
 v1.33 (2020-11-19)
     – Fixed occasional link error related to hiir::StageProcF64Sse2
@@ -332,7 +367,7 @@ v1.00 (2005-03-29)
 
 
 
-7. Contact
+8. Contact
 ----------
 
 Please address any comment, bug report or flame to:

@@ -57,8 +57,9 @@ public:
 	typedef float DataType;
 	static constexpr int _nbr_chn  = 1;
 	static constexpr int NBR_COEFS = NC;
+	static constexpr double _delay = -1;
 
-	               Downsampler2xSse ();
+	               Downsampler2xSse () noexcept;
 	               Downsampler2xSse (const Downsampler2xSse <NC> &other) = default;
 	               Downsampler2xSse (Downsampler2xSse <NC> &&other)      = default;
 
@@ -67,17 +68,17 @@ public:
 	Downsampler2xSse <NC> &
 	               operator = (Downsampler2xSse <NC> &&other)      = default;
 
-	void           set_coefs (const double coef_arr []);
+	void           set_coefs (const double coef_arr []) noexcept;
 
 	hiir_FORCEINLINE float
-	               process_sample (const float in_ptr [2]);
-	void           process_block (float out_ptr [], const float in_ptr [], long nbr_spl);
+	               process_sample (const float in_ptr [2]) noexcept;
+	void           process_block (float out_ptr [], const float in_ptr [], long nbr_spl) noexcept;
 
 	hiir_FORCEINLINE void
-	               process_sample_split (float &low, float &high, const float in_ptr [2]);
-	void           process_block_split (float out_l_ptr [], float out_h_ptr [], const float in_ptr [], long nbr_spl);
+	               process_sample_split (float &low, float &high, const float in_ptr [2]) noexcept;
+	void           process_block_split (float out_l_ptr [], float out_h_ptr [], const float in_ptr [], long nbr_spl) noexcept;
 
-	void           clear_buffers ();
+	void           clear_buffers () noexcept;
 
 
 
@@ -93,6 +94,17 @@ private:
 
 	static constexpr int _stage_width = 2;
 	static constexpr int _nbr_stages  = (NBR_COEFS + _stage_width - 1) / _stage_width;
+
+	template <typename FL, typename FH>
+	hiir_FORCEINLINE long
+	               process_block_quad (float out_l_ptr [], float out_h_ptr [], const float in_ptr [], long nbr_spl, FL fnc_l, FH fnc_h) noexcept;
+
+	hiir_FORCEINLINE static void
+	               store_low (float *ptr, __m128 even, __m128 odd, __m128 half) noexcept;
+	hiir_FORCEINLINE static void
+	               store_high (float *ptr, __m128 even, __m128 odd, __m128 half) noexcept;
+	hiir_FORCEINLINE static void
+	               bypass (float *, __m128, __m128, __m128) noexcept {}
 
 	// Stage 0 contains only input memory
 	typedef std::array <StageDataSse, _nbr_stages + 1> Filter;

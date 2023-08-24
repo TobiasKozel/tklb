@@ -32,12 +32,6 @@ http://sam.zoy.org/wtfpl/COPYING for more details.
 
 
 
-#if defined (_MSC_VER)
-	#pragma inline_depth (255)
-#endif
-
-
-
 namespace hiir
 {
 
@@ -48,7 +42,7 @@ namespace hiir
 
 
 template <>
-hiir_FORCEINLINE void	StageProc8Avx <1>::process_sample_pos (const int nbr_coefs, __m256 &spl_0, __m256 &spl_1, StageDataAvx *stage_arr)
+hiir_FORCEINLINE void	StageProc8Avx <1>::process_sample_pos (const int nbr_coefs, __m256 &spl_0, __m256 &spl_1, StageDataAvx *stage_arr) noexcept
 {
 	const int      cnt   = nbr_coefs + 2 - 1;
 
@@ -70,7 +64,7 @@ hiir_FORCEINLINE void	StageProc8Avx <1>::process_sample_pos (const int nbr_coefs
 
 
 template <>
-hiir_FORCEINLINE void	StageProc8Avx <0>::process_sample_pos (const int nbr_coefs, __m256 &spl_0, __m256 &spl_1, StageDataAvx *stage_arr)
+hiir_FORCEINLINE void	StageProc8Avx <0>::process_sample_pos (const int nbr_coefs, __m256 &spl_0, __m256 &spl_1, StageDataAvx *stage_arr) noexcept
 {
 	const int      cnt = nbr_coefs + 2;
 
@@ -81,7 +75,7 @@ hiir_FORCEINLINE void	StageProc8Avx <0>::process_sample_pos (const int nbr_coefs
 
 
 template <int REMAINING>
-void	StageProc8Avx <REMAINING>::process_sample_pos (const int nbr_coefs, __m256 &spl_0, __m256 &spl_1, StageDataAvx *stage_arr)
+void	StageProc8Avx <REMAINING>::process_sample_pos (const int nbr_coefs, __m256 &spl_0, __m256 &spl_1, StageDataAvx *stage_arr) noexcept
 {
 	const int      cnt   = nbr_coefs + 2 - REMAINING;
 
@@ -117,7 +111,7 @@ void	StageProc8Avx <REMAINING>::process_sample_pos (const int nbr_coefs, __m256 
 
 
 template <>
-hiir_FORCEINLINE void	StageProc8Avx <1>::process_sample_neg (const int nbr_coefs, __m256 &spl_0, __m256 &spl_1, StageDataAvx *stage_arr)
+hiir_FORCEINLINE void	StageProc8Avx <1>::process_sample_neg (const int nbr_coefs, __m256 &spl_0, __m256 &spl_1, StageDataAvx *stage_arr) noexcept
 {
 	const int      cnt   = nbr_coefs + 2 - 1;
 
@@ -139,7 +133,7 @@ hiir_FORCEINLINE void	StageProc8Avx <1>::process_sample_neg (const int nbr_coefs
 
 
 template <>
-hiir_FORCEINLINE void	StageProc8Avx <0>::process_sample_neg (const int nbr_coefs, __m256 &spl_0, __m256 &spl_1, StageDataAvx *stage_arr)
+hiir_FORCEINLINE void	StageProc8Avx <0>::process_sample_neg (const int nbr_coefs, __m256 &spl_0, __m256 &spl_1, StageDataAvx *stage_arr) noexcept
 {
 	const int      cnt = nbr_coefs + 2;
 
@@ -150,7 +144,7 @@ hiir_FORCEINLINE void	StageProc8Avx <0>::process_sample_neg (const int nbr_coefs
 
 
 template <int REMAINING>
-void	StageProc8Avx <REMAINING>::process_sample_neg (const int nbr_coefs, __m256 &spl_0, __m256 &spl_1, StageDataAvx *stage_arr)
+void	StageProc8Avx <REMAINING>::process_sample_neg (const int nbr_coefs, __m256 &spl_0, __m256 &spl_1, StageDataAvx *stage_arr) noexcept
 {
 	const int      cnt   = nbr_coefs + 2 - REMAINING;
 

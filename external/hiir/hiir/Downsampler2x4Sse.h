@@ -62,8 +62,9 @@ public:
 	typedef float DataType;
 	static constexpr int _nbr_chn  = 4;
 	static constexpr int NBR_COEFS = NC;
+	static constexpr double _delay = -1;
 
-	               Downsampler2x4Sse ();
+	               Downsampler2x4Sse () noexcept;
 	               Downsampler2x4Sse (const Downsampler2x4Sse <NC> &other) = default;
 	               Downsampler2x4Sse (Downsampler2x4Sse <NC> &&other)      = default;
 	               ~Downsampler2x4Sse ()                            = default;
@@ -74,21 +75,21 @@ public:
 	               operator = (Downsampler2x4Sse <NC> &&other)      = default;
 
 
-	void           set_coefs (const double coef_arr []);
+	void           set_coefs (const double coef_arr []) noexcept;
 
 	hiir_FORCEINLINE __m128
-	               process_sample (const float in_ptr [_nbr_chn * 2]);
+	               process_sample (const float in_ptr [_nbr_chn * 2]) noexcept;
 	hiir_FORCEINLINE __m128
-	               process_sample (__m128 in_0, __m128 in_1);
-	void           process_block (float out_ptr [], const float in_ptr [], long nbr_spl);
+	               process_sample (__m128 in_0, __m128 in_1) noexcept;
+	void           process_block (float out_ptr [], const float in_ptr [], long nbr_spl) noexcept;
 
 	hiir_FORCEINLINE void
-	               process_sample_split (__m128 &low, __m128 &high, const float in_ptr [_nbr_chn * 2]);
+	               process_sample_split (__m128 &low, __m128 &high, const float in_ptr [_nbr_chn * 2]) noexcept;
 	hiir_FORCEINLINE void
-	               process_sample_split (__m128 &low, __m128 &high, __m128 in_0, __m128 in_1);
-	void           process_block_split (float out_l_ptr [], float out_h_ptr [], const float in_ptr [], long nbr_spl);
+	               process_sample_split (__m128 &low, __m128 &high, __m128 in_0, __m128 in_1) noexcept;
+	void           process_block_split (float out_l_ptr [], float out_h_ptr [], const float in_ptr [], long nbr_spl) noexcept;
 
-	void           clear_buffers ();
+	void           clear_buffers () noexcept;
 
 
 

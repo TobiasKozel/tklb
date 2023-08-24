@@ -57,8 +57,9 @@ public:
 	typedef float DataType;
 	static constexpr int _nbr_chn  = 1;
 	static constexpr int NBR_COEFS = NC;
+	static constexpr double _delay = 0;
 
-	               Upsampler2x3dnow ();
+	               Upsampler2x3dnow () noexcept;
 	               Upsampler2x3dnow (const Upsampler2x3dnow <NC> &other) = default;
 	               Upsampler2x3dnow (Upsampler2x3dnow <NC> &&other)      = default;
 	               ~Upsampler2x3dnow ()                             = default;
@@ -68,11 +69,11 @@ public:
 	Upsampler2x3dnow <NC> &
 	               operator = (Upsampler2x3dnow <NC> &&other)       = default;
 
-	void           set_coefs (const double coef_arr [NBR_COEFS]);
+	void           set_coefs (const double coef_arr [NBR_COEFS]) noexcept;
 	hiir_FORCEINLINE void
-	               process_sample (float &out_0, float &out_1, float input);
-	void           process_block (float out_ptr [], const float in_ptr [], long nbr_spl);
-	void           clear_buffers ();
+	               process_sample (float &out_0, float &out_1, float input) noexcept;
+	void           process_block (float out_ptr [], const float in_ptr [], long nbr_spl) noexcept;
+	void           clear_buffers () noexcept;
 
 
 
@@ -86,11 +87,11 @@ protected:
 
 private:
 
-	static constexpr int STAGE_WIDTH = 2;
-	static constexpr int NBR_STAGES  =
-		(NBR_COEFS + STAGE_WIDTH - 1) / STAGE_WIDTH;
+	static constexpr int _stage_width = 2;
+	static constexpr int _nbr_stages  =
+		(NBR_COEFS + _stage_width - 1) / _stage_width;
 
-	typedef std::array <StageData3dnow, NBR_STAGES + 1> Filter; // Stage 0 contains only input memory
+	typedef std::array <StageData3dnow, _nbr_stages + 1> Filter; // Stage 0 contains only input memory
 
 	Filter         _filter;    // Should be the first member (thus easier to align)
 

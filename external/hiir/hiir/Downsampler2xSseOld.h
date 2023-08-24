@@ -7,8 +7,8 @@ Downsamples by a factor 2 the input signal, using SSE instruction set.
 
 This object must be aligned on a 16-byte boundary!
 
-If the number of coefficients is 2 or 3 modulo 4, the output is delayed from
-1 sample, compared to the theoretical formula (or FPU implementation).
+The output is delayed from 1 sample, compared to the theoretical formula (or
+FPU implementation).
 
 Template parameters:
 	- NC: number of coefficients, > 0
@@ -60,10 +60,11 @@ class Downsampler2xSseOld
 public:
 
 	typedef float DataType;
-	static constexpr int  _nbr_chn  = 1;
-	static constexpr int  NBR_COEFS = NC;
+	static constexpr int _nbr_chn  = 1;
+	static constexpr int NBR_COEFS = NC;
+	static constexpr double _delay = 2 - 1;
 
-	               Downsampler2xSseOld ();
+	               Downsampler2xSseOld () noexcept;
 	               Downsampler2xSseOld (const Downsampler2xSseOld <NC> &other) = default;
 	               Downsampler2xSseOld (Downsampler2xSseOld <NC> &&other) = default;
 	               ~Downsampler2xSseOld ()                            = default;
@@ -73,17 +74,17 @@ public:
 	Downsampler2xSseOld <NC> &
 	               operator = (Downsampler2xSseOld <NC> &&other)      = default;
 
-	void           set_coefs (const double coef_arr []);
+	void           set_coefs (const double coef_arr []) noexcept;
 
 	hiir_FORCEINLINE float
-	               process_sample (const float in_ptr [2]);
-	void           process_block (float out_ptr [], const float in_ptr [], long nbr_spl);
+	               process_sample (const float in_ptr [2]) noexcept;
+	void           process_block (float out_ptr [], const float in_ptr [], long nbr_spl) noexcept;
 
 	hiir_FORCEINLINE void
-	               process_sample_split (float &low, float &high, const float in_ptr [2]);
-	void           process_block_split (float out_l_ptr [], float out_h_ptr [], const float in_ptr [], long nbr_spl);
+	               process_sample_split (float &low, float &high, const float in_ptr [2]) noexcept;
+	void           process_block_split (float out_l_ptr [], float out_h_ptr [], const float in_ptr [], long nbr_spl) noexcept;
 
-	void           clear_buffers ();
+	void           clear_buffers () noexcept;
 
 
 
@@ -97,13 +98,30 @@ protected:
 
 private:
 
-	static constexpr int  STAGE_WIDTH = 4;
-	static constexpr int  NBR_STAGES  =
-		(NBR_COEFS + STAGE_WIDTH - 1) / STAGE_WIDTH;
+	static constexpr int _stage_width = 4;
+	static constexpr int _nbr_stages  =
+		(NBR_COEFS + _stage_width - 1) / _stage_width;
+	static constexpr int _coef_shift  = ((NBR_COEFS & 1) * 2) ^ 3;
 
-	typedef	std::array <StageDataSse, NBR_STAGES + 1>	Filter;  // Stage 0 contains only input memory
+	// Stage 0 contains only input memory
+	typedef	std::array <StageDataSse, _nbr_stages + 1>	Filter;
 
-	Filter         _filter; // Should be the first member (thus easier to align)
+	inline void    set_single_coef (int index, double coef) noexcept;
+
+	template <typename FL, typename FH>
+	hiir_FORCEINLINE long
+	               process_block_quad (float out_l_ptr [], float out_h_ptr [], const float in_ptr [], long nbr_spl, FL fnc_l, FH fnc_h) noexcept;
+
+	hiir_FORCEINLINE static void
+	               store_low (float *ptr, __m128 even, __m128 odd, __m128 half) noexcept;
+	hiir_FORCEINLINE static void
+	               store_high (float *ptr, __m128 even, __m128 odd, __m128 half) noexcept;
+	hiir_FORCEINLINE static void
+	               bypass (float *, __m128, __m128, __m128) noexcept {}
+
+	// Should be the first member (thus easier to align)
+	alignas (16) Filter
+	               _filter;
 
 
 

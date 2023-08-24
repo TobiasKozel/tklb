@@ -37,6 +37,15 @@ namespace hiir
 
 
 
+template <int NC>
+constexpr int 	Downsampler2x8F64Avx512 <NC>::_nbr_chn;
+template <int NC>
+constexpr int 	Downsampler2x8F64Avx512 <NC>::NBR_COEFS;
+template <int NC>
+constexpr double	Downsampler2x8F64Avx512 <NC>::_delay;
+
+
+
 /*
 ==============================================================================
 Name: ctor
@@ -45,7 +54,7 @@ Throws: Nothing
 */
 
 template <int NC>
-Downsampler2x8F64Avx512 <NC>::Downsampler2x8F64Avx512 ()
+Downsampler2x8F64Avx512 <NC>::Downsampler2x8F64Avx512 () noexcept
 :	_filter ()
 {
 	for (int i = 0; i < NBR_COEFS + 2; ++i)
@@ -73,7 +82,7 @@ Throws: Nothing
 */
 
 template <int NC>
-void	Downsampler2x8F64Avx512 <NC>::set_coefs (const double coef_arr [])
+void	Downsampler2x8F64Avx512 <NC>::set_coefs (const double coef_arr []) noexcept
 {
 	assert (coef_arr != nullptr);
 
@@ -101,7 +110,7 @@ Throws: Nothing
 */
 
 template <int NC>
-__m512d	Downsampler2x8F64Avx512 <NC>::process_sample (const double in_ptr [_nbr_chn * 2])
+__m512d	Downsampler2x8F64Avx512 <NC>::process_sample (const double in_ptr [_nbr_chn * 2]) noexcept
 {
 	assert (in_ptr != nullptr);
 
@@ -128,7 +137,7 @@ Throws: Nothing
 */
 
 template <int NC>
-__m512d	Downsampler2x8F64Avx512 <NC>::process_sample (__m512d in_0, __m512d in_1)
+__m512d	Downsampler2x8F64Avx512 <NC>::process_sample (__m512d in_0, __m512d in_1) noexcept
 {
 	__m512d         spl_0 = in_1;
 	__m512d         spl_1 = in_0;
@@ -163,7 +172,7 @@ Throws: Nothing
 */
 
 template <int NC>
-void	Downsampler2x8F64Avx512 <NC>::process_block (double out_ptr [], const double in_ptr [], long nbr_spl)
+void	Downsampler2x8F64Avx512 <NC>::process_block (double out_ptr [], const double in_ptr [], long nbr_spl) noexcept
 {
 	assert (in_ptr  != nullptr);
 	assert (out_ptr != nullptr);
@@ -203,7 +212,7 @@ Throws: Nothing
 */
 
 template <int NC>
-void	Downsampler2x8F64Avx512 <NC>::process_sample_split (__m512d &low, __m512d &high, const double in_ptr [_nbr_chn * 2])
+void	Downsampler2x8F64Avx512 <NC>::process_sample_split (__m512d &low, __m512d &high, const double in_ptr [_nbr_chn * 2]) noexcept
 {
 	assert (in_ptr != nullptr);
 
@@ -237,7 +246,7 @@ Throws: Nothing
 */
 
 template <int NC>
-void	Downsampler2x8F64Avx512 <NC>::process_sample_split (__m512d &low, __m512d &high, __m512d in_0, __m512d in_1)
+void	Downsampler2x8F64Avx512 <NC>::process_sample_split (__m512d &low, __m512d &high, __m512d in_0, __m512d in_1) noexcept
 {
 	__m512d         spl_0 = in_1;
 	__m512d         spl_1 = in_0;
@@ -281,7 +290,7 @@ Throws: Nothing
 */
 
 template <int NC>
-void	Downsampler2x8F64Avx512 <NC>::process_block_split (double out_l_ptr [], double out_h_ptr [], const double in_ptr [], long nbr_spl)
+void	Downsampler2x8F64Avx512 <NC>::process_block_split (double out_l_ptr [], double out_h_ptr [], const double in_ptr [], long nbr_spl) noexcept
 {
 	assert (in_ptr    != nullptr);
 	assert (out_l_ptr != nullptr);
@@ -317,7 +326,7 @@ Throws: Nothing
 */
 
 template <int NC>
-void	Downsampler2x8F64Avx512 <NC>::clear_buffers ()
+void	Downsampler2x8F64Avx512 <NC>::clear_buffers () noexcept
 {
 	for (int i = 0; i < NBR_COEFS + 2; ++i)
 	{

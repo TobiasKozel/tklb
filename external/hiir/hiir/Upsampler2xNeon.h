@@ -58,8 +58,9 @@ public:
 	typedef float DataType;
 	static constexpr int _nbr_chn  = 1;
 	static constexpr int NBR_COEFS = NC;
+	static constexpr double _delay = 0;
 
-	               Upsampler2xNeon ();
+	               Upsampler2xNeon () noexcept;
 	               Upsampler2xNeon (const Upsampler2xNeon <NC> &other) = default;
 	               Upsampler2xNeon (Upsampler2xNeon <NC> &&other)      = default;
 	               ~Upsampler2xNeon ()                                 = default;
@@ -69,10 +70,10 @@ public:
 	Upsampler2xNeon <NC> &
 	               operator = (Upsampler2xNeon <NC> &&other)           = default;
 
-	void           set_coefs (const double coef_arr [NBR_COEFS]);
-	inline void    process_sample (float &out_0, float &out_1, float input);
-	void           process_block (float out_ptr [], const float in_ptr [], long nbr_spl);
-	void           clear_buffers ();
+	void           set_coefs (const double coef_arr [NBR_COEFS]) noexcept;
+	inline void    process_sample (float &out_0, float &out_1, float input) noexcept;
+	void           process_block (float out_ptr [], const float in_ptr [], long nbr_spl) noexcept;
+	void           clear_buffers () noexcept;
 
 
 
@@ -92,6 +93,9 @@ private:
 
 	// Stage 0 contains only input memory
 	typedef std::array <StageDataNeonV2, _nbr_stages + 1> Filter;
+
+	hiir_FORCEINLINE long
+	               process_block_quad (float out_ptr [], const float in_ptr [], long nbr_spl) noexcept;
 
 	Filter         _filter;		// Should be the first member (thus easier to align)
 

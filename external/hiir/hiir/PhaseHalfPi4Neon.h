@@ -58,8 +58,9 @@ public:
 	typedef float DataType;
 	static constexpr int _nbr_chn  = 4;
 	static constexpr int NBR_COEFS = NC;
+	static constexpr double _delay = 0;
 
-	               PhaseHalfPi4Neon ();
+	               PhaseHalfPi4Neon () noexcept;
 	               PhaseHalfPi4Neon (const PhaseHalfPi4Neon <NC> &other) = default;
 	               PhaseHalfPi4Neon (PhaseHalfPi4Neon <NC> &&other)      = default;
 	               ~PhaseHalfPi4Neon ()                                  = default;
@@ -69,13 +70,13 @@ public:
 	PhaseHalfPi4Neon <NC> &
 	               operator = (PhaseHalfPi4Neon <NC> &&other)            = default;
 
-	void           set_coefs (const double coef_arr []);
+	void           set_coefs (const double coef_arr []) noexcept;
 
 	hiir_FORCEINLINE void
-	               process_sample (float32x4_t &out_0, float32x4_t &out_1, float32x4_t input);
-	void           process_block (float out_0_ptr [], float out_1_ptr [], const float in_ptr [], long nbr_spl);
+	               process_sample (float32x4_t &out_0, float32x4_t &out_1, float32x4_t input) noexcept;
+	void           process_block (float out_0_ptr [], float out_1_ptr [], const float in_ptr [], long nbr_spl) noexcept;
 
-	void           clear_buffers ();
+	void           clear_buffers () noexcept;
 
 
 
@@ -96,13 +97,8 @@ private:
 	typedef	std::array <Filter, _nbr_phases>	FilterBiPhase;
 
 	FilterBiPhase  _bifilter;
-	union
-	{
-		__attribute__ ((aligned (16))) float32x4_t
-		               _prev4;     // Just to ensure alignement
-		__attribute__ ((aligned (16))) float
-		               _prev [4];
-	};
+	alignas (16) float
+	               _prev [_nbr_chn];
 	int            _phase;			// 0 or 1
 
 

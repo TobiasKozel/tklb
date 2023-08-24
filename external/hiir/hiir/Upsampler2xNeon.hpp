@@ -39,6 +39,13 @@ namespace hiir
 
 
 
+template <int NC>
+constexpr int 	Upsampler2xNeon <NC>::_nbr_chn;
+template <int NC>
+constexpr int 	Upsampler2xNeon <NC>::NBR_COEFS;
+
+
+
 /*
 ==============================================================================
 Name: ctor
@@ -47,7 +54,7 @@ Throws: Nothing
 */
 
 template <int NC>
-Upsampler2xNeon <NC>::Upsampler2xNeon ()
+Upsampler2xNeon <NC>::Upsampler2xNeon () noexcept
 :	_filter ()
 {
 	for (int i = 0; i < _nbr_stages + 1; ++i)
@@ -80,7 +87,7 @@ Throws: Nothing
 */
 
 template <int NC>
-void	Upsampler2xNeon <NC>::set_coefs (const double coef_arr [NBR_COEFS])
+void	Upsampler2xNeon <NC>::set_coefs (const double coef_arr [NBR_COEFS]) noexcept
 {
 	assert (coef_arr != nullptr);
 
@@ -109,10 +116,10 @@ Throws: Nothing
 */
 
 template <int NC>
-void	Upsampler2xNeon <NC>::process_sample (float &out_0, float &out_1, float input)
+void	Upsampler2xNeon <NC>::process_sample (float &out_0, float &out_1, float input) noexcept
 {
 	auto           x = vdup_n_f32 (input);
-	StageProcNeonV2 <_nbr_stages>::process_sample_pos (x, &_filter [0]);
+	StageProcNeonV2 <_nbr_stages>::process_sample_pos (x, _filter.data ());
 	out_0 = vget_lane_f32 (x, 1);
 	out_1 = vget_lane_f32 (x, 0);
 }
@@ -135,20 +142,19 @@ Throws: Nothing
 */
 
 template <int NC>
-void	Upsampler2xNeon <NC>::process_block (float out_ptr [], const float in_ptr [], long nbr_spl)
+void	Upsampler2xNeon <NC>::process_block (float out_ptr [], const float in_ptr [], long nbr_spl) noexcept
 {
 	assert (out_ptr != nullptr);
 	assert (in_ptr  != nullptr);
 	assert (out_ptr >= in_ptr + nbr_spl || in_ptr >= out_ptr + nbr_spl);
 	assert (nbr_spl > 0);
 
-	long           pos = 0;
-	do
+	const long     n4 = process_block_quad (out_ptr, in_ptr, nbr_spl);
+
+	for (long pos = n4; pos < nbr_spl; ++pos)
 	{
 		process_sample (out_ptr [pos * 2], out_ptr [pos * 2 + 1], in_ptr [pos]);
-		++ pos;
 	}
-	while (pos < nbr_spl);
 }
 
 
@@ -164,7 +170,7 @@ Throws: Nothing
 */
 
 template <int NC>
-void	Upsampler2xNeon <NC>::clear_buffers ()
+void	Upsampler2xNeon <NC>::clear_buffers () noexcept
 {
 	for (int i = 0; i < _nbr_stages + 1; ++i)
 	{
@@ -179,6 +185,41 @@ void	Upsampler2xNeon <NC>::clear_buffers ()
 
 
 /*\\\ PRIVATE \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
+
+
+
+template <int NC>
+constexpr int	Upsampler2xNeon <NC>::_stage_width;
+template <int NC>
+constexpr int	Upsampler2xNeon <NC>::_nbr_stages;
+
+
+
+template <int NC>
+long	Upsampler2xNeon <NC>::process_block_quad (float out_ptr [], const float in_ptr [], long nbr_spl) noexcept
+{
+	const long     n4 = nbr_spl & ~(4-1);
+	for (long pos = 0; pos < n4; pos += 4)
+	{
+		const auto     x    = load4u (in_ptr + pos);
+
+		auto           y_0  = vdup_lane_f32 (vget_low_f32 (x), 0);
+		auto           y_1  = vdup_lane_f32 (vget_low_f32 (x), 1);
+		auto           y_2  = vdup_lane_f32 (vget_high_f32 (x), 0);
+		auto           y_3  = vdup_lane_f32 (vget_high_f32 (x), 1);
+		StageProcNeonV2 <_nbr_stages>::process_sample_pos (y_0, _filter.data ());
+		StageProcNeonV2 <_nbr_stages>::process_sample_pos (y_1, _filter.data ());
+		StageProcNeonV2 <_nbr_stages>::process_sample_pos (y_2, _filter.data ());
+		StageProcNeonV2 <_nbr_stages>::process_sample_pos (y_3, _filter.data ());
+
+		const auto     y_01 = vrev64q_f32 (vcombine_f32 (y_0, y_1));
+		const auto     y_23 = vrev64q_f32 (vcombine_f32 (y_2, y_3));
+		storeu (out_ptr + pos * 2    , y_01);
+		storeu (out_ptr + pos * 2 + 4, y_23);
+	}
+
+	return n4;
+}
 
 
 

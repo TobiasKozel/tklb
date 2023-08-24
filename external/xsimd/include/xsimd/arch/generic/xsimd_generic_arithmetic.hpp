@@ -13,6 +13,7 @@
 #define XSIMD_GENERIC_ARITHMETIC_HPP
 
 #include <complex>
+#include <limits>
 #include <type_traits>
 
 #include "./xsimd_generic_details.hpp"
@@ -41,6 +42,20 @@ namespace xsimd
             return detail::apply([](T x, T y) noexcept
                                  { return x >> y; },
                                  self, other);
+        }
+
+        // decr
+        template <class A, class T>
+        inline batch<T, A> decr(batch<T, A> const& self, requires_arch<generic>) noexcept
+        {
+            return self - T(1);
+        }
+
+        // decr_if
+        template <class A, class T, class Mask>
+        inline batch<T, A> decr_if(batch<T, A> const& self, Mask const& mask, requires_arch<generic>) noexcept
+        {
+            return select(mask, decr(self), self);
         }
 
         // div
@@ -112,6 +127,20 @@ namespace xsimd
             return { res_r, res_i };
         }
 
+        // incr
+        template <class A, class T>
+        inline batch<T, A> incr(batch<T, A> const& self, requires_arch<generic>) noexcept
+        {
+            return self + T(1);
+        }
+
+        // incr_if
+        template <class A, class T, class Mask>
+        inline batch<T, A> incr_if(batch<T, A> const& self, Mask const& mask, requires_arch<generic>) noexcept
+        {
+            return select(mask, incr(self), self);
+        }
+
         // mul
         template <class A, class T, class /*=typename std::enable_if<std::is_integral<T>::value, void>::type*/>
         inline batch<T, A> mul(batch<T, A> const& self, batch<T, A> const& other, requires_arch<generic>) noexcept
@@ -119,6 +148,22 @@ namespace xsimd
             return detail::apply([](T x, T y) noexcept -> T
                                  { return x * y; },
                                  self, other);
+        }
+
+        // rotl
+        template <class A, class T, class STy>
+        inline batch<T, A> rotl(batch<T, A> const& self, STy other, requires_arch<generic>) noexcept
+        {
+            constexpr auto N = std::numeric_limits<T>::digits;
+            return (self << other) | (self >> (N - other));
+        }
+
+        // rotr
+        template <class A, class T, class STy>
+        inline batch<T, A> rotr(batch<T, A> const& self, STy other, requires_arch<generic>) noexcept
+        {
+            constexpr auto N = std::numeric_limits<T>::digits;
+            return (self >> other) | (self << (N - other));
         }
 
         // sadd

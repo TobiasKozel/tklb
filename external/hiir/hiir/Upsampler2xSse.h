@@ -57,8 +57,9 @@ public:
 	typedef float DataType;
 	static constexpr int _nbr_chn  = 1;
 	static constexpr int NBR_COEFS = NC;
+	static constexpr double _delay = 0;
 
-	               Upsampler2xSse ();
+	               Upsampler2xSse () noexcept;
 	               Upsampler2xSse (const Upsampler2xSse &other)    = default;
 	               Upsampler2xSse (Upsampler2xSse &&other)         = default;
 	               ~Upsampler2xSse ()                              = default;
@@ -68,13 +69,13 @@ public:
 	Upsampler2xSse &
 	               operator = (Upsampler2xSse &&other)             = default;
 
-	void           set_coefs (const double coef_arr [NBR_COEFS]);
+	void           set_coefs (const double coef_arr [NBR_COEFS]) noexcept;
 
 	hiir_FORCEINLINE void
-	               process_sample (float &out_0, float &out_1, float input);
-	void           process_block (float out_ptr [], const float in_ptr [], long nbr_spl);
+	               process_sample (float &out_0, float &out_1, float input) noexcept;
+	void           process_block (float out_ptr [], const float in_ptr [], long nbr_spl) noexcept;
 
-	void           clear_buffers ();
+	void           clear_buffers () noexcept;
 
 
 

@@ -3,6 +3,14 @@
         PhaseHalfPiF64Sse2.h
         Author: Laurent de Soras, 2020
 
+From the input signal, generates two signals with a pi/2 phase shift, using
+SSE2 instruction set.
+
+This object must be aligned on a 16-byte boundary!
+
+Template parameters:
+	- NC: number of coefficients, > 0
+
 --- Legal stuff ---
 
 This program is free software. It comes without any warranty, to
@@ -50,8 +58,9 @@ public:
 	typedef double DataType;
 	static constexpr int _nbr_chn  = 1;
 	static constexpr int NBR_COEFS = NC;
+	static constexpr double _delay = 0;
 
-	               PhaseHalfPiF64Sse2 ();
+	               PhaseHalfPiF64Sse2 () noexcept;
 	               PhaseHalfPiF64Sse2 (const PhaseHalfPiF64Sse2 <NC> &other) = default;
 	               PhaseHalfPiF64Sse2 (PhaseHalfPiF64Sse2 <NC> &&other)      = default;
 
@@ -60,13 +69,13 @@ public:
 	PhaseHalfPiF64Sse2 <NC> &
 	               operator = (PhaseHalfPiF64Sse2 <NC> &&other)      = default;
 
-	void           set_coefs (const double coef_arr []);
+	void           set_coefs (const double coef_arr []) noexcept;
 
 	hiir_FORCEINLINE void
-	               process_sample (double &out_0, double &out_1, double input);
-	void           process_block (double out_0_ptr [], double out_1_ptr [], const double in_ptr [], long nbr_spl);
+	               process_sample (double &out_0, double &out_1, double input) noexcept;
+	void           process_block (double out_0_ptr [], double out_1_ptr [], const double in_ptr [], long nbr_spl) noexcept;
 
-	void           clear_buffers ();
+	void           clear_buffers () noexcept;
 
 
 
@@ -90,7 +99,8 @@ private:
 
 	typedef std::array <Filter, _nbr_phases> FilterBiPhase;
 
-	FilterBiPhase  _bifilter;  // Should be the first member (thus easier to align)
+	// Should be the first member (thus easier to align)
+	FilterBiPhase  _bifilter;
 	DataType       _prev;
 	int            _phase;     // 0 or 1
 

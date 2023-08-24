@@ -33,7 +33,6 @@ http://sam.zoy.org/wtfpl/COPYING for more details.
 
 #include "./def.h"
 
-//#include <xmmintrin.h>
 #include <immintrin.h>
 
 
@@ -55,9 +54,9 @@ class StageProc8Avx
 public:
 
 	static hiir_FORCEINLINE void
-	               process_sample_pos (const int nbr_coefs, __m256 &spl_0, __m256 &spl_1, StageDataAvx *stage_arr);
+	               process_sample_pos (const int nbr_coefs, __m256 &spl_0, __m256 &spl_1, StageDataAvx *stage_arr) noexcept;
 	static hiir_FORCEINLINE void
-	               process_sample_neg (const int nbr_coefs, __m256 &spl_0, __m256 &spl_1, StageDataAvx *stage_arr);
+	               process_sample_neg (const int nbr_coefs, __m256 &spl_0, __m256 &spl_1, StageDataAvx *stage_arr) noexcept;
 
 
 

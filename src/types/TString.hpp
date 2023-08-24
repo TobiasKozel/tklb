@@ -9,10 +9,9 @@ namespace tklb {
 	 *
 	 * @tparam N Size of the string
 	 */
-	template <unsigned int N = 8>
+	template <SizeT N = 8, typename Size = SizeT>
 	class StackString {
 		char mData[N];
-		using Size = unsigned int;
 		static constexpr char Terminator = '\0';
 	public:
 		StackString() { for (Size i = 0; i < N; i++) { mData[i] = Terminator; } }
@@ -35,8 +34,8 @@ namespace tklb {
 			return mData[index];
 		}
 
-		template <int N2>
-		bool operator==(const StackString<N2> &b) const {
+		template <int N2, typename Size2>
+		bool operator==(const StackString<N2, Size2> &b) const {
 			if (N == 0) { return false; }
 			for(Size i = 0; i < (N < N2 ? N : N2); i++) {
 				if (mData[i] != b[i]) { return false; }

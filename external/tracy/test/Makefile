@@ -1,16 +1,15 @@
 OPTFLAGS := -g3 -fmerge-constants
-TRACYFLAGS :=
-CFLAGS := $(OPTFLAGS) -Wall -DTRACY_ENABLE $(TRACYFLAGS)
+CFLAGS := $(OPTFLAGS) -Wall -DTRACY_ENABLE
 CXXFLAGS := $(CFLAGS) -std=gnu++11
 DEFINES +=
-INCLUDES :=
+INCLUDES := -I../public/tracy
 LIBS := -lpthread -ldl
 LDFLAGS := -rdynamic
 IMAGE := tracy_test
 
 SRC := \
     test.cpp \
-    ../TracyClient.cpp
+    ../public/TracyClient.cpp
 
 OBJ := $(SRC:%.cpp=%.o)
 
@@ -19,7 +18,7 @@ LIBS += -lexecinfo
 endif
 
 ifeq ($(shell uname),Linux)
-TRACYFLAGS += -DTRACY_DEBUGINFOD
+DEFINES += -DTRACY_DEBUGINFOD
 LIBS += -ldebuginfod
 endif
 

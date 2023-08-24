@@ -2,20 +2,33 @@
 
 cd "$(dirname "$0")/."
 
-echo "Updating xsimd"
-rm -rf ./xsimd
-rm ./master
-curl -LO https://codeload.github.com/xtensor-stack/xsimd/zip/refs/heads/master > /dev/null 2>&1
-unzip ./master > /dev/null 2>&1
-rm ./master
-mv ./xsimd-master ./xsimd
-
 echo "Updating pffft"
 rm -rf ./pffft
 curl -LO https://codeload.github.com/marton78/pffft/zip/refs/heads/master > /dev/null 2>&1
 unzip ./master > /dev/null 2>&1
 rm ./master
 mv ./pffft-master ./pffft
+
+echo "Updating audio convolver"
+rm -rf ./fft_consolver
+curl -LO https://github.com/falkTX/FFTConvolver/archive/refs/heads/non-uniform.zip > /dev/null 2>&1
+unzip ./non-uniform.zip > /dev/null 2>&1
+rm ./non-uniform.zip
+mv ./FFTConvolver-non-uniform ./fft_consolver
+
+echo "Updating qoa"
+rm -rf ./qoa
+curl -LO https://github.com/phoboslab/qoa/archive/refs/heads/master.zip > /dev/null 2>&1
+unzip ./master.zip > /dev/null 2>&1
+rm ./master.zip
+mv ./qoa-master ./qoa
+
+echo "Updating tracey"
+rm -rf ./tracy
+curl -LO https://github.com/wolfpld/tracy/archive/refs/heads/master.zip > /dev/null 2>&1
+unzip ./master.zip > /dev/null 2>&1
+rm ./master.zip
+mv ./tracy-master ./tracy
 
 echo "Updating speex_resampler"
 rm -rf ./speex_resampler
@@ -36,6 +49,14 @@ sed -e '/static void speex_free/ s/^\/*/\/\//' -i ./speex_resampler/resample.c
 sed -i 's/EXPORT\ //g' -b -i ./speex_resampler/resample.c
 rm -rf ./speexdsp-master/
 
+echo "Updating xsimd"
+rm -rf ./xsimd
+rm ./master
+curl -LO https://codeload.github.com/xtensor-stack/xsimd/zip/refs/heads/master > /dev/null 2>&1
+unzip ./master > /dev/null 2>&1
+rm ./master
+mv ./xsimd-master ./xsimd
+
 echo "Updating dirent"
 rm ./dirent.h
 curl -LO https://raw.githubusercontent.com/tronkko/dirent/master/include/dirent.h > /dev/null 2>&1
@@ -52,15 +73,8 @@ echo "Updating stb_sprintf"
 rm ./stb_sprintf.h
 curl -LO https://raw.githubusercontent.com/nothings/stb/master/stb_sprintf.h
 
-echo "Updating tracey"
-curl -LO https://github.com/wolfpld/tracy/archive/refs/tags/v0.8.2.zip
-unzip ./v0.8.2.zip > /dev/null 2>&1
-rm ./v0.8.2.zip
-rm -rf ./tracy
-mv ./tracy-0.8.2 ./tracy
-
 echo "Downloading hiir"
-HIIR="hiir-1.33.zip"
+HIIR="hiir-1.40.zip"
 rm -rf ./hiir
 mkdir ./hiir
 cd ./hiir

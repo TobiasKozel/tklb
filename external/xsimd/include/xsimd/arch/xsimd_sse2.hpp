@@ -23,8 +23,8 @@ namespace xsimd
     template <class batch_type, bool... Values>
     struct batch_bool_constant;
 
-    template <class B, class T, class A>
-    inline B bitwise_cast(batch<T, A> const& x) noexcept;
+    template <class T_out, class T_in, class A>
+    inline batch<T_out, A> bitwise_cast(batch<T_in, A> const& x) noexcept;
 
     template <class batch_type, typename batch_type::value_type... Values>
     struct batch_constant;
@@ -43,11 +43,23 @@ namespace xsimd
             {
                 return (y << 1) | x;
             }
+
+            constexpr uint32_t mod_shuffle(uint32_t w, uint32_t x, uint32_t y, uint32_t z)
+            {
+                return shuffle(w % 4, x % 4, y % 4, z % 4);
+            }
+
+            constexpr uint32_t mod_shuffle(uint32_t w, uint32_t x)
+            {
+                return shuffle(w % 2, x % 2);
+            }
         }
 
         // fwd
         template <class A, class T, size_t I>
         inline batch<T, A> insert(batch<T, A> const& self, T val, index<I>, requires_arch<generic>) noexcept;
+        template <class A, typename T, typename ITy, ITy... Indices>
+        inline batch<T, A> shuffle(batch<T, A> const& x, batch<T, A> const& y, batch_constant<batch<ITy, A>, Indices...>, requires_arch<generic>) noexcept;
 
         // abs
         template <class A>
@@ -140,7 +152,7 @@ namespace xsimd
         template <class A, class T_out, class T_in>
         inline batch_bool<T_out, A> batch_bool_cast(batch_bool<T_in, A> const& self, batch_bool<T_out, A> const&, requires_arch<sse2>) noexcept
         {
-            return { bitwise_cast<batch<T_out, A>>(batch<T_in, A>(self.data)).data };
+            return { bitwise_cast<T_out>(batch<T_in, A>(self.data)).data };
         }
 
         // bitwise_and
@@ -501,6 +513,13 @@ namespace xsimd
             }
         }
 
+        // decr_if
+        template <class A, class T, class = typename std::enable_if<std::is_integral<T>::value, void>::type>
+        inline batch<T, A> decr_if(batch<T, A> const& self, batch_bool<T, A> const& mask, requires_arch<sse2>) noexcept
+        {
+            return self + batch<T, A>(mask.data);
+        }
+
         // div
         template <class A>
         inline batch<float, A> div(batch<float, A> const& self, batch<float, A> const& other, requires_arch<sse2>) noexcept
@@ -806,6 +825,13 @@ namespace xsimd
         {
             return _mm_add_pd(_mm_unpacklo_pd(row[0], row[1]),
                               _mm_unpackhi_pd(row[0], row[1]));
+        }
+
+        // incr_if
+        template <class A, class T, class = typename std::enable_if<std::is_integral<T>::value, void>::type>
+        inline batch<T, A> incr_if(batch<T, A> const& self, batch_bool<T, A> const& mask, requires_arch<sse2>) noexcept
+        {
+            return self - batch<T, A>(mask.data);
         }
 
         // insert
@@ -1185,7 +1211,7 @@ namespace xsimd
             batch<T, A> acc2 = max(acc1, step2);
             if (sizeof(T) == 2)
                 return acc2.get(0);
-            batch<T, A> step3 = bitwise_cast<batch<T, A>>(bitwise_cast<batch<uint16_t, A>>(acc2) >> 8);
+            batch<T, A> step3 = bitwise_cast<T>(bitwise_cast<uint16_t>(acc2) >> 8);
             batch<T, A> acc3 = max(acc2, step3);
             return acc3.get(0);
         }
@@ -1207,7 +1233,7 @@ namespace xsimd
             batch<T, A> acc2 = min(acc1, step2);
             if (sizeof(T) == 2)
                 return acc2.get(0);
-            batch<T, A> step3 = bitwise_cast<batch<T, A>>(bitwise_cast<batch<uint16_t, A>>(acc2) >> 8);
+            batch<T, A> step3 = bitwise_cast<T>(bitwise_cast<uint16_t>(acc2) >> 8);
             batch<T, A> acc3 = min(acc2, step3);
             return acc3.get(0);
         }
@@ -1296,6 +1322,35 @@ namespace xsimd
         inline batch<double, A> select(batch_bool<double, A> const& cond, batch<double, A> const& true_br, batch<double, A> const& false_br, requires_arch<sse2>) noexcept
         {
             return _mm_or_pd(_mm_and_pd(cond, true_br), _mm_andnot_pd(cond, false_br));
+        }
+
+        // shuffle
+        template <class A, class ITy, ITy I0, ITy I1, ITy I2, ITy I3>
+        inline batch<float, A> shuffle(batch<float, A> const& x, batch<float, A> const& y, batch_constant<batch<ITy, A>, I0, I1, I2, I3> mask, requires_arch<sse2>) noexcept
+        {
+            constexpr uint32_t smask = detail::mod_shuffle(I0, I1, I2, I3);
+            // shuffle within lane
+            if (I0 < 4 && I1 < 4 && I2 >= 4 && I3 >= 4)
+                return _mm_shuffle_ps(x, y, smask);
+
+            // shuffle within opposite lane
+            if (I0 >= 4 && I1 >= 4 && I2 < 4 && I3 < 4)
+                return _mm_shuffle_ps(y, x, smask);
+            return shuffle(x, y, mask, generic {});
+        }
+
+        template <class A, class ITy, ITy I0, ITy I1>
+        inline batch<double, A> shuffle(batch<double, A> const& x, batch<double, A> const& y, batch_constant<batch<ITy, A>, I0, I1> mask, requires_arch<sse2>) noexcept
+        {
+            constexpr uint32_t smask = detail::mod_shuffle(I0, I1);
+            // shuffle within lane
+            if (I0 < 2 && I1 >= 2)
+                return _mm_shuffle_pd(x, y, smask);
+
+            // shuffle within opposite lane
+            if (I0 >= 2 && I1 < 2)
+                return _mm_shuffle_pd(y, x, smask);
+            return shuffle(x, y, mask, generic {});
         }
 
         // sqrt
@@ -1600,7 +1655,7 @@ namespace xsimd
         template <class A, uint64_t V0, uint64_t V1>
         inline batch<int64_t, A> swizzle(batch<int64_t, A> const& self, batch_constant<batch<uint64_t, A>, V0, V1> mask, requires_arch<sse2>) noexcept
         {
-            return bitwise_cast<batch<int64_t, A>>(swizzle(bitwise_cast<batch<uint64_t, A>>(self), mask, sse2 {}));
+            return bitwise_cast<int64_t>(swizzle(bitwise_cast<uint64_t>(self), mask, sse2 {}));
         }
 
         template <class A, uint32_t V0, uint32_t V1, uint32_t V2, uint32_t V3>
@@ -1613,7 +1668,7 @@ namespace xsimd
         template <class A, uint32_t V0, uint32_t V1, uint32_t V2, uint32_t V3>
         inline batch<int32_t, A> swizzle(batch<int32_t, A> const& self, batch_constant<batch<uint32_t, A>, V0, V1, V2, V3> mask, requires_arch<sse2>) noexcept
         {
-            return bitwise_cast<batch<int32_t, A>>(swizzle(bitwise_cast<batch<uint32_t, A>>(self), mask, sse2 {}));
+            return bitwise_cast<int32_t>(swizzle(bitwise_cast<uint32_t>(self), mask, sse2 {}));
         }
 
         // zip_hi

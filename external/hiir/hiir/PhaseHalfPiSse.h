@@ -8,8 +8,8 @@ SSE instruction set.
 
 This object must be aligned on a 16-byte boundary!
 
-If the number of coefficients is 2 or 3 modulo 4, the output is delayed from
-1 sample, compared to the theoretical formula (or FPU implementation).
+The output is delayed from 2 sample, compared to the theoretical formula (or
+FPU implementation).
 
 Template parameters:
 	- NC: number of coefficients, > 0
@@ -65,8 +65,9 @@ public:
 	typedef float DataType;
 	static constexpr int _nbr_chn  = 1;
 	static constexpr int NBR_COEFS = NC;
+	static constexpr double _delay = 2;
 
-	               PhaseHalfPiSse ();
+	               PhaseHalfPiSse () noexcept;
 	               PhaseHalfPiSse (const PhaseHalfPiSse <NC> &other) = default;
 	               PhaseHalfPiSse (PhaseHalfPiSse <NC> &&other)      = default;
 	               ~PhaseHalfPiSse ()                                = default;
@@ -76,13 +77,13 @@ public:
 	PhaseHalfPiSse <NC> &
 	               operator = (PhaseHalfPiSse <NC> &&other)          = default;
 
-	void           set_coefs (const double coef_arr []);
+	void           set_coefs (const double coef_arr []) noexcept;
 
 	hiir_FORCEINLINE void
-	               process_sample (float &out_0, float &out_1, float input);
-	void           process_block (float out_0_ptr [], float out_1_ptr [], const float in_ptr [], long nbr_spl);
+	               process_sample (float &out_0, float &out_1, float input) noexcept;
+	void           process_block (float out_0_ptr [], float out_1_ptr [], const float in_ptr [], long nbr_spl) noexcept;
 
-	void           clear_buffers ();
+	void           clear_buffers () noexcept;
 
 
 
@@ -96,14 +97,23 @@ protected:
 
 private:
 
-	static constexpr int STAGE_WIDTH = 4;
-	static constexpr int NBR_STAGES  = (NBR_COEFS + STAGE_WIDTH-1) / STAGE_WIDTH;
-	static constexpr int NBR_PHASES  = 2;
+	static constexpr int _stage_width = 4;
+	static constexpr int _nbr_stages  = (NBR_COEFS + _stage_width-1) / _stage_width;
+	static constexpr int _nbr_phases  = 2;
+	static constexpr int _coef_shift  = ((NBR_COEFS & 1) * 2) ^ 3;
 
-	typedef std::array <StageDataSse, NBR_STAGES + 1> Filter;   // Stage 0 contains only input memory
-   typedef std::array <Filter, NBR_PHASES> FilterBiPhase;
+	// Stage 0 contains only input memory
+	typedef std::array <StageDataSse, _nbr_stages + 1> Filter;
+   typedef std::array <Filter, _nbr_phases> FilterBiPhase;
 
-	FilterBiPhase  _filter; // Should be the first member (thus easier to align)
+	inline void    set_single_coef (int index, double coef) noexcept;
+
+	hiir_FORCEINLINE long
+	               process_block_quad (float out_0_ptr [], float out_1_ptr [], const float in_ptr [], long nbr_spl) noexcept;
+
+	// Should be the first member (thus easier to align)
+	alignas (16) FilterBiPhase
+	               _filter;
 	float          _prev;
 	int            _phase;  // 0 or 1
 

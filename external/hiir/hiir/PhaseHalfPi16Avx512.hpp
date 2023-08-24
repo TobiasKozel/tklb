@@ -37,6 +37,15 @@ namespace hiir
 
 
 
+template <int NC>
+constexpr int 	PhaseHalfPi16Avx512 <NC>::_nbr_chn;
+template <int NC>
+constexpr int 	PhaseHalfPi16Avx512 <NC>::NBR_COEFS;
+template <int NC>
+constexpr double	PhaseHalfPi16Avx512 <NC>::_delay;
+
+
+
 /*
 ==============================================================================
 Name: ctor
@@ -45,7 +54,7 @@ Throws: Nothing
 */
 
 template <int NC>
-PhaseHalfPi16Avx512 <NC>::PhaseHalfPi16Avx512 ()
+PhaseHalfPi16Avx512 <NC>::PhaseHalfPi16Avx512 () noexcept
 :	_bifilter ()
 ,	_phase (0)
 {
@@ -75,7 +84,7 @@ Throws: Nothing
 */
 
 template <int NC>
-void	PhaseHalfPi16Avx512 <NC>::set_coefs (const double coef_arr [])
+void	PhaseHalfPi16Avx512 <NC>::set_coefs (const double coef_arr []) noexcept
 {
 	assert (coef_arr != nullptr);
 
@@ -105,14 +114,10 @@ Throws: Nothing
 */
 
 template <int NC>
-void	PhaseHalfPi16Avx512 <NC>::process_sample (__m512 &out_0, __m512 &out_1, __m512 input)
+void	PhaseHalfPi16Avx512 <NC>::process_sample (__m512 &out_0, __m512 &out_1, __m512 input) noexcept
 {
 	out_0 = input;                   // Even coefs
 	out_1 = _mm512_load_ps (_prev);  // Odd coefs
-
-	#if defined (_MSC_VER)
-		#pragma inline_depth (255)
-	#endif   // _MSC_VER
 
 	StageProc16Avx512 <NBR_COEFS>::process_sample_neg (
 		NBR_COEFS, out_0, out_1, &_bifilter [_phase] [0]
@@ -142,7 +147,7 @@ Throws: Nothing
 */
 
 template <int NC>
-void	PhaseHalfPi16Avx512 <NC>::process_block (float out_0_ptr [], float out_1_ptr [], const float in_ptr [], long nbr_spl)
+void	PhaseHalfPi16Avx512 <NC>::process_block (float out_0_ptr [], float out_1_ptr [], const float in_ptr [], long nbr_spl) noexcept
 {
 	assert (out_0_ptr != nullptr);
 	assert (out_1_ptr != nullptr);
@@ -218,7 +223,7 @@ Throws: Nothing
 */
 
 template <int NC>
-void	PhaseHalfPi16Avx512 <NC>::clear_buffers ()
+void	PhaseHalfPi16Avx512 <NC>::clear_buffers () noexcept
 {
 	_phase = 0;
 	for (int i = 0; i < NBR_COEFS + 2; ++i)
@@ -236,6 +241,11 @@ void	PhaseHalfPi16Avx512 <NC>::clear_buffers ()
 
 
 /*\\\ PRIVATE \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
+
+
+
+template <int NC>
+constexpr int	PhaseHalfPi16Avx512 <NC>::_nbr_phases;
 
 
 
