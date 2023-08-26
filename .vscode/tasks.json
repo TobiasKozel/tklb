@@ -16,10 +16,39 @@
 			"options": {
 				"cwd": "${workspaceFolder}"
 			},
+			"group": "build",
+			"problemMatcher": []
+		},
+		{
+			"type": "shell",
+			"label": "g++ asm",
+			"command": "/usr/bin/g++",
+			"args": [
+				"-std=c++14",
+				"-DTKLB_NO_SIMD",
+				"-DTKLB_IMPL",
+				"-fno-asynchronous-unwind-tables",
+				"-fno-exceptions",
+				"-fno-rtti",
+				"-fverbose-asm",
+				"-Wall",
+				"-Wextra",
+				"-g0",
+				"-O3",
+				"-masm=intel",
+				"-S",
+				"${file}",
+				"-o",
+				"${fileDirname}/${fileBasenameNoExtension}.asm"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
 			"group": {
 				"kind": "build",
 				"isDefault": true
-			}
+			},
+			"problemMatcher": []
 		},
 		{
 			"type": "cppbuild",

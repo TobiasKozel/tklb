@@ -16,9 +16,9 @@
 
 namespace tklb {
 #ifdef TKLB_NO_SIMD
-	constexpr SizeT DEFAULT_ALIGNMENT = 16;
+	constexpr SizeT DEFAULT_ALIGNMENT_BYTES = 16; // default to sse2 alignment
 #else
-	constexpr SizeT DEFAULT_ALIGNMENT = xsimd::default_arch::alignment();
+	constexpr SizeT DEFAULT_ALIGNMENT_BYTES = xsimd::default_arch::alignment();
 #endif // TKLB_NO_SIMD
 
 	/**
@@ -30,13 +30,15 @@ namespace tklb {
 	 * @tparam T Sample type. Can be anything traits::IsArithmetic
 	 * @tparam STORAGE Storage type, tklb::HeapBuffer for now since there are a few things missing in a std::vector
 	 */
-	template <typename T, class STORAGE = HeapBuffer<T, DEFAULT_ALIGNMENT>>
+	template <typename T, class STORAGE = HeapBuffer<T, DEFAULT_ALIGNMENT_BYTES>>
 	class AudioBufferTpl {
 		static_assert(traits::IsFloat<T>::value, "Need arithmetic type.");
 	public:
 		using Sample = T;
 		using Storage = STORAGE;
 		using Channel = unsigned char;
+
+		// TODO higher sample rates wont work, maybe use enum
 		using SampleRate = unsigned short;
 		using Size = typename Storage::Size;
 
@@ -52,7 +54,7 @@ namespace tklb {
 	public:
 		/**
 		 * @brief Only relevant for resampling and oversampling.
-		 * TODO higher sample rates wont work, maybe use enum
+		 * TODO move this out since it not always needed
 		 */
 		 SampleRate sampleRate = 0;
 
@@ -101,7 +103,7 @@ namespace tklb {
 		}
 
 		/**
-		 * @brief calculate the scale factor needed between the types
+		 * @brief calculate the amplitude scale factor needed between the types
 		 * @tparam T1 Source type
 		 * @tparam T2 target type
 		 * @tparam Ratio Floating point type since the value can be smaller than 1
