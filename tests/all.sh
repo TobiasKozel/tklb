@@ -8,13 +8,13 @@ echo ""
 clang++ -v
 echo ""
 
-# for f in ./*.cpp
-# do
-# 	./run.sh $f
-# 	if [[ $? -ne 0 ]] ; then
-# 		FAILED=true
-# 	fi
-# done
+for f in ./*.cpp
+do
+	./run.sh $f
+	if [[ $? -ne 0 ]] ; then
+		FAILED=true
+	fi
+done
 
 echo "Test Profiler"
 g++ -std=c++14 -O3 -Wall -march=native ./TestProfiler.cxx
