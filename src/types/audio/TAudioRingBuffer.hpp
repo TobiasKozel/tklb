@@ -4,7 +4,7 @@
 #include "./TAudioBuffer.hpp"
 
 namespace tklb {
-	template <typename T, class STORAGE = HeapBuffer<T, DEFAULT_ALIGNMENT>>
+	template <typename T, class STORAGE = HeapBuffer<T, DEFAULT_ALIGNMENT_BYTES>>
 	class AudioRingBufferTpl : public AudioBufferTpl<T, STORAGE> {
 		using Base = AudioBufferTpl<T, STORAGE>;
 		using uchar = unsigned char;
