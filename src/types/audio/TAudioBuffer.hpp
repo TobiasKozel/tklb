@@ -61,7 +61,7 @@ namespace tklb {
 		/**
 		 * @brief Empty buffer with no memory allocated yet
 		 */
-		AudioBufferTpl() { }
+		AudioBufferTpl() = default;
 
 		/**
 		 * @brief Buffer with memory allocated
@@ -632,7 +632,7 @@ namespace tklb {
 			length = length == 0 ? valid : length;
 			length = min(length, valid - offset);
 
-			const T2* source = get(channel) + offset;
+			const T* source = get(channel) + offset;
 			if (traits::IsSame<T2, T>::value) {
 				memory::copy(target, source, sizeof(T) * length);
 			} else {
@@ -670,7 +670,7 @@ namespace tklb {
 			Size res = 0;
 			chan = (chan == 0) ? channels() : chan;
 			for (Channel c = 0; c < chan; c++) {
-				res = put(target[c], length, c, offset);
+				res = put<T2>(target[c], length, c, offset);
 			}
 			return res;
 		}

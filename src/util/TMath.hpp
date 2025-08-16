@@ -146,6 +146,16 @@ namespace tklb {
 		#endif
 	}
 
+	template <typename T>
+	constexpr T log10(const T& x) {
+		#ifdef TKLB_NO_STDLIB
+			// TODO
+			static_assert(false, "TKLB_NO_STDLIB not log10 implemented yet");
+		#else
+			return std::log10(x);
+		#endif
+	}
+
 	/**
 	 * @brief This beeing constexpr allows the SPCAP to be prepared at compile time
 	 *        for the predefined speaker setups.
