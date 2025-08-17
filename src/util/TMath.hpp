@@ -149,8 +149,8 @@ namespace tklb {
 	template <typename T>
 	constexpr T log10(const T& x) {
 		#ifdef TKLB_NO_STDLIB
-			// TODO
-			static_assert(false, "TKLB_NO_STDLIB not log10 implemented yet");
+		static_assert(false, "TKLB_NO_STDLIB not log10 implemented yet");
+		return x;
 		#else
 			return std::log10(x);
 		#endif

@@ -179,7 +179,7 @@ namespace tklb {
 				chan = channels();
 			}
 
-			chan == min(chan, channels());
+			chan = min(chan, channels());
 
 			for (Channel c = 0; c < chan; c++) {
 				set(samples[c] + offsetSrc, length, c, offsetDst);
