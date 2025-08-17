@@ -75,6 +75,33 @@ namespace tklb {
 		}
 
 		/**
+		 * @brief Adds validSize() amount of frames to the buffer, pushes out old data if not enough space
+		 * @param in Source buffer
+		 * @return How many elements where stored in the ring buffer
+		 */
+		template <typename T2, class STORAGE2>
+		Size pushOver(const AudioBufferTpl<T2, STORAGE2>& in) {
+			// TODO check if this hehaves as intended
+			Size elements = in.validSize();
+			if (remaining() <= elements) {
+				const Size head = mHead; // Offset the head
+				if (elements > head) {
+					elements = head; // Clamp the elements to peek to the elements in the buffer
+				}
+				if (elements > 0) {
+					Size tailStart = mTail - head; // This should always be negative when the offset is 0
+					if (mTail < head) {
+						// So move it back
+						// TODO tklb this does overflow, which is a little mad
+						tailStart += Base::size();
+					}
+				}
+				mHead -= elements;
+			}
+			return push(in);
+		}
+
+		/**
 		 * @brief Adds validSize() amount of frames to the buffer
 		 * @param in Source buffer
 		 * @param offsetSrc Where to start in the source buffer
@@ -118,6 +145,8 @@ namespace tklb {
 		 * @brief Returns how many elements are in the buffer
 		 */
 		Size filled() const { return mHead; }
+
+		Size tail() const { return mTail; }
 	};
 
 	using AudioRingBufferFloat = AudioRingBufferTpl<float>;
