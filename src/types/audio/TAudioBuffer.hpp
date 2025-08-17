@@ -162,7 +162,7 @@ namespace tklb {
 		 * @brief Set multiple channels from a 2D array
 		 * @param samples A 2D Array containing the audio samples (float or double)
 		 * @param length Samples to copy in (single channel)
-		 * @param channels Channel count
+		 * @param channelCount Channel count
 		 * @param offsetSrc Offset in the source buffer
 		 * @param offsetDst Offset in the destination buffer
 		 */
@@ -170,12 +170,18 @@ namespace tklb {
 		void set(
 			T2** const samples,
 			const Size length,
-			const Channel channels,
+			Channel chan = 0,
 			const Size offsetSrc = 0,
 			const Size offsetDst = 0
 		) {
 			static_assert(traits::IsArithmetic<T2>::value, "Need arithmetic type.");
-			for (Channel c = 0; c < channels; c++) {
+			if (chan == 0) {
+				chan = channels();
+			}
+
+			chan == min(chan, channels());
+
+			for (Channel c = 0; c < chan; c++) {
 				set(samples[c] + offsetSrc, length, c, offsetDst);
 			}
 		}

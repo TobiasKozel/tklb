@@ -16,6 +16,8 @@
 	#define TKLB_PROFILER_FREE(ptr)
 #endif
 
+#include "../util/TAssert.h"
+
 /**
  * @brief Main allocation function.
  *        Use TKLB_MALLOC which allows tracking memory.
@@ -108,10 +110,23 @@ namespace tklb { namespace memory {
 	 *
 	 * @param dst
 	 * @param src
-	 * @param size Size of the dst buffer.
+	 * @param size Size of the dst buffer. Can be zero for short terminated strings only.
 	 * @param terminate Whether the last character in the destination will be '\0' terminated for safety.
 	 */
-	static inline void stringCopy(char* dst, const char* src, SizeT size, bool terminate = true) {
+	static inline void stringCopy(char* dst, const char* src, SizeT size = 0, bool terminate = true) {
+		if (size == 0) {
+			terminate = true;
+			// only allow short terminated strings.
+			for (SizeT i = 0; i < 64; i++) {
+				size = i;
+				if (src[i] == '\0') {
+					terminate = false;
+					break;
+				}
+			}
+			TKLB_ASSERT(!terminate && "Non terminated string longer than 64 characters copied. Provide a length!")
+		}
+
 		for (SizeT i = 0; i < size; i++) {
 			dst[i] = src[i];
 			if (src[i] == '\0') { return; }
