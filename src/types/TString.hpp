@@ -82,6 +82,15 @@ namespace tklb {
 			for(; i < N; i++) { mData[i] = Terminator; }
 			mData[N - 1] = Terminator; // just in case, will run over the last char
 		}
+
+		void put(char* str, Size length) const {
+			if (N == 0) { return; }
+			for (Size i = 0; i < (min(N, length)); i++) {
+				str[i] = mData[i];
+			}
+			auto end = min(N, length - 1);
+			str[end] = Terminator;
+		}
 	};
 
 	/**
