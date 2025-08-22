@@ -22,6 +22,12 @@ namespace tklb {
 			if (N == 0) { return nullptr; }
 			return mData;
 		}
+
+		char* c_str() {
+			if (N == 0) { return nullptr; }
+			return mData;
+		}
+
 		const char& operator[](const Size index) const {
 			TKLB_ASSERT(index < N)
 			// If asserts are disable, pretend the string is terminated
@@ -70,6 +76,10 @@ namespace tklb {
 				}
 			}
 			return N; // someone wrote past the end
+		}
+
+		Size maxSize() const {
+			return N;
 		}
 
 		void set(const char* str) {

@@ -10,7 +10,7 @@ namespace tklb {
 		if (db < silenceDb) {
 			return 0;
 		}
-		return pow (T(10), db * T(0.05));
+		return pow(T(10), db * T(0.05));
 	}
 
 	template <typename T>
